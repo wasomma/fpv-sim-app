@@ -28,7 +28,8 @@ installed, offline tool needs:
   georeferenced by a configurable anchor. VBS4 connects through its
   standard VBS Gateway; HLA federations via bridging (Pitch DIS
   Adapter). See [docs/INTEROP.md](docs/INTEROP.md) and
-  [docs/VBS4_CHECKLIST.md](docs/VBS4_CHECKLIST.md).
+  [docs/VBS4_CHECKLIST.md](docs/VBS4_CHECKLIST.md); new to the
+  standards, start with [docs/DIS_HLA_PRIMER.md](docs/DIS_HLA_PRIMER.md).
 - **Terrain export** — any seed's heightfield as a georeferenced DEM
   (Esri ASCII Grid + UTM .prj + canopy raster) for VBS Geo import, so
   the remote terrain correlates with the engagement.
