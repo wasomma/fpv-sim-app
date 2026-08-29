@@ -43,16 +43,19 @@ const sourceCommit = [...sources][0];
 
 const subHead = execFileSync("git", ["-C", sub, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 
-/* CI checkouts clone the submodule shallow; fetch the fixtures' source
-   commit into it if the local history doesn't reach that far. */
+/* CI checkouts clone the submodule shallow; ancestry needs the full
+   graph between the fixtures' source commit and HEAD, so unshallow
+   first, then make sure the commit object itself is present. */
+const isShallow = execFileSync("git", ["-C", sub, "rev-parse", "--is-shallow-repository"], {
+  encoding: "utf8",
+}).trim();
+if (isShallow === "true") {
+  execFileSync("git", ["-C", sub, "fetch", "--quiet", "--unshallow", "origin"], { stdio: "ignore" });
+}
 try {
   execFileSync("git", ["-C", sub, "cat-file", "-e", `${sourceCommit}^{commit}`], { stdio: "ignore" });
 } catch {
-  try {
-    execFileSync("git", ["-C", sub, "fetch", "--quiet", "origin", sourceCommit], { stdio: "ignore" });
-  } catch {
-    execFileSync("git", ["-C", sub, "fetch", "--quiet", "--unshallow", "origin"], { stdio: "ignore" });
-  }
+  execFileSync("git", ["-C", sub, "fetch", "--quiet", "origin", sourceCommit], { stdio: "ignore" });
 }
 
 try {
