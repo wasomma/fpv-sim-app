@@ -74,7 +74,7 @@
       <canvas id="map" width="860" height="860"></canvas>
       <div class="box">
         <h2>GATEWAY</h2>
-        <div id="gateway">DIS gateway module not yet installed — sessions run app-local.</div>
+        <div id="gateway">no gateway config staged — sessions run app-local (stage one via live_configure_gateway)</div>
       </div>
     </div>
     <div class="col">
@@ -92,7 +92,7 @@
   const $ = (id) => document.getElementById(id);
   const WORLD = 4000;
   const cv = $("map"), ctx = cv.getContext("2d");
-  let lastView = null, running = false, paused = false;
+  let lastView = null, running = false, paused = false, overlayTracks = [];
 
   const fmtT = (t) => {
     const s = Math.floor(t % 60), m = Math.floor(t / 60);
@@ -147,6 +147,14 @@
         if (e.videoOn) { ctx.beginPath(); ctx.arc(x, y, 9, 0, 7); ctx.stroke(); }
       }
     }
+    // External DIS entities: read-only overlay, never engine-affecting.
+    ctx.fillStyle = "#b9c2b0"; ctx.strokeStyle = "#b9c2b0"; ctx.font = "10px monospace";
+    for (const t of overlayTracks) {
+      if (t.outsideWorld) continue;
+      const x = X(t.x), y = Y(t.y);
+      ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.lineTo(x + 6, y); ctx.lineTo(x, y + 6); ctx.lineTo(x - 6, y); ctx.closePath(); ctx.stroke();
+      ctx.fillText(t.marking || t.key, x + 8, y + 3);
+    }
   }
 
   function renderEntities() {
@@ -185,10 +193,17 @@
     $("pause").textContent = paused ? "RESUME" : "PAUSE";
   }
 
-  window.fpvApp.live.onSnapshot(({ status, view }) => {
+  window.fpvApp.live.onSnapshot(({ status, view, overlay }) => {
     running = status.state === "running" || status.state === "paused";
     paused = status.state === "paused";
     lastView = view;
+    overlayTracks = overlay || [];
+    const g = status.gateway;
+    $("gateway").textContent = g && g.enabled
+      ? `${g.state}${g.detail ? " — " + g.detail : ""} · tx ${g.tx ? Object.entries(g.tx).filter(([k]) => k !== "bytes").map(([k, v]) => k + " " + v).join(", ") : "-"}` +
+        ` · peers ${(g.peers || []).length} · overlay ${g.externalTracks ?? 0}` +
+        (g.lastError ? " · ERR " + g.lastError : "")
+      : "gateway inactive for this session";
     $("clock").textContent = fmtT(view.t);
     $("phase").textContent = `${status.mode} · ${view.phase}${paused ? " · PAUSED" : ""}`;
     const lag = status.lagMs ?? 0;

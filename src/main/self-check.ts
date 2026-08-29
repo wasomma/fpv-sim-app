@@ -15,7 +15,7 @@ import path from "node:path";
 import { runEngagement } from "fpv-sim-mcp/engine";
 import { mcpHostStatus } from "./mcp/host.js";
 import { resultsDir } from "./paths.js";
-import { liveStart, liveWaitForEnd } from "./sessions/session-manager.js";
+import { liveGatewayStatus, liveStart, liveWaitForEnd } from "./sessions/session-manager.js";
 import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
@@ -203,6 +203,33 @@ export async function runSelfCheck(): Promise<number> {
     }
     const summary = batch.outcome.result + " at " + batch.duration_s.toFixed(1) + " s";
     return `seed ${seed}: live === batch (${summary}, ${a.length} chars compared)`;
+  });
+
+  await step("DIS gateway publishes over loopback UDP inside a live session", async () => {
+    const seed = 66;
+    const started = liveStart({
+      seed,
+      mode: "orbit",
+      speed: 60,
+      maxSimS: 3600,
+      gateway: {
+        network: { mode: "unicast", unicastDestinations: ["127.0.0.1"], port: 46731 },
+        anchor: { lat0Deg: 21.35, lon0Deg: -157.95, h0M: 0, rotationDeg: 0, geoidOffsetM: 0 },
+      },
+    });
+    if (!started.ok) throw new Error(started.error);
+    await liveWaitForEnd(120000);
+    const g = liveGatewayStatus();
+    if (g.tx === undefined || (g.tx.espdu ?? 0) < 50) {
+      throw new Error(`too few ESPDUs published: ${JSON.stringify(g.tx)}`);
+    }
+    if ((g.tx.detonation ?? 0) !== 1) throw new Error(`expected exactly 1 detonation, got ${g.tx.detonation}`);
+    if ((g.tx.emission ?? 0) < 10) throw new Error(`too few EE PDUs: ${g.tx.emission}`);
+    const rx = g.rx as Record<string, number> | undefined;
+    if (rx === undefined || rx.selfHeard !== 1) {
+      throw new Error(`gateway did not hear its own traffic on loopback: ${JSON.stringify(rx)}`);
+    }
+    return `espdu ${g.tx.espdu}, ee ${g.tx.emission}, detonation 1, start/resume ${g.tx.startResume}, self-heard`;
   });
 
   await step("viewer3d loads (WebGPU reported, not required)", async () => {

@@ -10,10 +10,12 @@
  */
 
 import { Simulation, type ConfigOverrides } from "fpv-sim-mcp/engine";
+import { DisGateway } from "../gateway/index.js";
+import { NullGateway, type GatewaySlot, type OverlayTrack, type TickView } from "../../shared/gateway-slot.js";
+import { buildTickView } from "./tick-view.js";
+import { TickPacer } from "./pacer.js";
 
 type Mode = "orbit" | "tactical";
-import { NullGateway, type GatewaySlot, type TickEntity, type TickView } from "../../shared/gateway-slot.js";
-import { TICK_S, TickPacer } from "./pacer.js";
 
 /* Electron's utilityProcess message port on `process`. */
 interface ParentPort {
@@ -23,7 +25,16 @@ interface ParentPort {
 const parentPort = (process as unknown as { parentPort: ParentPort }).parentPort;
 
 type HostCommand =
-  | { type: "start"; sessionId: string; seed: number; mode: Mode; overrides: ConfigOverrides | undefined; speed: number; maxSimS: number }
+  | {
+      type: "start";
+      sessionId: string;
+      seed: number;
+      mode: Mode;
+      overrides: ConfigOverrides | undefined;
+      speed: number;
+      maxSimS: number;
+      gatewayConfig: unknown | null;
+    }
   | { type: "pause" }
   | { type: "resume" }
   | { type: "set-speed"; speed: number }
@@ -42,9 +53,8 @@ interface HostRuntime {
   gatewayEventCursor: number;
   interval: NodeJS.Timeout;
   gateway: GatewaySlot;
-  /** False while the slot holds the NullGateway — skips per-tick view builds. */
   gatewayActive: boolean;
-  endedReason: string | null;
+  overlay: OverlayTrack[];
 }
 
 let rt: HostRuntime | null = null;
@@ -52,63 +62,8 @@ const CATCHUP_TICKS_PER_WAKE = 40;
 const SNAPSHOT_MS = 100;
 let lastSnapshotAt = 0;
 
-function entityViews(sim: Simulation): TickEntity[] {
-  const out: TickEntity[] = [];
-  for (const side of ["BLUFOR", "OPFOR"] as const) {
-    const T = sim.teams[side];
-    out.push({
-      id: T.gcs.id,
-      side,
-      kind: "gcs",
-      x: T.gcs.x,
-      y: T.gcs.y,
-      destroyed: T.gcs.destroyed,
-      transmitting: T.gcs.transmitting,
-    });
-    for (const n of T.nodes) {
-      out.push({ id: n.id, side, kind: "df_node", x: n.x, y: n.y });
-    }
-    const drones = T.drones ?? (T.drone !== null ? [T.drone] : []);
-    for (const d of drones) {
-      out.push({
-        id: d.id,
-        side,
-        kind: "drone",
-        role: d.role,
-        x: d.x,
-        y: d.y,
-        aglM: d.agl,
-        hdgRad: d.hdg,
-        spdMps: d.spd,
-        state: d.state,
-        battPct: d.batt,
-        launched: d.launched,
-        downed: d.downed,
-        videoOn: d.videoOn,
-      });
-    }
-  }
-  return out;
-}
-
-function buildView(includeEventsFrom: number): TickView {
-  const sim = rt!.sim;
-  const fix = (side: "BLUFOR" | "OPFOR") => {
-    const est = sim.teams[side].est;
-    return est !== null && est.solved && est.p !== null ? { x: est.p.x, y: est.p.y, cepM: est.cep } : null;
-  };
-  return {
-    t: sim.t,
-    tick: rt!.tick,
-    mode: rt!.mode,
-    phase: sim.phase,
-    entities: entityViews(sim),
-    fixes: { BLUFOR: fix("BLUFOR"), OPFOR: fix("OPFOR") },
-    winner: sim.winner ?? undefined,
-    stalemate: sim.stalemate,
-    objective: sim.obj !== null ? { x: sim.obj.x, y: sim.obj.y, r: sim.obj.r, name: sim.obj.name } : undefined,
-    eventsTail: sim.events.slice(includeEventsFrom),
-  };
+function view(eventsFrom: number): TickView {
+  return buildTickView(rt!.sim, rt!.tick, rt!.mode, eventsFrom);
 }
 
 /** One engine tick + the exact end conditions of runToCompletion(). */
@@ -138,14 +93,16 @@ function postSnapshot(force: boolean): void {
   const now = Date.now();
   if (!force && now - lastSnapshotAt < SNAPSHOT_MS) return;
   lastSnapshotAt = now;
-  const view = buildView(rt!.eventCursor);
+  const v = view(rt!.eventCursor);
   rt!.eventCursor = rt!.sim.events.length;
   parentPort.postMessage({
     type: "snapshot",
-    view,
+    view: v,
     speed: rt!.pacer.speed,
     paused: rt!.pacer.isPaused,
     lagMs: rt!.pacer.lagMs(rt!.tick, now),
+    gateway: rt!.gatewayActive ? rt!.gateway.status() : null,
+    overlay: rt!.overlay,
   });
 }
 
@@ -155,6 +112,7 @@ function endSession(reason: string): void {
   rt.gateway.onSessionEnd(reason);
   postSnapshot(true);
   parentPort.postMessage({ type: "ended", reason, result: rt.sim.buildResult() });
+  void rt.gateway.shutdown();
   rt = null;
 }
 
@@ -167,9 +125,9 @@ function onWake(): void {
     const ended = stepOnce();
     steps++;
     if (rt.gatewayActive) {
-      const view = buildView(rt.gatewayEventCursor);
+      const v = view(rt.gatewayEventCursor);
       rt.gatewayEventCursor = rt.sim.events.length;
-      rt.gateway.onTick(view);
+      rt.gateway.onTick(v);
     }
     if (ended) {
       endSession(rt.sim.winner !== null ? "engagement_decided" : "engagement_over");
@@ -186,35 +144,52 @@ parentPort.on("message", (e) => {
       parentPort.postMessage({ type: "error", message: "session already running in this host" });
       return;
     }
-    try {
-      const sim = new Simulation(msg.seed, msg.overrides, msg.mode);
-      rt = {
-        sim,
-        pacer: new TickPacer(Date.now(), msg.speed),
-        sessionId: msg.sessionId,
-        mode: msg.mode,
-        maxSimS: msg.maxSimS,
-        tick: 0,
-        eventCursor: 0,
-        gatewayEventCursor: 0,
-        interval: setInterval(onWake, 20),
-        gateway: new NullGateway(),
-        gatewayActive: false,
-        endedReason: null,
-      };
-      rt.gateway.onSessionStart({
-        sessionId: msg.sessionId,
-        seed: msg.seed,
-        mode: msg.mode,
-        overridesDigest: msg.overrides !== undefined ? JSON.stringify(msg.overrides) : "",
-        startedAtMs: Date.now(),
-        speed: msg.speed,
-      });
-      parentPort.postMessage({ type: "started", sessionId: msg.sessionId });
-      postSnapshot(true);
-    } catch (err) {
-      parentPort.postMessage({ type: "error", message: err instanceof Error ? err.message : String(err) });
-    }
+    void (async () => {
+      try {
+        const sim = new Simulation(msg.seed, msg.overrides, msg.mode);
+        let gateway: GatewaySlot = new NullGateway();
+        let gatewayActive = false;
+        if (msg.gatewayConfig !== null && msg.gatewayConfig !== undefined) {
+          const dis = new DisGateway(msg.gatewayConfig);
+          if (dis.configIssues !== undefined) {
+            parentPort.postMessage({ type: "error", message: `gateway config: ${dis.configIssues}` });
+            return;
+          }
+          await dis.open();
+          gateway = dis;
+          gatewayActive = true;
+        }
+        rt = {
+          sim,
+          pacer: new TickPacer(Date.now(), msg.speed),
+          sessionId: msg.sessionId,
+          mode: msg.mode,
+          maxSimS: msg.maxSimS,
+          tick: 0,
+          eventCursor: 0,
+          gatewayEventCursor: 0,
+          interval: setInterval(onWake, 20),
+          gateway,
+          gatewayActive,
+          overlay: [],
+        };
+        gateway.onOverlay((tracks) => {
+          if (rt !== null) rt.overlay = tracks;
+        });
+        gateway.onSessionStart({
+          sessionId: msg.sessionId,
+          seed: msg.seed,
+          mode: msg.mode,
+          overridesDigest: msg.overrides !== undefined ? JSON.stringify(msg.overrides) : "",
+          startedAtMs: Date.now(),
+          speed: msg.speed,
+        });
+        parentPort.postMessage({ type: "started", sessionId: msg.sessionId });
+        postSnapshot(true);
+      } catch (err) {
+        parentPort.postMessage({ type: "error", message: err instanceof Error ? err.message : String(err) });
+      }
+    })();
     return;
   }
   if (rt === null) return;
@@ -222,10 +197,12 @@ parentPort.on("message", (e) => {
   switch (msg.type) {
     case "pause":
       rt.pacer.pause(rt.tick, now);
+      rt.gateway.onPause?.();
       postSnapshot(true);
       break;
     case "resume":
       rt.pacer.resume(rt.tick, now);
+      rt.gateway.onResume?.();
       postSnapshot(true);
       break;
     case "set-speed":

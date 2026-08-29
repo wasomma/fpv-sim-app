@@ -8,6 +8,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
+  liveConfigureGateway,
+  liveGatewayStatus,
   livePause,
   liveResume,
   liveSetSpeed,
@@ -40,10 +42,32 @@ export function registerLiveTools(server: McpServer): void {
           .describe("Partial CONFIG overrides, same shape the batch tools accept (see get_config_schema)."),
         speed: z.number().min(0.25).max(60).default(1).describe("Wall-clock speed factor."),
         max_sim_s: z.number().min(60).max(14400).default(3600),
+        gateway: z
+          .record(z.unknown())
+          .optional()
+          .describe(
+            "DIS gateway config for this session (partial; merged over defaults — network, dis IDs, anchor, " +
+              "entity types, dead reckoning, emissions). Omit to use the config staged via " +
+              "live_configure_gateway, or run gateway-less.",
+          ),
       },
     },
-    async ({ seed, mode, config_overrides, speed, max_sim_s }) =>
-      json(liveStart({ seed, mode, overrides: config_overrides, speed, maxSimS: max_sim_s })),
+    async ({ seed, mode, config_overrides, speed, max_sim_s, gateway }) =>
+      json(liveStart({ seed, mode, overrides: config_overrides, speed, maxSimS: max_sim_s, gateway })),
+  );
+
+  server.registerTool(
+    "live_configure_gateway",
+    {
+      title: "Stage the DIS gateway config",
+      description:
+        "Validate and stage a DIS gateway configuration (partial JSON merged over defaults) for the NEXT live " +
+        "session: network mode/port, exercise & site/app IDs, geo anchor (lat/lon/alt/rotation of the sim " +
+        "origin), entity-type mapping, dead-reckoning thresholds, notional emitter parameters, sim-management " +
+        "behavior. Returns precise per-path errors on invalid values.",
+      inputSchema: { config: z.record(z.unknown()) },
+    },
+    async ({ config }) => json(liveConfigureGateway(config)),
   );
 
   server.registerTool(
@@ -111,10 +135,12 @@ export function registerLiveTools(server: McpServer): void {
     "live_gateway_status",
     {
       title: "Interop gateway status",
-      description: "Status of the DIS gateway module (lands in a later phase; reports disabled until then).",
+      description:
+        "DIS gateway status: state, PDU counters by type (tx/rx), peers heard, external overlay track count, " +
+        "last error, and whether a config is staged for the next session.",
       inputSchema: {},
       annotations: { readOnlyHint: true },
     },
-    async () => json({ enabled: false, state: "idle", detail: "DIS gateway module not yet installed" }),
+    async () => json(liveGatewayStatus()),
   );
 }

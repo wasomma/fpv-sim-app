@@ -23,6 +23,8 @@ export interface TickEntity {
   y: number;
   /** Height above ground, meters. Ground entities omit it (they sit on terrain). */
   aglM?: number;
+  /** Sim-MSL height, meters: max(ground, 0) + AGL (engine convention). */
+  zM?: number;
   /** Heading, radians, north = 0, clockwise positive (engine convention). */
   hdgRad?: number;
   spdMps?: number;
@@ -96,6 +98,9 @@ export interface GatewaySlot {
   onTick(view: TickView): void;
   /** Pacer speed changed mid-session (wall-apparent kinematics rescale). */
   onSpeedChange?(speed: number): void;
+  /** Pacer paused/resumed (drives Stop-Freeze/Start-Resume when configured). */
+  onPause?(): void;
+  onResume?(): void;
   onSessionEnd(reason: string): void;
   status(): GatewayStatus;
   onOverlay(cb: (tracks: OverlayTrack[]) => void): () => void;

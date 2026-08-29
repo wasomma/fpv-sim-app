@@ -9,7 +9,8 @@
 import { BrowserWindow, utilityProcess, type UtilityProcess } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { TickView } from "../../shared/gateway-slot.js";
+import type { GatewayStatus, OverlayTrack, TickView } from "../../shared/gateway-slot.js";
+import { validateGatewayConfig } from "../gateway/config.js";
 
 export interface LiveStartOpts {
   seed: number;
@@ -17,6 +18,8 @@ export interface LiveStartOpts {
   overrides?: Record<string, unknown>;
   speed?: number;
   maxSimS?: number;
+  /** Gateway config for this session; falls back to the pending config. */
+  gateway?: unknown;
 }
 
 interface SnapshotMsg {
@@ -25,6 +28,8 @@ interface SnapshotMsg {
   speed: number;
   paused: boolean;
   lagMs: number;
+  gateway: GatewayStatus | null;
+  overlay: OverlayTrack[];
 }
 type HostMsg =
   | { type: "started"; sessionId: string }
@@ -50,10 +55,13 @@ interface SessionRecord {
   endedReason: string | null;
   result: unknown | null;
   stopWaiters: ((result: unknown) => void)[];
+  gatewayStatus: GatewayStatus | null;
+  overlay: OverlayTrack[];
 }
 
 let session: SessionRecord | null = null;
 let counter = 0;
+let pendingGatewayCfg: unknown | null = null;
 
 function hostModulePath(): string {
   return path.join(path.dirname(fileURLToPath(import.meta.url)), "session-host.js");
@@ -92,8 +100,34 @@ export function liveStatus(): {
     lagMs: session.lagMs,
     winner: session.lastView?.winner,
     endedReason: session.endedReason ?? undefined,
-    gateway: { enabled: false, state: "idle" }, // real gateway status lands with the DIS module
+    gateway: session.gatewayStatus ?? { enabled: false, state: "idle" },
   };
+}
+
+/** Stage a gateway config for the next session (validated immediately). */
+export function liveConfigureGateway(cfg: unknown): { ok: boolean; error?: string } {
+  const { issues } = validateGatewayConfig(cfg);
+  if (issues.length > 0) {
+    return { ok: false, error: issues.map((i) => `${i.path}: ${i.message}`).join("; ") };
+  }
+  if (session !== null && session.state !== "ended") {
+    return { ok: false, error: "a session is active; the new gateway config applies to the next session" };
+  }
+  pendingGatewayCfg = cfg;
+  return { ok: true };
+}
+
+export function liveGatewayStatus(): GatewayStatus & { pendingConfig: boolean } {
+  const status = session?.gatewayStatus ?? {
+    enabled: false,
+    state: "idle" as const,
+    detail: pendingGatewayCfg !== null ? "configured for next session" : "no gateway config staged",
+  };
+  return { ...status, pendingConfig: pendingGatewayCfg !== null };
+}
+
+export function liveOverlay(): OverlayTrack[] {
+  return session?.overlay ?? [];
 }
 
 export function liveSnapshot(eventsAfter = 0): {
@@ -148,6 +182,8 @@ export function liveStart(opts: LiveStartOpts): { ok: boolean; sessionId?: strin
     endedReason: null,
     result: null,
     stopWaiters: [],
+    gatewayStatus: null,
+    overlay: [],
   };
 
   child.on("message", (raw: unknown) => {
@@ -158,8 +194,10 @@ export function liveStart(opts: LiveStartOpts): { ok: boolean; sessionId?: strin
       session.speed = msg.speed;
       session.lagMs = msg.lagMs;
       session.state = msg.paused ? "paused" : session.state === "ended" ? "ended" : "running";
+      session.gatewayStatus = msg.gateway;
+      session.overlay = msg.overlay;
       if (msg.view.eventsTail.length > 0) session.events.push(...msg.view.eventsTail);
-      broadcast("live-snapshot", { status: liveStatus(), view: msg.view });
+      broadcast("live-snapshot", { status: liveStatus(), view: msg.view, overlay: msg.overlay });
     } else if (msg.type === "ended") {
       session.state = "ended";
       session.endedReason = msg.reason;
@@ -188,7 +226,16 @@ export function liveStart(opts: LiveStartOpts): { ok: boolean; sessionId?: strin
     }
   });
 
-  child.postMessage({ type: "start", sessionId, seed, mode, overrides: opts.overrides, speed, maxSimS });
+  child.postMessage({
+    type: "start",
+    sessionId,
+    seed,
+    mode,
+    overrides: opts.overrides,
+    speed,
+    maxSimS,
+    gatewayConfig: opts.gateway ?? pendingGatewayCfg,
+  });
   return { ok: true, sessionId };
 }
 
