@@ -104,6 +104,10 @@
       <b>MCP ENDPOINT</b>
       <span>Connect Claude Code and other MCP clients to the batch and live tools.</span>
     </button>
+    <button class="card" id="open-live">
+      <b>LIVE OPS</b>
+      <span>Real-time-paced sessions: map, entities, events — the DIS gateway's feed.</span>
+    </button>
   </div>
 
   <div class="launch">
@@ -127,6 +131,7 @@
   $("open-viewer3d").addEventListener("click", () => window.fpvApp.openWindow("viewer3d"));
   $("open-studies").addEventListener("click", () => window.fpvApp.openPanel("studies"));
   $("open-mcp").addEventListener("click", () => window.fpvApp.openPanel("mcp"));
+  $("open-live").addEventListener("click", () => window.fpvApp.openPanel("live-ops"));
   $("launch").addEventListener("click", () => {
     const seed = Number($("seed").value);
     window.fpvApp.openWindow("sim", {

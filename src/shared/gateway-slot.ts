@@ -44,10 +44,12 @@ export interface TickView {
   mode: "orbit" | "tactical";
   phase: string;
   entities: TickEntity[];
+  /** Per-side solved fix estimate on the ENEMY GCS, if any. */
+  fixes: Record<Side, { x: number; y: number; cepM: number } | null>;
   winner?: Side;
   stalemate?: boolean;
   objective?: { x: number; y: number; r: number; name: string };
-  /** Events appended since the previous tick (engine's typed event stream). */
+  /** Events appended since the previous view (engine's typed event stream). */
   eventsTail: { t: number; side: string; text: string }[];
 }
 

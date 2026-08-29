@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Live Ops</title>
+<style>
+  :root {
+    --bg: #10140f; --panel: #171d15; --edge: #2a3325; --ink: #cdd6c4;
+    --dim: #7d8a72; --accent: #a7d129; --accent-dim: #5d7a1a; --err: #d16a4a;
+    --blu: #6ea8fe; --opf: #ff8f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 13px/1.45 "Cascadia Mono", Consolas, monospace;
+    height: 100vh; display: flex; flex-direction: column; padding: 16px 20px; gap: 10px;
+  }
+  header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 16px; letter-spacing: 2px; color: var(--accent); margin-right: 6px; }
+  .clock { font-size: 15px; color: var(--ink); min-width: 88px; }
+  .phase { color: var(--dim); }
+  label { color: var(--dim); font-size: 12px; }
+  input, select {
+    background: var(--bg); color: var(--ink); border: 1px solid var(--edge);
+    border-radius: 4px; padding: 4px 7px; font: inherit;
+  }
+  input[type="number"] { width: 110px; }
+  button {
+    background: var(--accent-dim); color: #eaf5d0; border: none; border-radius: 4px;
+    padding: 5px 12px; font: inherit; cursor: pointer;
+  }
+  button:hover { background: var(--accent); color: #1c2410; }
+  button.warn { background: #6b3a2a; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .lag { color: var(--dim); font-size: 11.5px; }
+  .lag.bad { color: var(--err); }
+  main { flex: 1; display: grid; grid-template-columns: minmax(430px, 46%) 1fr; gap: 10px; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  canvas { background: #0b0e0a; border: 1px solid var(--edge); border-radius: 6px; width: 100%; aspect-ratio: 1; }
+  .box { background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 8px 10px; }
+  .box h2 { font-size: 11px; letter-spacing: 1px; color: var(--dim); margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { text-align: left; padding: 2px 8px 2px 0; white-space: nowrap; }
+  th { color: var(--dim); font-weight: normal; }
+  .BLUFOR { color: var(--blu); } .OPFOR { color: var(--opf); } .SYS { color: var(--accent); }
+  #events { flex: 1; overflow-y: auto; background: #0b0e0a; border: 1px solid var(--edge); border-radius: 6px; padding: 8px 10px; font-size: 12px; min-height: 90px; }
+  #entities-box { overflow-y: auto; max-height: 300px; }
+  .endcard { color: var(--accent); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>LIVE OPS</h1>
+    <span class="clock" id="clock">T+00:00</span>
+    <span class="phase" id="phase">idle</span>
+    <label>seed</label><input id="seed" type="number" value="20260719" min="0" max="4294967295">
+    <label>mode</label>
+    <select id="mode"><option value="orbit" selected>orbit</option><option value="tactical">tactical</option></select>
+    <label>speed</label>
+    <select id="speed">
+      <option value="0.5">0.5×</option><option value="1" selected>1× (real time)</option>
+      <option value="2">2×</option><option value="4">4×</option><option value="8">8×</option>
+      <option value="20">20×</option><option value="60">60×</option>
+    </select>
+    <button id="start">START</button>
+    <button id="pause" disabled>PAUSE</button>
+    <button id="stop" class="warn" disabled>STOP</button>
+    <span class="lag" id="lag"></span>
+  </header>
+
+  <main>
+    <div class="col">
+      <canvas id="map" width="860" height="860"></canvas>
+      <div class="box">
+        <h2>GATEWAY</h2>
+        <div id="gateway">DIS gateway module not yet installed — sessions run app-local.</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="box" id="entities-box">
+        <h2>ENTITIES</h2>
+        <table id="entities"><thead><tr>
+          <th>id</th><th>kind</th><th>state</th><th>batt</th><th>spd</th><th>agl</th><th>emit</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <div id="events"></div>
+    </div>
+  </main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const WORLD = 4000;
+  const cv = $("map"), ctx = cv.getContext("2d");
+  let lastView = null, running = false, paused = false;
+
+  const fmtT = (t) => {
+    const s = Math.floor(t % 60), m = Math.floor(t / 60);
+    return `T+${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+  const X = (x) => (x / WORLD) * cv.width;
+  const Y = (y) => cv.height - (y / WORLD) * cv.height;
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.strokeStyle = "#22301f"; ctx.lineWidth = 1;
+    for (let g = 0; g <= WORLD; g += 500) {
+      ctx.beginPath(); ctx.moveTo(X(g), 0); ctx.lineTo(X(g), cv.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, Y(g)); ctx.lineTo(cv.width, Y(g)); ctx.stroke();
+    }
+    if (lastView === null) return;
+    const colors = { BLUFOR: "#6ea8fe", OPFOR: "#ff8f5e" };
+
+    if (lastView.objective) {
+      const o = lastView.objective;
+      ctx.strokeStyle = "#a7d12955"; ctx.setLineDash([6, 5]);
+      ctx.beginPath(); ctx.arc(X(o.x), Y(o.y), (o.r / WORLD) * cv.width, 0, 7); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#a7d12999"; ctx.font = "11px monospace";
+      ctx.fillText(o.name, X(o.x) + 6, Y(o.y) - 6);
+    }
+    for (const side of ["BLUFOR", "OPFOR"]) {
+      const fx = lastView.fixes?.[side];
+      if (fx) {
+        ctx.strokeStyle = colors[side] + "66"; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.arc(X(fx.x), Y(fx.y), Math.max(3, (fx.cepM / WORLD) * cv.width), 0, 7); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    for (const e of lastView.entities) {
+      const c = e.destroyed || e.downed ? "#5a5f56" : colors[e.side];
+      ctx.fillStyle = c; ctx.strokeStyle = c;
+      const x = X(e.x), y = Y(e.y);
+      if (e.kind === "gcs") {
+        ctx.fillRect(x - 5, y - 5, 10, 10);
+        if (e.transmitting) { ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.stroke(); }
+      } else if (e.kind === "df_node") {
+        ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 5); ctx.lineTo(x - 5, y); ctx.closePath(); ctx.fill();
+      } else {
+        if (e.launched === false) continue;
+        const h = e.hdgRad ?? 0, s = 7;
+        ctx.beginPath();
+        ctx.moveTo(x + s * Math.sin(h), y - s * Math.cos(h));
+        ctx.lineTo(x + s * 0.6 * Math.sin(h + 2.5), y - s * 0.6 * Math.cos(h + 2.5));
+        ctx.lineTo(x + s * 0.6 * Math.sin(h - 2.5), y - s * 0.6 * Math.cos(h - 2.5));
+        ctx.closePath(); ctx.fill();
+        if (e.videoOn) { ctx.beginPath(); ctx.arc(x, y, 9, 0, 7); ctx.stroke(); }
+      }
+    }
+  }
+
+  function renderEntities() {
+    const tb = $("entities").querySelector("tbody");
+    tb.innerHTML = "";
+    if (lastView === null) return;
+    for (const e of lastView.entities) {
+      const tr = document.createElement("tr");
+      tr.className = e.side;
+      const emit = [e.transmitting ? "UL" : "", e.videoOn ? "VID" : ""].filter(Boolean).join("+");
+      tr.innerHTML =
+        `<td>${e.id}</td><td>${e.kind}${e.role ? ":" + e.role : ""}</td><td>${e.state ?? (e.destroyed ? "DESTROYED" : "-")}</td>` +
+        `<td>${e.battPct !== undefined ? e.battPct.toFixed(0) + "%" : "-"}</td>` +
+        `<td>${e.spdMps !== undefined ? e.spdMps.toFixed(0) : "-"}</td>` +
+        `<td>${e.aglM !== undefined ? e.aglM.toFixed(0) : "-"}</td><td>${emit}</td>`;
+      tb.appendChild(tr);
+    }
+  }
+
+  function appendEvents(tail) {
+    const box = $("events");
+    for (const ev of tail) {
+      const div = document.createElement("div");
+      div.className = ev.side;
+      div.textContent = `${fmtT(ev.t)} ${ev.side.padEnd(6)} ${ev.text}`;
+      box.appendChild(div);
+    }
+    while (box.childNodes.length > 500) box.removeChild(box.firstChild);
+    if (tail.length > 0) box.scrollTop = box.scrollHeight;
+  }
+
+  function setButtons() {
+    $("start").disabled = running;
+    $("pause").disabled = !running;
+    $("stop").disabled = !running;
+    $("pause").textContent = paused ? "RESUME" : "PAUSE";
+  }
+
+  window.fpvApp.live.onSnapshot(({ status, view }) => {
+    running = status.state === "running" || status.state === "paused";
+    paused = status.state === "paused";
+    lastView = view;
+    $("clock").textContent = fmtT(view.t);
+    $("phase").textContent = `${status.mode} · ${view.phase}${paused ? " · PAUSED" : ""}`;
+    const lag = status.lagMs ?? 0;
+    $("lag").textContent = `lag ${lag} ms`;
+    $("lag").className = lag > 500 ? "lag bad" : "lag";
+    draw(); renderEntities(); appendEvents(view.eventsTail); setButtons();
+  });
+  window.fpvApp.live.onEnded(({ reason, result }) => {
+    running = false; paused = false; setButtons();
+    const summary = result && result.outcome
+      ? `${result.outcome.result} (${result.outcome.reason}) at ${fmtT(result.duration_s)}`
+      : reason;
+    appendEvents([{ t: lastView?.t ?? 0, side: "SYS", text: `ENDEX — ${summary}` }]);
+    $("phase").innerHTML = `<span class="endcard">ENDEX — ${summary}</span>`;
+  });
+
+  $("start").addEventListener("click", async () => {
+    $("events").innerHTML = ""; lastView = null; draw(); renderEntities();
+    const r = await window.fpvApp.live.start({
+      seed: Number($("seed").value),
+      mode: $("mode").value,
+      speed: Number($("speed").value),
+    });
+    if (!r.ok) appendEvents([{ t: 0, side: "SYS", text: `refused: ${r.error}` }]);
+  });
+  $("pause").addEventListener("click", () => (paused ? window.fpvApp.live.resume() : window.fpvApp.live.pause()));
+  $("stop").addEventListener("click", () => window.fpvApp.live.stop());
+  $("speed").addEventListener("change", () => {
+    if (running) window.fpvApp.live.setSpeed(Number($("speed").value));
+  });
+
+  window.fpvApp.live.status().then((s) => {
+    running = s.state === "running" || s.state === "paused";
+    paused = s.state === "paused";
+    setButtons(); draw();
+  });
+</script>
+</body>
+</html>

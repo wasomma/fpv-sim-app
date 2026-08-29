@@ -12,8 +12,10 @@
 import { BrowserWindow, app } from "electron";
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { runEngagement } from "fpv-sim-mcp/engine";
 import { mcpHostStatus } from "./mcp/host.js";
 import { resultsDir } from "./paths.js";
+import { liveStart, liveWaitForEnd } from "./sessions/session-manager.js";
 import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
@@ -183,6 +185,24 @@ export async function runSelfCheck(): Promise<number> {
       throw new Error(`run_engagement(20260719) did not report the golden outcome: ${callText.slice(0, 800)}`);
     }
     return `healthz ok, 401 without token, initialize ok, run_engagement(20260719) golden on port ${status.port}`;
+  });
+
+  await step("live session at 60x replays the batch result exactly", async () => {
+    const seed = 66; // featured fast orbit win — short even at real time
+    const started = liveStart({ seed, mode: "orbit", speed: 60, maxSimS: 3600 });
+    if (!started.ok) throw new Error(started.error);
+    const liveResult = await liveWaitForEnd(120000);
+    if (liveResult === null) throw new Error("session host died without a result");
+    const batch = runEngagement(seed, undefined, { mode: "orbit" });
+    const a = JSON.stringify(liveResult);
+    const b = JSON.stringify(batch);
+    if (a !== b) {
+      throw new Error(
+        `live buildResult() differs from batch runEngagement() (${a.length} vs ${b.length} chars)`,
+      );
+    }
+    const summary = batch.outcome.result + " at " + batch.duration_s.toFixed(1) + " s";
+    return `seed ${seed}: live === batch (${summary}, ${a.length} chars compared)`;
   });
 
   await step("viewer3d loads (WebGPU reported, not required)", async () => {

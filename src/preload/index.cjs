@@ -30,4 +30,15 @@ contextBridge.exposeInMainWorld("fpvApp", {
     setPort: (port) => ipcRenderer.invoke("mcp-set-port", port),
     regenerateToken: () => ipcRenderer.invoke("mcp-regenerate-token"),
   },
+  live: {
+    start: (opts) => ipcRenderer.invoke("live-start", opts),
+    stop: () => ipcRenderer.invoke("live-stop"),
+    pause: () => ipcRenderer.invoke("live-pause"),
+    resume: () => ipcRenderer.invoke("live-resume"),
+    setSpeed: (speed) => ipcRenderer.invoke("live-set-speed", speed),
+    status: () => ipcRenderer.invoke("live-status"),
+    snapshot: (eventsAfter) => ipcRenderer.invoke("live-snapshot", eventsAfter),
+    onSnapshot: (cb) => subscribe("live-snapshot", cb),
+    onEnded: (cb) => subscribe("live-ended", cb),
+  },
 });

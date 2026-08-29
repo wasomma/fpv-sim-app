@@ -79,7 +79,7 @@ export function openUiWindow(
   return openAppUrl(`app://ui/${file}${query}`);
 }
 
-const APP_PANELS = new Set(["studies", "mcp"]);
+const APP_PANELS = new Set(["studies", "mcp", "live-ops"]);
 
 /** Open one of the app's own panel pages (preload + contextBridge). */
 export function openAppPanel(name: string): BrowserWindow | null {

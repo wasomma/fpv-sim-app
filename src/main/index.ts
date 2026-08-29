@@ -12,8 +12,19 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
 import { engineRoot, pinsFile } from "./paths.js";
-import { mcpHostStatus, restartMcpHost, startMcpHost } from "./mcp/host.js";
+import { mcpHostStatus, restartMcpHost, setServerExtender, startMcpHost } from "./mcp/host.js";
+import { registerLiveTools } from "./mcp/live-tools.js";
 import { seedResultsIfEmpty } from "./results.js";
+import {
+  livePause,
+  liveResume,
+  liveSetSpeed,
+  liveSnapshot,
+  liveStart,
+  liveStatus,
+  liveStop,
+  type LiveStartOpts,
+} from "./sessions/session-manager.js";
 import { getSettings, regenerateMcpToken, setMcpPort } from "./settings.js";
 import { isSelfCheck, selfCheckAndExit } from "./self-check.js";
 import { cancelStudy, startStudy, studyStatus, type StudyStartOpts } from "./studies/study-runner.js";
@@ -121,6 +132,17 @@ if (!gotLock) {
       return { ok: true };
     });
 
+    ipcMain.handle("live-start", (_event, opts: unknown) => liveStart(opts as LiveStartOpts));
+    ipcMain.handle("live-stop", () => liveStop());
+    ipcMain.handle("live-pause", () => livePause());
+    ipcMain.handle("live-resume", () => liveResume());
+    ipcMain.handle("live-set-speed", (_event, speed: unknown) => liveSetSpeed(speed as number));
+    ipcMain.handle("live-status", () => liveStatus());
+    ipcMain.handle("live-snapshot", (_event, eventsAfter: unknown) =>
+      liveSnapshot(typeof eventsAfter === "number" ? eventsAfter : 0),
+    );
+
+    setServerExtender((server) => registerLiveTools(server));
     const mcpStart = await startMcpHost();
     if (!mcpStart.ok) console.error(`mcp host failed to start: ${mcpStart.error}`);
 

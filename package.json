@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "fpv-sim-mcp": "github:wasomma/fpv-sim-mcp#f848528d7ba5069480522b7b3d5b7e02d9881b0f"
+    "fpv-sim-mcp": "github:wasomma/fpv-sim-mcp#f848528d7ba5069480522b7b3d5b7e02d9881b0f",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
