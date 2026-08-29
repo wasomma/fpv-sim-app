@@ -64,6 +64,46 @@ npm run dist       # NSIS installer -> out/
 approval; the approval is pre-recorded in `package.json` (`allowScripts`).
 Node ≥ 20 (`.nvmrc` says 24).
 
+## Independent DIS cross-check
+
+Everything else that decodes the DIS stream (dis-listen, the loopback
+self-check) uses the app's own codec, so it can only prove the codec
+agrees with itself. `npm run interop-check` closes that circle with
+[open-dis-python](https://github.com/open-dis/open-dis-python), a
+second, independent implementation of IEEE 1278.1:
+
+1. The real publisher stack streams the full seed 20260719 orbit
+   engagement over UDP loopback to `tools/dis-crosscheck.py receive`,
+   which decodes every datagram with open-dis and scores the stream
+   (PDU types and wire lengths, site:app identity, entity numbers,
+   force IDs, markings, geodetic positions near the anchor, EE beam
+   frequencies), with zero datagram loss required.
+2. `tools/dis-crosscheck.py send` then emits an Entity State orbit
+   encoded by open-dis's own encoder at the app's receive path, which
+   must surface it as a Live Ops overlay track.
+
+CI runs the same check on every change. Requires Python 3.12+ with
+open-dis-python. PyPI's `opendis` 1.0 package pins `numpy<2`, which
+does not install on Python 3.13, so install the pinned upstream commit
+instead (it needs no numpy at all):
+
+```
+pip install "git+https://github.com/open-dis/open-dis-python@732b6655bb47e34ccc73722eefe0f4706fd0032f"
+```
+
+### Captures
+
+`docs/captures/seed-20260719-orbit.pcap` is a committed golden capture:
+the first 60 s of the seed 20260719 orbit engagement (Start/Resume, the
+initial entity census, EMCON keying) as a classic pcap with fabricated
+Ethernet/IPv4/UDP headers on port 3000, so Wireshark's DIS dissector
+opens it with zero setup. It is generated through the same publisher
+path as the interop check, at 1x with a fixed epoch, so regeneration
+via `node scripts/interop-check.mjs --write-pcap
+docs/captures/seed-20260719-orbit.pcap` is byte-identical. To capture
+live traffic the same way, pass `--pcap=<file>` to `npm run
+dis-listen`.
+
 Useful CLIs (plain node, no Electron):
 
 ```

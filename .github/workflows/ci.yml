@@ -11,7 +11,10 @@
 #   4. npm test          — engine-parity smoke (11 golden runs, both modes,
 #                          event strings byte-equal) + ad-hoc runner
 #                          equivalence vs run-sweep.mjs
-#   5. electron --self-check — app-level smoke: app:// serving, engine
+#   5. interop-check     — the DIS stream scored by open-dis-python (an
+#                          INDEPENDENT IEEE 1278.1 implementation, pinned
+#                          by commit), both directions over UDP loopback
+#   6. electron --self-check — app-level smoke: app:// serving, engine
 #                          under a deep link, dashboard data, viewer3d
 name: ci
 
@@ -41,4 +44,11 @@ jobs:
       - run: npm run build
       - run: npm run check-pins
       - run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # PyPI's opendis 1.0 pins numpy<2 (no py3.13 build); the pinned
+      # upstream commit needs no numpy. Bump deliberately, never float.
+      - run: python -m pip install "git+https://github.com/open-dis/open-dis-python@732b6655bb47e34ccc73722eefe0f4706fd0032f"
+      - run: npm run interop-check
       - run: npx electron . --self-check

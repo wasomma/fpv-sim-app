@@ -4,11 +4,14 @@
  *
  *   node dist/src/main/gateway/tools/dis-listen.js \
  *     [--port 3000] [--mode broadcast|multicast|unicast] \
- *     [--group 239.1.2.3] [--interface 192.168.1.20] [--anchor lat,lon]
+ *     [--group 239.1.2.3] [--interface 192.168.1.20] [--anchor lat,lon] \
+ *     [--pcap out.pcap]
  *
  * Prints one line per decoded PDU; with --anchor, ESPDU positions are
- * also shown in the sim's local frame. Runs under plain node — no
- * Electron required.
+ * also shown in the sim's local frame. With --pcap, every received
+ * datagram (decoded or not) is also appended to a classic pcap file
+ * that Wireshark's DIS dissector opens directly. Runs under plain
+ * node — no Electron required.
  */
 
 import { parseArgs } from "node:util";
@@ -17,6 +20,7 @@ import { DEFAULT_GATEWAY_CONFIG } from "../config.js";
 import { LocalFrame } from "../geo/localframe.js";
 import { DisSocket } from "../net/udp.js";
 import { timestampToSecondsPastHour } from "../codec/header.js";
+import { PcapWriter } from "./pcap.js";
 
 const { values: args } = parseArgs({
   options: {
@@ -25,6 +29,7 @@ const { values: args } = parseArgs({
     group: { type: "string", default: "239.1.2.3" },
     interface: { type: "string" },
     anchor: { type: "string" },
+    pcap: { type: "string" },
   },
 });
 
@@ -48,10 +53,30 @@ const socket = new DisSocket({
   interface: args.interface ?? null,
 });
 
+const pcap = args.pcap !== undefined ? new PcapWriter(args.pcap) : null;
+/** Fabricated destination for the pcap headers: where traffic in this mode is addressed. */
+const pcapDstIp = mode === "multicast" ? (args.group ?? "239.1.2.3") : mode === "broadcast" ? "255.255.255.255" : "127.0.0.1";
+if (pcap !== null) {
+  process.on("SIGINT", () => {
+    pcap.close();
+    process.exit(0);
+  });
+}
+
 const id = (e: { site: number; app: number; entity: number }) => `${e.site}:${e.app}:${e.entity}`;
 const fmt = (n: number, digits = 1) => n.toFixed(digits);
 
 socket.onPacket((data, from) => {
+  if (pcap !== null) {
+    const sep = from.lastIndexOf(":");
+    pcap.appendDatagram(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), {
+      tsMs: Date.now(),
+      srcIp: sep > 0 ? from.slice(0, sep) : "0.0.0.0",
+      srcPort: sep > 0 ? Number(from.slice(sep + 1)) : 0,
+      dstIp: pcapDstIp,
+      dstPort: Number(args.port),
+    });
+  }
   const decoded = decodePdu(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
   const stamp = new Date().toISOString().slice(11, 23);
   if (!decoded.ok) {
@@ -110,5 +135,6 @@ console.log(
     (mode === "multicast" ? ` group ${args.group}` : "") +
     (args.interface !== undefined ? ` iface ${args.interface}` : "") +
     (frame !== null ? ` anchor ${args.anchor}` : "") +
+    (pcap !== null ? ` pcap ${args.pcap}` : "") +
     " — ctrl-c to stop",
 );

@@ -89,3 +89,10 @@ identically afterward — the overlay is display-only).
 Feed any threshold/enumeration adjustments back into the shipped
 defaults (`src/main/gateway/config.ts`) or the site config, and archive
 a reference `.pcapng` of a clean run in `docs/captures/`.
+
+Captures: a committed golden reference already exists at
+`docs/captures/seed-20260719-orbit.pcap` (first 60 s of seed 20260719
+at 1x, fabricated headers on UDP port 3000, opens directly in
+Wireshark). See the README "Captures" section for how it is generated;
+`npm run dis-listen -- --pcap=<file>` records live traffic the same
+way for comparison against it.
