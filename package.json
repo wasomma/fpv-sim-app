@@ -1,0 +1,37 @@
+{
+  "name": "fpv-sim-app",
+  "version": "0.1.0",
+  "description": "Windows desktop application for the fpv-sim engagement simulation: interactive sim, Monte Carlo studies, an MCP endpoint, and a DIS gateway for VBS4 interoperability. Notional data only.",
+  "private": true,
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "author": "wasomma <wasomma@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wasomma/fpv-sim-app.git"
+  },
+  "main": "dist/src/main/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "vendor": "node scripts/vendor-ui.mjs",
+    "build": "tsc",
+    "start": "electron .",
+    "self-check": "electron . --self-check",
+    "test": "tsc && node --test dist/test/*.test.js",
+    "dist": "electron-builder --publish never"
+  },
+  "dependencies": {
+    "fpv-sim-mcp": "github:wasomma/fpv-sim-mcp#f848528d7ba5069480522b7b3d5b7e02d9881b0f"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "44.0.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.9.0"
+  },
+  "allowScripts": {
+    "github:wasomma/fpv-sim-mcp#f848528d7ba5069480522b7b3d5b7e02d9881b0f": true
+  }
+}

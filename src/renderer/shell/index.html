@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>FPV Sim</title>
+<style>
+  :root {
+    --bg: #10140f;
+    --panel: #171d15;
+    --edge: #2a3325;
+    --ink: #cdd6c4;
+    --dim: #7d8a72;
+    --accent: #a7d129;
+    --accent-dim: #5d7a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 "Cascadia Mono", Consolas, monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 32px;
+    gap: 20px;
+  }
+  header h1 { font-size: 20px; letter-spacing: 2px; color: var(--accent); }
+  header p { color: var(--dim); margin-top: 4px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: left;
+    color: var(--ink);
+    cursor: pointer;
+    font: inherit;
+  }
+  .card:hover { border-color: var(--accent-dim); }
+  .card b { display: block; color: var(--accent); letter-spacing: 1px; margin-bottom: 6px; }
+  .card span { color: var(--dim); font-size: 12.5px; }
+  .launch {
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: 6px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .launch label { color: var(--dim); font-size: 12.5px; }
+  .launch input[type="number"], .launch select {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font: inherit;
+    width: 130px;
+  }
+  .launch select { width: auto; }
+  .launch button {
+    background: var(--accent-dim);
+    color: #eaf5d0;
+    border: none;
+    border-radius: 4px;
+    padding: 7px 16px;
+    font: inherit;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .launch button:hover { background: var(--accent); color: #1c2410; }
+  footer { margin-top: auto; color: var(--dim); font-size: 11.5px; line-height: 1.7; }
+  footer code { color: var(--ink); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>FPV SIM</h1>
+    <p>FPV sUAS vs counter-UAS engagement — sim, evidence, interoperability. Notional data only.</p>
+  </header>
+
+  <div class="cards">
+    <button class="card" id="open-sim">
+      <b>SIMULATION</b>
+      <span>The interactive engagement — orbit and tactical modes, featured scenarios, event log.</span>
+    </button>
+    <button class="card" id="open-dashboard">
+      <b>DASHBOARD</b>
+      <span>Monte Carlo results: baseline, paired experiments, dose-response, ad-hoc sweeps.</span>
+    </button>
+    <button class="card" id="open-viewer3d">
+      <b>3D VIEWER</b>
+      <span>WebGPU terrain, canopy, flight paths and the detectability field.</span>
+    </button>
+  </div>
+
+  <div class="launch">
+    <label for="seed">SEED</label>
+    <input id="seed" type="number" min="0" max="4294967295" step="1" value="20260719">
+    <label for="mode">MODE</label>
+    <select id="mode">
+      <option value="orbit" selected>orbit</option>
+      <option value="tactical">tactical</option>
+    </select>
+    <label><input id="play" type="checkbox" checked> autoplay</label>
+    <button id="launch">LAUNCH</button>
+  </div>
+
+  <footer id="footer">loading version info…</footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  $("open-sim").addEventListener("click", () => window.fpvApp.openWindow("sim"));
+  $("open-dashboard").addEventListener("click", () => window.fpvApp.openWindow("dashboard"));
+  $("open-viewer3d").addEventListener("click", () => window.fpvApp.openWindow("viewer3d"));
+  $("launch").addEventListener("click", () => {
+    const seed = Number($("seed").value);
+    window.fpvApp.openWindow("sim", {
+      seed: Number.isFinite(seed) ? seed : undefined,
+      mode: $("mode").value,
+      play: $("play").checked,
+    });
+  });
+  window.fpvApp.info().then((i) => {
+    const pin = i.pins && i.pins.fpv_sim_commit ? i.pins.fpv_sim_commit.slice(0, 7) : "unvendored";
+    $("footer").innerHTML =
+      "app <code>" + i.appVersion + "</code> · engine fpv-sim-mcp <code>" + i.engineVersion + "</code>" +
+      " · ui pin <code>" + pin + "</code> · electron <code>" + i.electron + "</code>" +
+      " · node <code>" + i.node + "</code> · chrome <code>" + i.chrome + "</code>";
+  }).catch(() => { $("footer").textContent = "version info unavailable"; });
+</script>
+</body>
+</html>

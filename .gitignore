@@ -1,0 +1,9 @@
+# build outputs
+node_modules/
+dist/
+build/
+out/
+
+# local noise
+*.log
+Thumbs.db

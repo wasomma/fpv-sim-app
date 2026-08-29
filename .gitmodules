@@ -1,0 +1,3 @@
+[submodule "upstream/fpv-sim"]
+	path = upstream/fpv-sim
+	url = https://github.com/wasomma/fpv-sim.git
