@@ -19,7 +19,8 @@
     "build": "tsc",
     "start": "electron .",
     "self-check": "electron . --self-check",
-    "test": "tsc && node --test dist/test/*.test.js",
+    "check-pins": "node scripts/check-pins.mjs",
+    "test": "tsc && node --test \"dist/test/**/*.test.js\"",
     "dist": "electron-builder --publish never"
   },
   "dependencies": {

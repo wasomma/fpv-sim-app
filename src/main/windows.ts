@@ -79,6 +79,28 @@ export function openUiWindow(
   return openAppUrl(`app://ui/${file}${query}`);
 }
 
+const APP_PANELS = new Set(["studies"]);
+
+/** Open one of the app's own panel pages (preload + contextBridge). */
+export function openAppPanel(name: string): BrowserWindow | null {
+  if (!APP_PANELS.has(name)) return null;
+  const win = new BrowserWindow({
+    width: 1100,
+    height: 780,
+    autoHideMenuBar: true,
+    backgroundColor: "#10140f",
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: preloadPath(),
+    },
+  });
+  applyNavPolicy(win);
+  void win.loadURL(`app://app/${name}/index.html`);
+  return win;
+}
+
 export function createShellWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 860,

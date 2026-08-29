@@ -10,9 +10,10 @@
  */
 
 import { BrowserWindow, app } from "electron";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { resultsDir } from "./paths.js";
+import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
 
 function log(line: string): void {
@@ -104,6 +105,24 @@ export async function runSelfCheck(): Promise<number> {
     } finally {
       win.destroy();
     }
+  });
+
+  await step("studies runner spawns app-as-node children", async () => {
+    const before = new Set(readdirSync(resultsDir()));
+    const started = startStudy({ kind: "adhoc", label: "self check", start: 1, count: 8, mode: "orbit" });
+    if (!started.ok) throw new Error(started.error);
+    await poll(async () => studyStatus().running, (r) => r === false, 60000, 400);
+    const written = readdirSync(resultsDir()).find(
+      (f) => f.startsWith("adhoc-self-check-") && !before.has(f),
+    );
+    if (written === undefined) throw new Error("no dataset written by the ad-hoc child");
+    // Clean the probe artifact back out of the user's results store.
+    const manifestPath = path.join(resultsDir(), "index.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { datasets: { file: string }[] };
+    manifest.datasets = manifest.datasets.filter((d) => d.file !== written);
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+    rmSync(path.join(resultsDir(), written));
+    return `wrote and cleaned ${written}`;
   });
 
   await step("viewer3d loads (WebGPU reported, not required)", async () => {

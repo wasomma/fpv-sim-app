@@ -42,3 +42,20 @@ export function preloadPath(): string {
     ? path.join(process.resourcesPath, "preload", "index.cjs")
     : path.join(appRoot, "src", "preload", "index.cjs");
 }
+
+/**
+ * Root of the fpv-sim-mcp package (engine + fixtures). Child runners get
+ * it via FPV_SIM_MCP; sweep-utils appends dist/src/engine/index.js.
+ * Packaged builds ship a plain-file copy in extraResources.
+ */
+export function engineRoot(): string {
+  if (app.isPackaged) return path.join(process.resourcesPath, "engine");
+  return path.join(appRoot, "node_modules", "fpv-sim-mcp");
+}
+
+/** App-owned child runner scripts (.mjs, not compiled by tsc). */
+export function runnersDir(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, "runners")
+    : path.join(appRoot, "src", "main", "studies");
+}

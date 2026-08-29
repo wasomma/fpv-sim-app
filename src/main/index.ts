@@ -9,12 +9,13 @@
 
 import { BrowserWindow, app, ipcMain } from "electron";
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
+import path from "node:path";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
-import { pinsFile } from "./paths.js";
+import { engineRoot, pinsFile } from "./paths.js";
 import { seedResultsIfEmpty } from "./results.js";
 import { isSelfCheck, selfCheckAndExit } from "./self-check.js";
-import { createShellWindow, openUiWindow } from "./windows.js";
+import { cancelStudy, startStudy, studyStatus, type StudyStartOpts } from "./studies/study-runner.js";
+import { createShellWindow, openAppPanel, openUiWindow } from "./windows.js";
 
 registerAppScheme();
 
@@ -46,6 +47,10 @@ if (!gotLock) {
       return win !== null;
     });
 
+    ipcMain.handle("open-app-panel", (_event, name: unknown) => {
+      return openAppPanel(typeof name === "string" ? name : "") !== null;
+    });
+
     ipcMain.handle("app-info", () => {
       let pins: unknown = null;
       try {
@@ -55,8 +60,11 @@ if (!gotLock) {
       }
       let engineVersion = "unknown";
       try {
-        const require = createRequire(import.meta.url);
-        engineVersion = (require("fpv-sim-mcp/package.json") as { version: string }).version;
+        // The dependency's exports map blocks specifier access to its
+        // package.json — read it by filesystem path instead.
+        engineVersion = (
+          JSON.parse(readFileSync(path.join(engineRoot(), "package.json"), "utf8")) as { version: string }
+        ).version;
       } catch {
         /* dependency not installed */
       }
@@ -69,6 +77,10 @@ if (!gotLock) {
         pins,
       };
     });
+
+    ipcMain.handle("study-start", (_event, opts: unknown) => startStudy(opts as StudyStartOpts));
+    ipcMain.handle("study-cancel", () => cancelStudy());
+    ipcMain.handle("study-status", () => studyStatus());
 
     if (isSelfCheck()) {
       await selfCheckAndExit();

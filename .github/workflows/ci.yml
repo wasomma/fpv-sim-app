@@ -1,0 +1,43 @@
+# Build + verify on every change, plus a weekly cron that doubles as the
+# "upstreams moved" alarm (the parity smoke runs against the *pinned*
+# dependency, so a red weekly run means this repo's environment broke —
+# upstream drift itself is caught by the pin-pair check when pins bump).
+#
+# Gates, in order:
+#   1. npm ci            — git-dep engine builds via its prepare script
+#   2. vendor + build    — UI snapshot from the submodule; tsc
+#   3. check-pins        — fixtures' source commit .. submodule pin leaves
+#                          index.html unchanged (the parity-pair invariant)
+#   4. npm test          — engine-parity smoke (11 golden runs, both modes,
+#                          event strings byte-equal) + ad-hoc runner
+#                          equivalence vs run-sweep.mjs
+#   5. electron --self-check — app-level smoke: app:// serving, engine
+#                          under a deep link, dashboard data, viewer3d
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run vendor
+      - run: npm run build
+      - run: npm run check-pins
+      - run: npm test
+      - run: npx electron . --self-check
