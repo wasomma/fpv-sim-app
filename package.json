@@ -20,6 +20,8 @@
     "start": "electron .",
     "self-check": "electron . --self-check",
     "check-pins": "node scripts/check-pins.mjs",
+    "dis-listen": "node dist/src/main/gateway/tools/dis-listen.js",
+    "terrain-export": "node dist/src/main/gateway/terrain/export-cli.js",
     "test": "tsc && node --test \"dist/test/**/*.test.js\"",
     "dist": "electron-builder --publish never"
   },
