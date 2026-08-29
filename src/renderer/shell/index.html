@@ -27,7 +27,7 @@
   }
   header h1 { font-size: 20px; letter-spacing: 2px; color: var(--accent); }
   header p { color: var(--dim); margin-top: 4px; }
-  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .card {
     background: var(--panel);
     border: 1px solid var(--edge);
@@ -100,6 +100,10 @@
       <b>STUDIES</b>
       <span>Run the canonical Monte Carlo study or ad-hoc sweeps against the bundled engine.</span>
     </button>
+    <button class="card" id="open-mcp">
+      <b>MCP ENDPOINT</b>
+      <span>Connect Claude Code and other MCP clients to the batch and live tools.</span>
+    </button>
   </div>
 
   <div class="launch">
@@ -122,6 +126,7 @@
   $("open-dashboard").addEventListener("click", () => window.fpvApp.openWindow("dashboard"));
   $("open-viewer3d").addEventListener("click", () => window.fpvApp.openWindow("viewer3d"));
   $("open-studies").addEventListener("click", () => window.fpvApp.openPanel("studies"));
+  $("open-mcp").addEventListener("click", () => window.fpvApp.openPanel("mcp"));
   $("launch").addEventListener("click", () => {
     const seed = Number($("seed").value);
     window.fpvApp.openWindow("sim", {

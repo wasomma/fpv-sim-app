@@ -43,6 +43,18 @@ const sourceCommit = [...sources][0];
 
 const subHead = execFileSync("git", ["-C", sub, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 
+/* CI checkouts clone the submodule shallow; fetch the fixtures' source
+   commit into it if the local history doesn't reach that far. */
+try {
+  execFileSync("git", ["-C", sub, "cat-file", "-e", `${sourceCommit}^{commit}`], { stdio: "ignore" });
+} catch {
+  try {
+    execFileSync("git", ["-C", sub, "fetch", "--quiet", "origin", sourceCommit], { stdio: "ignore" });
+  } catch {
+    execFileSync("git", ["-C", sub, "fetch", "--quiet", "--unshallow", "origin"], { stdio: "ignore" });
+  }
+}
+
 try {
   execFileSync("git", ["-C", sub, "merge-base", "--is-ancestor", sourceCommit, subHead]);
 } catch {

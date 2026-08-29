@@ -23,4 +23,11 @@ contextBridge.exposeInMainWorld("fpvApp", {
     onOutput: (cb) => subscribe("study-output", cb),
     onDone: (cb) => subscribe("study-done", cb),
   },
+  mcp: {
+    status: () => ipcRenderer.invoke("mcp-status"),
+    health: () => ipcRenderer.invoke("mcp-health"),
+    snippets: () => ipcRenderer.invoke("mcp-snippets"),
+    setPort: (port) => ipcRenderer.invoke("mcp-set-port", port),
+    regenerateToken: () => ipcRenderer.invoke("mcp-regenerate-token"),
+  },
 });

@@ -12,7 +12,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
 import { engineRoot, pinsFile } from "./paths.js";
+import { mcpHostStatus, restartMcpHost, startMcpHost } from "./mcp/host.js";
 import { seedResultsIfEmpty } from "./results.js";
+import { getSettings, regenerateMcpToken, setMcpPort } from "./settings.js";
 import { isSelfCheck, selfCheckAndExit } from "./self-check.js";
 import { cancelStudy, startStudy, studyStatus, type StudyStartOpts } from "./studies/study-runner.js";
 import { createShellWindow, openAppPanel, openUiWindow } from "./windows.js";
@@ -81,6 +83,46 @@ if (!gotLock) {
     ipcMain.handle("study-start", (_event, opts: unknown) => startStudy(opts as StudyStartOpts));
     ipcMain.handle("study-cancel", () => cancelStudy());
     ipcMain.handle("study-status", () => studyStatus());
+
+    ipcMain.handle("mcp-status", () => mcpHostStatus());
+    ipcMain.handle("mcp-health", async () => {
+      try {
+        const r = await fetch(`http://127.0.0.1:${mcpHostStatus().port}/healthz`);
+        return r.ok;
+      } catch {
+        return false;
+      }
+    });
+    ipcMain.handle("mcp-snippets", () => {
+      const { port, token } = getSettings().mcp;
+      const url = `http://127.0.0.1:${port}/mcp`;
+      return {
+        cli: `claude mcp add --transport http fpv-sim-app ${url} --header "Authorization: Bearer ${token}"`,
+        json: JSON.stringify(
+          {
+            mcpServers: {
+              "fpv-sim-app": { type: "http", url, headers: { Authorization: `Bearer ${token}` } },
+            },
+          },
+          null,
+          2,
+        ),
+      };
+    });
+    ipcMain.handle("mcp-set-port", async (_event, port: unknown) => {
+      if (typeof port !== "number" || !Number.isInteger(port) || port < 1024 || port > 65535) {
+        return { ok: false, error: "port must be an integer in 1024..65535" };
+      }
+      setMcpPort(port);
+      return restartMcpHost();
+    });
+    ipcMain.handle("mcp-regenerate-token", () => {
+      regenerateMcpToken();
+      return { ok: true };
+    });
+
+    const mcpStart = await startMcpHost();
+    if (!mcpStart.ok) console.error(`mcp host failed to start: ${mcpStart.error}`);
 
     if (isSelfCheck()) {
       await selfCheckAndExit();

@@ -12,7 +12,9 @@
 import { BrowserWindow, app } from "electron";
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { mcpHostStatus } from "./mcp/host.js";
 import { resultsDir } from "./paths.js";
+import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
 
@@ -123,6 +125,64 @@ export async function runSelfCheck(): Promise<number> {
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
     rmSync(path.join(resultsDir(), written));
     return `wrote and cleaned ${written}`;
+  });
+
+  await step("mcp endpoint serves the batch tools", async () => {
+    const status = mcpHostStatus();
+    if (!status.running) throw new Error(`host not running: ${status.lastError ?? "unknown"}`);
+    const health = await fetch(`http://127.0.0.1:${status.port}/healthz`);
+    if (!health.ok) throw new Error(`healthz returned ${health.status}`);
+    const unauthorized = await fetch(status.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 0, method: "ping" }),
+    });
+    if (unauthorized.status !== 401) throw new Error(`missing token should 401, got ${unauthorized.status}`);
+    const init = await fetch(status.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Authorization: `Bearer ${getSettings().mcp.token}`,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-03-26",
+          capabilities: {},
+          clientInfo: { name: "self-check", version: "0" },
+        },
+      }),
+    });
+    if (!init.ok) throw new Error(`initialize returned ${init.status}`);
+    const text = await init.text();
+    if (!text.includes("fpv-sim-mcp")) throw new Error(`initialize response missing server info: ${text.slice(0, 200)}`);
+    // Full tool round-trip. Stateless transport: every POST gets a fresh
+    // server, so a bare tools/call is handled on its own (batching was
+    // removed from the MCP protocol). The SSE body escapes inner quotes,
+    // so match the bare token.
+    const call = await fetch(status.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Authorization: `Bearer ${getSettings().mcp.token}`,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: { name: "run_engagement", arguments: { seed: 20260719 } },
+      }),
+    });
+    if (!call.ok) throw new Error(`tools/call returned ${call.status}`);
+    const callText = await call.text();
+    if (!callText.includes("BLUFOR")) {
+      throw new Error(`run_engagement(20260719) did not report the golden outcome: ${callText.slice(0, 800)}`);
+    }
+    return `healthz ok, 401 without token, initialize ok, run_engagement(20260719) golden on port ${status.port}`;
   });
 
   await step("viewer3d loads (WebGPU reported, not required)", async () => {
