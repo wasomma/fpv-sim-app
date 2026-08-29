@@ -1,0 +1,46 @@
+# Packaging. Everything read at runtime by child processes or the app://
+# protocol handler ships as plain files under resources/ (extraResources)
+# — never inside the asar archive; app code itself stays in asar.
+appId: com.wasomma.fpv-sim-app
+productName: FPV Sim
+artifactName: fpv-sim-app-setup-${version}.exe
+
+directories:
+  output: out
+  buildResources: build/installer
+
+files:
+  - dist/**/*
+  - package.json
+  - "!dist/test/**"
+
+extraResources:
+  - from: build/resources/ui
+    to: ui
+  - from: build/resources/upstream-pins.json
+    to: upstream-pins.json
+  - from: build/resources/engine
+    to: engine
+  - from: src/renderer
+    to: renderer
+  - from: src/preload
+    to: preload
+  - from: src/main/studies
+    to: runners
+    filter:
+      - "*.mjs"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+
+# No auto-update in v1; no code signing by default (CSC_LINK/
+# CSC_KEY_PASSWORD env in the release workflow when a cert exists).

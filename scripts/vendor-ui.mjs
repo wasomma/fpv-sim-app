@@ -61,5 +61,20 @@ const pins = {
 };
 writeFileSync(path.join(out, "upstream-pins.json"), JSON.stringify(pins, null, 2) + "\n");
 
+/* Plain-file engine copy for packaged builds: child node processes and
+   the parity smoke need it outside the asar archive. */
+const mcpSrc = path.join(root, "node_modules", "fpv-sim-mcp");
+const engineOut = path.join(out, "engine");
+rmSync(engineOut, { recursive: true, force: true });
+if (existsSync(path.join(mcpSrc, "dist"))) {
+  mkdirSync(engineOut, { recursive: true });
+  cpSync(path.join(mcpSrc, "dist"), path.join(engineOut, "dist"), { recursive: true });
+  cpSync(path.join(mcpSrc, "package.json"), path.join(engineOut, "package.json"));
+  cpSync(path.join(mcpSrc, "test", "fixtures"), path.join(engineOut, "test", "fixtures"), { recursive: true });
+} else {
+  console.error("warning: node_modules/fpv-sim-mcp/dist missing — run npm install first");
+}
+
 console.log(`vendored ui from fpv-sim ${fpvSimCommit.slice(0, 7)} -> ${uiOut}`);
+console.log(`engine copy: fpv-sim-mcp ${mcpVersion ?? "?"} -> ${engineOut}`);
 console.log(`pins: ${JSON.stringify(pins)}`);
