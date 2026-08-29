@@ -32,6 +32,11 @@ installed, offline tool needs:
 - **Terrain export** — any seed's heightfield as a georeferenced DEM
   (Esri ASCII Grid + UTM .prj + canopy raster) for VBS Geo import, so
   the remote terrain correlates with the engagement.
+- **Shareable lab brief** —
+  [docs/fpv-sim-vbs4-interop-brief.pdf](docs/fpv-sim-vbs4-interop-brief.pdf),
+  a 3-page summary (architecture, wire contract, lab procedure) for
+  colleagues ahead of a VBS4 session; regenerate with
+  `python docs/brief/generate_brief.py` (requires reportlab).
 
 All simulation data is notional and unclassified.
 
