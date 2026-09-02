@@ -25,7 +25,10 @@ installed, offline tool needs:
 - **Native DIS gateway** — IEEE 1278.1 over UDP (Entity State, EM
   Emission, Detonation, optional Fire, Start/Resume, Stop/Freeze),
   wall-apparent kinematics at accelerated speeds, receive-as-overlay,
-  georeferenced by a configurable anchor. VBS4 connects through its
+  georeferenced by a configurable anchor. Stage it from the Live Ops
+  panel's JSON editor — **STAGE** validates the configuration and names
+  the exact path of any bad value — or over MCP with
+  `live_configure_gateway`. VBS4 connects through its
   standard VBS Gateway; HLA federations via bridging (Pitch DIS
   Adapter). See [docs/INTEROP.md](docs/INTEROP.md) and
   [docs/VBS4_CHECKLIST.md](docs/VBS4_CHECKLIST.md); new to the
@@ -51,6 +54,7 @@ Grab `fpv-sim-app-setup-<version>.exe` from Releases and run it
 every window and panel, running Monte Carlo studies, reading the dashboard,
 and sending entities over DIS, with screenshots regenerated from each build.
 A single-file PDF of the same manual is attached to every release.
+Release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Development
 
