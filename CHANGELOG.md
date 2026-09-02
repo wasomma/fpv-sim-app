@@ -12,8 +12,17 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+### Added
+
+- `CHANGELOG.md`, and the README now names the Live Ops **STAGE**
+  editor alongside the `live_configure_gateway` route.
+
 ### Fixed
 
+- `--self-check` quit silently when another instance held the
+  single-instance lock, so `npm run self-check` exited 0 having run no
+  checks at all — a vacuous pass, and precisely when you would reach for
+  it locally. Headless modes now abort with a message and exit 1.
 - The development section claimed 58 tests; the suite has 60.
 
 ## [0.2.0] — 2026-09-02

@@ -42,7 +42,28 @@ registerAppScheme();
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
-  app.quit();
+  /*
+   * A second normal launch just focuses the running window (see the
+   * "second-instance" handler below), and quitting is the right answer.
+   * A headless run must not do that: app.quit() here exits 0 having done
+   * nothing, so `npm run self-check` reports success without running a
+   * single check. Fail loudly instead, the way screenshot mode already
+   * does when it finds the MCP port taken.
+   *
+   * Screenshot mode redirects userData above and so derives its own lock;
+   * it is covered here only so that a future change which stops doing that
+   * surfaces as an error rather than a vacuous pass.
+   */
+  const headlessMode = isSelfCheck() ? "SELF-CHECK" : isScreenshots() ? "SCREENSHOTS" : null;
+  if (headlessMode !== null) {
+    console.error(
+      `${headlessMode} abort: another FPV Sim instance holds the single-instance lock. ` +
+        "Close it and retry.",
+    );
+    app.exit(1);
+  } else {
+    app.quit();
+  }
 } else {
   app.on("second-instance", () => {
     const win = BrowserWindow.getAllWindows()[0];
