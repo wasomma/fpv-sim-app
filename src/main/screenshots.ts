@@ -184,8 +184,15 @@ function makeCtx(win: BrowserWindow): Ctx {
   return {
     win,
     js,
-    waitFor: (expr, timeoutMs = 15000) =>
-      poll(() => js<boolean>(`!!(${expr})`), (v) => v === true, timeoutMs, 100).then(() => undefined),
+    /* 45 s, not 15: CI runners render the heaviest dashboards (the 24,800-run
+       tactical study) far slower than a dev box with a GPU. The expression is
+       folded into the failure so a timeout says which wait gave up. */
+    waitFor: (expr, timeoutMs = 45000) =>
+      poll(() => js<boolean>(`!!(${expr})`), (v) => v === true, timeoutMs, 100)
+        .then(() => undefined)
+        .catch((e: unknown) => {
+          throw new Error(`waitFor ${expr} — ${e instanceof Error ? e.message : String(e)}`);
+        }),
     click: (sel) => js(`(() => { document.querySelector(${JSON.stringify(sel)}).click(); return true; })()`).then(() => undefined),
     setVal: (sel, value, fireEvents = true) =>
       js(

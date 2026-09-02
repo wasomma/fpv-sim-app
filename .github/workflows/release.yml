@@ -47,5 +47,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ github.ref_name }}" (Get-Item out/fpv-sim-app-setup-*.exe).FullName --clobber
-          gh release upload "${{ github.ref_name }}" docs/manual/fpv-sim-manual.pdf --clobber
+          $tag = "${{ github.ref_name }}"
+          # A tag push creates the tag, not a Release; `gh release upload` needs
+          # the Release to exist already, so create it on first run.
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title $tag --generate-notes --verify-tag
+            if ($LASTEXITCODE -ne 0) { throw "gh release create $tag failed" }
+          }
+          gh release upload $tag (Get-Item out/fpv-sim-app-setup-*.exe).FullName --clobber
+          if ($LASTEXITCODE -ne 0) { throw "installer upload failed" }
+          gh release upload $tag docs/manual/fpv-sim-manual.pdf --clobber
+          if ($LASTEXITCODE -ne 0) { throw "manual upload failed" }
