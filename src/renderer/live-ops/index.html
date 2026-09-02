@@ -36,8 +36,13 @@
   .lag { color: var(--dim); font-size: 11.5px; }
   .lag.bad { color: var(--err); }
   main { flex: 1; display: grid; grid-template-columns: minmax(430px, 46%) 1fr; gap: 10px; min-height: 0; }
-  .col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-  canvas { background: #0b0e0a; border: 1px solid var(--edge); border-radius: 6px; width: 100%; aspect-ratio: 1; }
+  .col { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; }
+  /* The map stays square and shrinks so the GATEWAY box below it always fits. */
+  canvas {
+    background: #0b0e0a; border: 1px solid var(--edge); border-radius: 6px;
+    display: block; width: auto; height: auto; max-width: 100%; max-height: calc(100vh - 350px);
+    aspect-ratio: 1; flex: 0 0 auto;
+  }
   .box { background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 8px 10px; }
   .box h2 { font-size: 11px; letter-spacing: 1px; color: var(--dim); margin-bottom: 6px; }
   table { border-collapse: collapse; width: 100%; font-size: 12px; }
@@ -47,6 +52,16 @@
   #events { flex: 1; overflow-y: auto; background: #0b0e0a; border: 1px solid var(--edge); border-radius: 6px; padding: 8px 10px; font-size: 12px; min-height: 90px; }
   #entities-box { overflow-y: auto; max-height: 300px; }
   .endcard { color: var(--accent); }
+  .row { display: flex; gap: 10px; align-items: center; }
+  #gateway { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  #gateway.ok { color: var(--accent); }
+  #gateway.bad { color: var(--err); }
+  .hint { color: var(--dim); font-size: 11px; letter-spacing: 0; }
+  textarea {
+    width: 100%; margin-top: 6px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--edge); border-radius: 4px; padding: 5px 7px;
+    font: inherit; font-size: 12px; line-height: 1.4; resize: vertical;
+  }
 </style>
 </head>
 <body>
@@ -72,9 +87,15 @@
   <main>
     <div class="col">
       <canvas id="map" width="860" height="860"></canvas>
-      <div class="box">
-        <h2>GATEWAY</h2>
-        <div id="gateway">no gateway config staged — sessions run app-local (stage one via live_configure_gateway)</div>
+      <div class="box" id="gateway-box">
+        <h2>GATEWAY <span class="hint">· DIS config for the next session</span></h2>
+        <div class="row">
+          <span id="gateway">checking…</span>
+          <button id="stage" title="Validate this JSON and stage it for the next session (kept in memory until the app closes)">STAGE</button>
+        </div>
+        <textarea id="gateway-cfg" rows="4" spellcheck="false" title="Gateway config JSON — staged in memory until the app closes">{"network":{"mode":"broadcast","port":3000},
+ "dis":{"exerciseId":1},
+ "anchor":{"lat0Deg":21.35,"lon0Deg":-157.95}}</textarea>
       </div>
     </div>
     <div class="col">
@@ -190,8 +211,47 @@
     $("start").disabled = running;
     $("pause").disabled = !running;
     $("stop").disabled = !running;
+    $("stage").disabled = running;
     $("pause").textContent = paused ? "RESUME" : "PAUSE";
   }
+
+  // GATEWAY box: while a gateway-armed session runs, the snapshot's status
+  // (state, tx counters, peers, overlay) is shown; otherwise the staging
+  // state — "configured for next session" or "no gateway config staged".
+  let gatewayLive = false;
+  function formatGateway(g) {
+    const tx = g.tx ? Object.entries(g.tx).filter(([k]) => k !== "bytes").map(([k, v]) => k + " " + v).join(", ") : "-";
+    return `${g.state}${g.detail ? " — " + g.detail : ""} · tx ${tx}` +
+      ` · peers ${(g.peers || []).length} · overlay ${g.externalTracks ?? 0}` +
+      (g.lastError ? " · ERR " + g.lastError : "");
+  }
+  function setGateway(text, cls) {
+    $("gateway").textContent = text;
+    $("gateway").className = cls || "";
+  }
+  function refreshGateway() {
+    return window.fpvApp.live.gatewayStatus().then((g) => {
+      if (g.enabled) setGateway(formatGateway(g), "");
+      else if (g.pendingConfig) setGateway("configured for next session — press START to arm it", "ok");
+      else setGateway("no gateway config staged — sessions run app-local", "");
+    }).catch(() => setGateway("gateway status unavailable", "bad"));
+  }
+  $("stage").addEventListener("click", async () => {
+    let cfg;
+    try {
+      cfg = JSON.parse($("gateway-cfg").value);
+    } catch (err) {
+      setGateway(`invalid JSON: ${err.message}`, "bad");
+      return;
+    }
+    if (cfg === null || typeof cfg !== "object" || Array.isArray(cfg)) {
+      setGateway("invalid config: must be a JSON object", "bad");
+      return;
+    }
+    const r = await window.fpvApp.live.configureGateway(cfg);
+    if (r.ok) setGateway("configured for next session — press START to arm it", "ok");
+    else setGateway(`refused: ${r.error}`, "bad");
+  });
 
   window.fpvApp.live.onSnapshot(({ status, view, overlay }) => {
     running = status.state === "running" || status.state === "paused";
@@ -199,13 +259,13 @@
     lastView = view;
     overlayTracks = overlay || [];
     const g = status.gateway;
-    $("gateway").textContent = g && g.enabled
-      ? `${g.state}${g.detail ? " — " + g.detail : ""} · tx ${g.tx ? Object.entries(g.tx).filter(([k]) => k !== "bytes").map(([k, v]) => k + " " + v).join(", ") : "-"}` +
-        ` · peers ${(g.peers || []).length} · overlay ${g.externalTracks ?? 0}` +
-        (g.lastError ? " · ERR " + g.lastError : "")
-      : "gateway inactive for this session";
+    gatewayLive = !!(g && g.enabled);
+    setGateway(gatewayLive ? formatGateway(g) : "gateway inactive for this session", "");
     $("clock").textContent = fmtT(view.t);
     $("phase").textContent = `${status.mode} · ${view.phase}${paused ? " · PAUSED" : ""}`;
+    if (typeof status.speed === "number" && [...$("speed").options].some((o) => Number(o.value) === status.speed)) {
+      $("speed").value = String(status.speed);
+    }
     const lag = status.lagMs ?? 0;
     $("lag").textContent = `lag ${lag} ms`;
     $("lag").className = lag > 500 ? "lag bad" : "lag";
@@ -218,6 +278,7 @@
       : reason;
     appendEvents([{ t: lastView?.t ?? 0, side: "SYS", text: `ENDEX — ${summary}` }]);
     $("phase").innerHTML = `<span class="endcard">ENDEX — ${summary}</span>`;
+    if (!gatewayLive) refreshGateway();
   });
 
   $("start").addEventListener("click", async () => {
@@ -239,6 +300,7 @@
     running = s.state === "running" || s.state === "paused";
     paused = s.state === "paused";
     setButtons(); draw();
+    if (!running) refreshGateway();
   });
 </script>
 </body>

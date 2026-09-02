@@ -4,6 +4,10 @@ dist/
 build/
 out/
 
+# manual build intermediates (PDF is attached to releases, not committed)
+docs/manual/.build/
+docs/manual/*.pdf
+
 # local noise
 *.log
 Thumbs.db

@@ -16,6 +16,8 @@ import { mcpHostStatus, restartMcpHost, setServerExtender, startMcpHost } from "
 import { registerLiveTools } from "./mcp/live-tools.js";
 import { seedResultsIfEmpty } from "./results.js";
 import {
+  liveConfigureGateway,
+  liveGatewayStatus,
   livePause,
   liveResume,
   liveSetSpeed,
@@ -26,9 +28,15 @@ import {
   type LiveStartOpts,
 } from "./sessions/session-manager.js";
 import { getSettings, regenerateMcpToken, setMcpPort } from "./settings.js";
+import { isScreenshots, prepareScreenshotsBoot, screenshotsAndExit } from "./screenshots.js";
 import { isSelfCheck, selfCheckAndExit } from "./self-check.js";
 import { cancelStudy, startStudy, studyStatus, type StudyStartOpts } from "./studies/study-runner.js";
 import { createShellWindow, openAppPanel, openUiWindow } from "./windows.js";
+
+// Screenshot mode redirects userData to a scratch dir; it must happen before
+// the single-instance lock (derived from userData) and before anything reads
+// settings or the results store.
+if (isScreenshots()) prepareScreenshotsBoot();
 
 registerAppScheme();
 
@@ -141,6 +149,8 @@ if (!gotLock) {
     ipcMain.handle("live-snapshot", (_event, eventsAfter: unknown) =>
       liveSnapshot(typeof eventsAfter === "number" ? eventsAfter : 0),
     );
+    ipcMain.handle("live-configure-gateway", (_event, cfg: unknown) => liveConfigureGateway(cfg));
+    ipcMain.handle("live-gateway-status", () => liveGatewayStatus());
 
     setServerExtender((server) => registerLiveTools(server));
     const mcpStart = await startMcpHost();
@@ -150,12 +160,16 @@ if (!gotLock) {
       await selfCheckAndExit();
       return;
     }
+    if (isScreenshots()) {
+      await screenshotsAndExit();
+      return;
+    }
     createShellWindow();
   });
 
   app.on("window-all-closed", () => {
-    // Self-check opens and destroys hidden windows between steps; quitting
-    // here would end the run after the first one.
-    if (!isSelfCheck()) app.quit();
+    // Self-check and screenshot mode open and destroy windows between steps;
+    // quitting here would end the run after the first one.
+    if (!isSelfCheck() && !isScreenshots()) app.quit();
   });
 }

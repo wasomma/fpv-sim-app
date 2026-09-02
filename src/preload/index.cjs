@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld("fpvApp", {
     setSpeed: (speed) => ipcRenderer.invoke("live-set-speed", speed),
     status: () => ipcRenderer.invoke("live-status"),
     snapshot: (eventsAfter) => ipcRenderer.invoke("live-snapshot", eventsAfter),
+    configureGateway: (cfg) => ipcRenderer.invoke("live-configure-gateway", cfg),
+    gatewayStatus: () => ipcRenderer.invoke("live-gateway-status"),
     onSnapshot: (cb) => subscribe("live-snapshot", cb),
     onEnded: (cb) => subscribe("live-ended", cb),
   },

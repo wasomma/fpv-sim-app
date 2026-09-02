@@ -82,11 +82,15 @@ export function openUiWindow(
 const APP_PANELS = new Set(["studies", "mcp", "live-ops"]);
 
 /** Open one of the app's own panel pages (preload + contextBridge). */
-export function openAppPanel(name: string): BrowserWindow | null {
+export function openAppPanel(
+  name: string,
+  opts: { show?: boolean; backgroundThrottling?: boolean } = {},
+): BrowserWindow | null {
   if (!APP_PANELS.has(name)) return null;
   const win = new BrowserWindow({
     width: 1100,
     height: 780,
+    show: opts.show ?? true,
     autoHideMenuBar: true,
     backgroundColor: "#10140f",
     webPreferences: {
@@ -94,6 +98,7 @@ export function openAppPanel(name: string): BrowserWindow | null {
       contextIsolation: true,
       nodeIntegration: false,
       preload: preloadPath(),
+      backgroundThrottling: opts.backgroundThrottling ?? true,
     },
   });
   applyNavPolicy(win);
@@ -101,10 +106,11 @@ export function openAppPanel(name: string): BrowserWindow | null {
   return win;
 }
 
-export function createShellWindow(): BrowserWindow {
+export function createShellWindow(opts: { show?: boolean; backgroundThrottling?: boolean } = {}): BrowserWindow {
   const win = new BrowserWindow({
     width: 860,
     height: 640,
+    show: opts.show ?? true,
     autoHideMenuBar: true,
     backgroundColor: "#10140f",
     webPreferences: {
@@ -112,6 +118,7 @@ export function createShellWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       preload: preloadPath(),
+      backgroundThrottling: opts.backgroundThrottling ?? true,
     },
   });
   applyNavPolicy(win);

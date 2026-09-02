@@ -1,0 +1,81 @@
+# B. Files and settings
+
+## B.1 Program folder
+
+| Item | Default location |
+|---|---|
+| The application | `%LOCALAPPDATA%\Programs\FPV Sim\` — `FPV Sim.exe`, the Electron runtime, and a `resources\` folder holding the bundled engine, the three UI pages, the panels and the study runners |
+| Uninstaller | `Uninstall FPV Sim.exe` in the same folder |
+| Shortcuts | Start menu and desktop, both **FPV Sim** |
+
+Nothing in the program folder is meant to be edited. Upgrades replace it in full.
+
+## B.2 Data folder — `%APPDATA%\fpv-sim-app`
+
+Paste `%APPDATA%\fpv-sim-app` into the File Explorer address bar to open it.
+
+![The data folder](images/manual/appdata-folder.png)
+*Figure B-1. Where your data lives: the results store and the settings file.*
+
+| Path | Content |
+|---|---|
+| `results\index.json` | The **manifest** — the list of datasets the Dashboard shows, newest first. |
+| `results\monte-carlo.json` | The bundled orbit study (22,800 engagements). Replaced by **RUN FULL** in orbit mode. |
+| `results\monte-carlo-tactical.json` | The bundled tactical study (24,800 engagements). Replaced by **RUN FULL** in tactical mode. |
+| `results\adhoc-df-bearing-error-doubled-8-deg-2026-08-24.json` | The bundled example sweep. |
+| `results\adhoc-<slug>-<YYYY-MM-DD>.json` | Your ad-hoc sweeps. |
+| `results\monte-carlo-quick.json`, `results\monte-carlo-tactical-quick.json` | Written by **RUN QUICK**; **not** listed in the manifest. |
+| `settings.json` | `{ "mcp": { "port": 8765, "token": "…" } }` — the MCP endpoint's port and bearer token. Created on first launch. |
+| Other folders (`Cache`, `GPUCache`, …) | The embedded browser's own working files. Safe to ignore. |
+
+### The manifest
+
+`index.json` is plain JSON. Each dataset has one entry (abridged):
+
+```json
+{
+  "datasets": [
+    {
+      "file": "adhoc-df-bearing-error-doubled-2026-09-02.json",
+      "kind": "adhoc",
+      "mode": "orbit",
+      "label": "DF bearing error doubled",
+      "generated": "2026-09-02T01:49:12.000Z",
+      "total_runs": 1000,
+      "seed_range": { "start": 1, "count": 1000 },
+      "overrides": { "CUAS": { "BRG_SIGMA_DEG": 8 } }
+    }
+  ]
+}
+```
+
+The Dashboard shows exactly what this list contains: a dataset file that is not listed here is invisible, and an entry whose file is missing fails to load.
+
+### Common operations
+
+| Task | How |
+|---|---|
+| Retire a dataset | Close the Dashboard. Delete the dataset file and its `{ … }` entry in `index.json` (keep the JSON valid — mind the commas). Reopen the Dashboard. |
+| Restore the factory datasets | Close FPV Sim. Delete the whole `results` folder. Start FPV Sim: the folder is recreated with the three bundled datasets. Your own sweeps are gone unless you copied them out first. |
+| Move results to another PC | Copy the dataset file and paste its manifest entry into the other PC's `index.json`. |
+| Back up everything | Copy `%APPDATA%\fpv-sim-app`. |
+
+## B.3 Settings
+
+The only persistent settings are the MCP endpoint's port and token, both managed from the MCP Endpoint panel (Chapter 8). Editing `settings.json` by hand while FPV Sim is running has no effect until the next launch; a token shorter than 16 characters or a port outside 1024–65535 is replaced with a fresh default.
+
+Everything else — window positions, the last seed, the gateway configuration — is deliberately not persisted. In particular the **DIS gateway configuration lives only in memory** and must be staged again after every launch (Chapter 10).
+
+## B.4 What survives an uninstall
+
+Uninstalling removes the program folder and the shortcuts and leaves `%APPDATA%\fpv-sim-app` untouched, so a reinstall finds your datasets and your MCP token again. Delete the folder yourself for a clean removal.
+
+## B.5 Logs and diagnostics
+
+FPV Sim writes no log files. Diagnostics live in three places:
+
+- the **Studies panel log** (the last 800 lines of the current or last run, while the window is open);
+- the **Live Ops event feed** (the last 500 events of the current or last session);
+- the **Developer Tools console** of any window: press <kbd>Alt</kbd>, then **View ▸ Toggle Developer Tools** (Chapter 3.5).
+
+When reporting a problem include the launcher footer line (`app 0.2.0 · engine fpv-sim-mcp 0.3.0 · …`).

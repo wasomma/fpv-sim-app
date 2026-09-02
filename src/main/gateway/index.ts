@@ -37,6 +37,7 @@ export class DisGateway implements GatewaySlot {
   private overlayCbs = new Set<(tracks: OverlayTrack[]) => void>();
   private overlayTimer: NodeJS.Timeout | null = null;
   private lastView: TickView | null = null;
+  private sessionLabel = "";
   private rxIgnored = { exercise: 0, self: 0, malformed: 0, otherTypes: 0 };
   private selfHeard = false;
   private peers = new Map<string, { lastSeenMs: number; pduCount: number }>();
@@ -123,7 +124,8 @@ export class DisGateway implements GatewaySlot {
   onSessionStart(info: SessionInfo): void {
     if (this.publisher === null) return;
     this.state = "running";
-    this.detail = `session ${info.sessionId} seed ${info.seed} (${info.mode}) at ${info.speed}x`;
+    this.sessionLabel = `session ${info.sessionId} seed ${info.seed} (${info.mode})`;
+    this.detail = this.speedDetail(info.speed);
     this.publisher.sessionStart(info, Date.now());
   }
 
@@ -136,10 +138,15 @@ export class DisGateway implements GatewaySlot {
     }
   }
 
+  /** "<session> at Nx", plus the advisory when N exceeds publish.maxSpeedFactor. */
+  private speedDetail(speed: number): string {
+    const max = this.cfg.publish.maxSpeedFactor;
+    const warn = speed > max ? ` · speed ${speed}x exceeds publish.maxSpeedFactor ${max} — remote smoothing will degrade` : "";
+    return `${this.sessionLabel} at ${speed}x${warn}`;
+  }
+
   onSpeedChange(speed: number): void {
-    if (speed > this.cfg.publish.maxSpeedFactor) {
-      this.detail = `speed ${speed}x exceeds publish.maxSpeedFactor ${this.cfg.publish.maxSpeedFactor} — remote smoothing will degrade`;
-    }
+    if (this.state === "running") this.detail = this.speedDetail(speed);
     this.publisher?.setSpeed(speed, this.lastView, Date.now());
   }
 

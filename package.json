@@ -1,6 +1,6 @@
 {
   "name": "fpv-sim-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Windows desktop application for the fpv-sim engagement simulation: interactive sim, Monte Carlo studies, an MCP endpoint, and a DIS gateway for VBS4 interoperability. Notional data only.",
   "private": true,
   "type": "module",
@@ -19,6 +19,8 @@
     "build": "tsc",
     "start": "electron .",
     "self-check": "electron . --self-check",
+    "screenshots": "tsc && electron . --screenshots",
+    "manual:pdf": "node scripts/build-manual.mjs",
     "check-pins": "node scripts/check-pins.mjs",
     "dis-listen": "node dist/src/main/gateway/tools/dis-listen.js",
     "terrain-export": "node dist/src/main/gateway/terrain/export-cli.js",
@@ -35,6 +37,7 @@
     "@types/node": "^24.0.0",
     "electron": "44.0.0",
     "electron-builder": "^26.15.3",
+    "marked": "^18.0.11",
     "typescript": "^5.9.0"
   },
   "allowScripts": {

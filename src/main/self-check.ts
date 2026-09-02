@@ -9,42 +9,20 @@
  * pass, 1 on fail; output is plain lines for CI logs.
  */
 
-import { BrowserWindow, app } from "electron";
+import { app } from "electron";
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { runEngagement } from "fpv-sim-mcp/engine";
+import { loaded, poll } from "./headless-util.js";
 import { mcpHostStatus } from "./mcp/host.js";
 import { resultsDir } from "./paths.js";
-import { liveGatewayStatus, liveStart, liveWaitForEnd } from "./sessions/session-manager.js";
+import { liveConfigureGateway, liveGatewayStatus, liveStart, liveWaitForEnd } from "./sessions/session-manager.js";
 import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
 
 function log(line: string): void {
   console.log(`SELF-CHECK ${line}`);
-}
-
-async function loaded(win: BrowserWindow): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    win.webContents.once("did-finish-load", () => resolve());
-    win.webContents.once("did-fail-load", (_e, code, desc) => reject(new Error(`load failed: ${code} ${desc}`)));
-  });
-}
-
-async function poll<T>(
-  fn: () => Promise<T>,
-  ok: (v: T) => boolean,
-  timeoutMs: number,
-  intervalMs = 250,
-): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  let last: T;
-  for (;;) {
-    last = await fn();
-    if (ok(last)) return last;
-    if (Date.now() > deadline) throw new Error(`timeout; last value: ${JSON.stringify(last)}`);
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
 }
 
 export async function runSelfCheck(): Promise<number> {
@@ -205,18 +183,27 @@ export async function runSelfCheck(): Promise<number> {
     return `seed ${seed}: live === batch (${summary}, ${a.length} chars compared)`;
   });
 
-  await step("DIS gateway publishes over loopback UDP inside a live session", async () => {
-    const seed = 66;
-    const started = liveStart({
-      seed,
-      mode: "orbit",
-      speed: 60,
-      maxSimS: 3600,
-      gateway: {
-        network: { mode: "unicast", unicastDestinations: ["127.0.0.1"], port: 46731 },
-        anchor: { lat0Deg: 21.35, lon0Deg: -157.95, h0M: 0, rotationDeg: 0, geoidOffsetM: 0 },
-      },
+  await step("gateway config staging validates and stages for the next session", async () => {
+    const bad = liveConfigureGateway({ netwok: { port: 3000 } });
+    if (bad.ok || !(bad.error ?? "").includes("netwok") || !(bad.error ?? "").includes("unknown key")) {
+      throw new Error(`typo key not rejected: ${JSON.stringify(bad)}`);
+    }
+    const good = liveConfigureGateway({
+      network: { mode: "unicast", unicastDestinations: ["127.0.0.1"], port: 46731 },
+      anchor: { lat0Deg: 21.35, lon0Deg: -157.95 },
     });
+    if (!good.ok) throw new Error(`valid config refused: ${good.error}`);
+    const g = liveGatewayStatus();
+    if (!g.pendingConfig || g.detail !== "configured for next session") {
+      throw new Error(`staging not reflected in status: ${JSON.stringify(g)}`);
+    }
+    return `typo rejected ("${bad.error}"); unicast loopback config staged`;
+  });
+
+  await step("DIS gateway publishes over loopback UDP inside a live session (staged config)", async () => {
+    const seed = 66;
+    // No gateway passed: the session must pick up the config staged above.
+    const started = liveStart({ seed, mode: "orbit", speed: 60, maxSimS: 3600 });
     if (!started.ok) throw new Error(started.error);
     await liveWaitForEnd(120000);
     const g = liveGatewayStatus();

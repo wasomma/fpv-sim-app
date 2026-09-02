@@ -16,6 +16,9 @@
 #                          by commit), both directions over UDP loopback
 #   6. electron --self-check — app-level smoke: app:// serving, engine
 #                          under a deep link, dashboard data, viewer3d
+#   7. screenshots + manual — every committed manual figure regenerates
+#                          from the app (viewer3d excepted: no GPU on the
+#                          runner) and the PDF builds
 name: ci
 
 on:
@@ -52,3 +55,6 @@ jobs:
       - run: python -m pip install "git+https://github.com/open-dis/open-dis-python@732b6655bb47e34ccc73722eefe0f4706fd0032f"
       - run: npm run interop-check
       - run: npx electron . --self-check
+      - run: npx electron . --screenshots="${{ runner.temp }}\shots" --skip=viewer3d
+      - run: node scripts/check-screenshots.mjs "${{ runner.temp }}\shots\manifest.json" docs/manual/images/manifest.json --ignore-group=viewer3d
+      - run: npm run manual:pdf
