@@ -1,6 +1,6 @@
 {
   "name": "fpv-sim-app",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Windows desktop application for the fpv-sim engagement simulation: interactive sim, Monte Carlo studies, an MCP endpoint, and a DIS gateway for VBS4 interoperability. Notional data only.",
   "private": true,
   "type": "module",

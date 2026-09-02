@@ -12,6 +12,8 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-09-02
+
 ### Added
 
 - `CHANGELOG.md`, and the README now names the Live Ops **STAGE**
@@ -24,6 +26,12 @@ All simulation data is notional and unclassified.
   checks at all — a vacuous pass, and precisely when you would reach for
   it locally. Headless modes now abort with a message and exit 1.
 - The development section claimed 58 tests; the suite has 60.
+
+### Known limitations
+
+- Figure 2-1 (Choose Install Location) still shows **FPV Sim 0.2.0** in
+  the wizard corner; it is shot from a built installer rather than
+  regenerated, and the page it documents is otherwise unchanged.
 
 ## [0.2.0] — 2026-09-02
 
@@ -114,6 +122,7 @@ First installable build.
 - The MCP panel wrongly states that live-session tools arrive in a later
   phase. All fourteen tools work. Corrected in 0.2.0.
 
-[Unreleased]: https://github.com/wasomma/fpv-sim-app/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/wasomma/fpv-sim-app/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/wasomma/fpv-sim-app/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wasomma/fpv-sim-app/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wasomma/fpv-sim-app/releases/tag/v0.1.0
