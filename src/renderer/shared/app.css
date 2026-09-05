@@ -1,0 +1,87 @@
+/*
+ * Shared stylesheet for the app's own panels (app://app/...). The vendored
+ * upstream pages never load it. Tokens live here so a palette change is a
+ * one-file edit; each page adds only its own layout rules.
+ */
+:root {
+  --bg: #10140f;
+  --panel: #171d15;
+  --well: #0b0e0a;
+  --edge: #2a3325;
+  --ink: #cdd6c4;
+  --dim: #7d8a72;
+  --accent: #a7d129;
+  --accent-dim: #5d7a1a;
+  --err: #d16a4a;
+  --caution: #e0b64a;
+  --blu: #6ea8fe;
+  --opf: #ff8f5e;
+  --btn-ink: #eaf5d0;
+  --btn-ink-hover: #1c2410;
+  --warn-bg: #6b3a2a;
+  --mono: "Cascadia Mono", Consolas, monospace;
+  --fs-base: 13.5px;
+  --pad-y: 22px;
+  --pad-x: 26px;
+  --gap: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--fs-base)/1.5 var(--mono);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pad-y) var(--pad-x);
+  gap: var(--gap);
+}
+
+h1 { font-size: 17px; letter-spacing: 2px; color: var(--accent); }
+
+.box { background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 12px 14px; }
+.box h2 { font-size: 12px; letter-spacing: 1px; color: var(--dim); margin-bottom: 8px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+label { color: var(--dim); font-size: 12px; }
+input, select, textarea {
+  background: var(--bg); color: var(--ink); border: 1px solid var(--edge);
+  border-radius: 4px; padding: 5px 8px; font: inherit;
+}
+input[type="number"] { width: 110px; }
+textarea { width: 100%; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 1px solid var(--accent); outline-offset: 1px;
+}
+
+button {
+  background: var(--accent-dim); color: var(--btn-ink); border: none; border-radius: 4px;
+  padding: 6px 14px; font: inherit; letter-spacing: 1px; cursor: pointer;
+}
+button:hover { background: var(--accent); color: var(--btn-ink-hover); }
+button.warn { background: var(--warn-bg); }
+button.warn:hover { background: var(--err); color: #1c0f08; }
+button:disabled, button:disabled:hover { background: var(--accent-dim); color: var(--btn-ink); opacity: 0.45; cursor: default; }
+button.warn:disabled, button.warn:disabled:hover { background: var(--warn-bg); }
+button.quiet { background: transparent; border: 1px solid var(--edge); color: var(--dim); padding: 3px 10px; font-size: 11.5px; }
+button.quiet:hover { background: transparent; border-color: var(--accent-dim); color: var(--ink); }
+
+pre, .well {
+  background: var(--well); border: 1px solid var(--edge); border-radius: 6px;
+  padding: 10px 12px; font-size: 12px; white-space: pre-wrap; overflow-x: auto;
+}
+
+.note { color: var(--dim); font-size: 11.5px; }
+.ok { color: var(--accent); }
+.bad { color: var(--err); }
+.caution { color: var(--caution); }
+.field-err { color: var(--err); font-size: 11.5px; }
+.field-err:empty { display: none; }
+
+.kv { display: grid; grid-template-columns: max-content 1fr; column-gap: 12px; row-gap: 2px; font-size: 12px; }
+.kv dt { color: var(--dim); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+
+a { color: var(--accent); }

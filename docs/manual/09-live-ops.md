@@ -9,7 +9,7 @@ The Simulation window plays an engagement as fast as your screen refreshes. **Li
 
 - A live session is **the same engagement, paced**. A session run to its end produces exactly the result the batch engine produces for the same seed, mode and overrides; the application's own checks verify this on every build. Pausing, changing speed and streaming over DIS are observation concerns and cannot change the outcome.
 - **One session at a time.** Starting another while one is running is refused.
-- The session runs in its own process. Closing the Live Ops window does not stop it; reopening the window picks it up again. Closing the last FPV Sim window quits the application and stops it.
+- The session runs in its own process. Closing the Live Ops window does not stop it; reopening the window picks it up again. Closing the last FPV Sim window quits the application and stops it, after asking you to confirm while a session is active.
 
 ## 9.2 The panel
 
@@ -23,18 +23,19 @@ Click the **LIVE OPS** tile.
 | Control | Meaning |
 |---|---|
 | Clock `T+00:00` | Simulated time. |
-| Phase text | `idle`; while running `orbit · PHASE II // SEARCH AND COLLECT`, with `· PAUSED` appended when paused; at the end an `ENDEX — …` card. |
-| **seed** | 0 to 4,294,967,295. Default 20260719. |
+| Phase text | `idle`; while running `orbit · PHASE II // SEARCH AND COLLECT`, with `· PAUSED` appended when paused; at the end an `ENDEX — …` card, or `ABORTED — …` in red if the session process failed. |
+| **seed** + **RANDOM** | 0 to 4,294,967,295. Default 20260719. **RANDOM** picks one; the seed is remembered for the next time either way. |
 | **mode** | **orbit** or **tactical**. |
 | **speed** | **0.5×**, **1× (real time)**, **2×**, **4×**, **8×**, **20×**, **60×**. Can be changed while a session runs. |
 | **START** | Starts a session with the seed, mode and speed shown. |
 | **PAUSE** / **RESUME** | Holds and releases the pacing; the simulated clock stops. |
 | **STOP** | Ends the session. |
 | `lag N ms` | How far the session is behind its schedule. Turns red above 500 ms — the PC cannot keep pace at that speed; pick a lower one. |
+| Message line | Under the header, empty until something is refused or goes wrong: `refused: session live-… is running; stop it first`, `the session ended abnormally: …`. |
 
 ### Map
 
-A 4 km × 4 km plan view with a 500 m grid, the same frame as the Simulation window.
+A 4 km × 4 km plan view with a 500 m grid, the same frame as the Simulation window. The legend under the map is this table in one line.
 
 | Symbol | Meaning |
 |---|---|
@@ -50,7 +51,7 @@ Blue is BLUFOR, orange-red is OPFOR.
 
 ### GATEWAY
 
-The status line reads `no gateway config staged — sessions run app-local` until you stage a DIS configuration. The text box holds the configuration JSON and **STAGE** validates and stages it for the next session. Chapter 10 covers this box in full; you can ignore it for app-local sessions.
+The status line reads `no gateway config staged — sessions run app-local` until you stage a DIS configuration. The text box holds the configuration JSON and **STAGE** validates and stages it for the next session; the **preset…** menu in the box's title fills the text with one of the ready-to-paste configurations from Appendix C (broadcast, unicast, multicast, VBS4 through VBS Gateway), after which you set the anchor and press **STAGE**. While a gateway-armed session runs, the box turns into a status display — a short line with a small table under it: PDUs sent by type, what arrived on the socket, the peers heard, the external entities on the map — and the text box and preset menu come back when the session ends (nothing can be staged until then anyway). Chapter 10 covers this box in full; you can ignore it for app-local sessions.
 
 ### ENTITIES
 
@@ -104,6 +105,7 @@ Pressing **STOP** at any time ends the session early; the header then reports th
 |---|---|
 | The ENTITIES table | Drones appear only once launched; a battery-exhausted drone shows `DOWNED`, a drone whose GCS died shows `LINK LOST`. |
 | The fix circles | They appear when a side first solves a fix and shrink as it tightens; the Simulation window draws the full ellipse, Live Ops the CEP circle. |
-| Refusals | `refused: session live-… is running; stop it first` in the feed means a session is already active. `refused: seed must be an integer in 0..4294967295` means the seed field is out of range. |
+| Refusals | `refused: session live-… is running; stop it first` (in the message line under the header, and in the feed) means a session is already active. `refused: seed must be an integer in 0..4294967295` means the seed field is out of range. |
+| Reopening the panel | A panel opened while a session runs, or after one ended, shows the whole event feed of that session, not only what happens from that moment on. |
 | Speed and the outcome | Speed, pause and resume change pacing only. The result of a session run to its end is byte-identical to the batch result of the same seed. |
 | Sessions started elsewhere | A session started through the MCP tool `live_start_session` (Chapter 8) appears here too; the panel reflects whatever session is running, whoever started it. |

@@ -11,11 +11,11 @@ The Dashboard turns datasets into evidence: win rates with confidence intervals,
 Three ways, all equivalent: the **DASHBOARD** tile, **OPEN DASHBOARD** in the Studies panel, or the **RESULTS** link in the Simulation and 3D Viewer headers.
 
 > [!NOTE]
-> The Dashboard reads the list of datasets **once, when it opens**. After a sweep finishes, press <kbd>Ctrl</kbd>+<kbd>R</kbd> in an already-open Dashboard, or close and reopen it, to see the new entry.
+> The Dashboard reads the list of datasets **once, when it opens**. A run finished from the Studies panel reloads every open Dashboard by itself, so the new entry simply appears. Only a dataset you copied into the results folder by hand (Appendix B) needs <kbd>Ctrl</kbd>+<kbd>R</kbd>, or a close and reopen.
 
 ## 7.2 Guided exercise, part B: analyze the sweep
 
-1. Open the Dashboard (or press <kbd>Ctrl</kbd>+<kbd>R</kbd> if it was already open).
+1. Open the Dashboard (if it was already open it has reloaded by itself).
    → *The newest dataset loads by default — your sweep. The **DATASET** box reads* `AD-HOC · DF bearing error doubled · <today> · 1,000 runs`.
 
 ![The Dashboard right after the exercise](images/dashboard-overview.png)

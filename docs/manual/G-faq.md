@@ -37,7 +37,7 @@ No. The endpoint listens on `127.0.0.1` only, which cloud connectors cannot reac
 No. It speaks DIS over UDP. HLA federations are reached through a DIS/HLA bridge such as the Pitch DIS Adapter (Chapter 11).
 
 **Why does the gateway forget its configuration?**
-The staged configuration is deliberately kept in memory only, so a stray configuration cannot silently transmit on the next launch. Stage it again after every start (Chapter 10.2).
+It forgets the *arming*, not the text. A staged configuration is deliberately disarmed when FPV Sim closes, so a stray configuration cannot silently transmit on the next launch. The GATEWAY box comes back holding the text you last staged; one press of **STAGE** arms it again (Chapter 10.2).
 
 **Does a live session over DIS behave differently from the batch run?**
 No. A live session run to its end produces exactly the batch result for the same seed, mode and overrides; pacing, pausing and publishing cannot change the outcome. Received DIS entities are display-only.

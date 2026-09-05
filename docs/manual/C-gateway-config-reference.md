@@ -28,7 +28,16 @@ The gateway configuration is a JSON object staged from the Live Ops GATEWAY box 
  "anchor":{"lat0Deg":21.35,"lon0Deg":-157.95,"h0M":0,"rotationDeg":0}}
 ```
 
-Replace the anchor with your own latitude and longitude in every case.
+**VBS4 through VBS Gateway — unicast to the VBS4 PC, emitter function 5** (the worked example in Appendix H)
+
+```json
+{"network":{"mode":"unicast","unicastDestinations":["192.168.1.20"],"port":3000},
+ "dis":{"protocolVersion":6,"exerciseId":1},
+ "emissions":{"uplink":{"function":5},"video":{"function":5}},
+ "anchor":{"lat0Deg":21.35,"lon0Deg":-157.95}}
+```
+
+Replace the anchor with your own latitude and longitude in every case. The same four blocks are the **preset…** menu in the Live Ops GATEWAY box; picking one fills the text box, and **STAGE** is still yours to press.
 
 ## C.2 All keys
 
@@ -115,7 +124,7 @@ These are generic, mappable surrogates. Verify them against the SISO-REF-010 rev
 | `heartbeatS` | `10` (1–60) | Emission PDU heartbeat while a radio is keyed. |
 | `uplink.freqHz` / `bandwidthHz` / `erpDbm` | `915e6` / `5e6` / `30` | The GCS C2 uplink beam. |
 | `video.freqHz` / `bandwidthHz` / `erpDbm` | `5.8e9` / `20e6` / `27` | The drone video downlink beam. |
-| `uplink.emitterName`, `uplink.function`, `video.emitterName`, `video.function` | `0` | SISO emitter name and function enumerations. |
+| `uplink.emitterName`, `uplink.function`, `video.emitterName`, `video.function` | `0` | SISO emitter name and function enumerations. VBS Gateway lists an incoming emitter system only when its function is *Acquisition / Detection* (5), so set both `function` keys to `5` for VBS4 (Appendix H). |
 
 ### `anchor` — placing the box on the Earth
 

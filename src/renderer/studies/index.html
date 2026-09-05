@@ -2,77 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
-<title>Studies</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>Studies — FPV Sim</title>
+<link rel="stylesheet" href="../shared/app.css">
 <style>
-  :root {
-    --bg: #10140f; --panel: #171d15; --edge: #2a3325; --ink: #cdd6c4;
-    --dim: #7d8a72; --accent: #a7d129; --accent-dim: #5d7a1a; --err: #d16a4a;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 13.5px/1.5 "Cascadia Mono", Consolas, monospace;
-    min-height: 100vh; display: flex; flex-direction: column; padding: 22px 26px; gap: 14px;
-  }
-  h1 { font-size: 17px; letter-spacing: 2px; color: var(--accent); }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .box { background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 12px 14px; }
-  .box h2 { font-size: 12px; letter-spacing: 1px; color: var(--dim); margin-bottom: 8px; }
-  label { color: var(--dim); font-size: 12px; }
-  input, select, textarea {
-    background: var(--bg); color: var(--ink); border: 1px solid var(--edge);
-    border-radius: 4px; padding: 5px 8px; font: inherit;
-  }
-  input[type="number"] { width: 110px; }
-  textarea { width: 100%; height: 52px; resize: vertical; }
-  button {
-    background: var(--accent-dim); color: #eaf5d0; border: none; border-radius: 4px;
-    padding: 6px 14px; font: inherit; letter-spacing: 1px; cursor: pointer;
-  }
-  button:hover { background: var(--accent); color: #1c2410; }
-  button.warn { background: #6b3a2a; }
-  button.warn:hover { background: var(--err); color: #1c0f08; }
-  button:disabled { opacity: 0.45; cursor: default; }
+  textarea { height: 52px; }
+  .invalid { border-color: var(--err); }
+  #sw-err:not(:empty) { margin-bottom: 8px; }
   #status { color: var(--dim); }
   #status.running { color: var(--accent); }
+  #elapsed { color: var(--dim); font-size: 12px; }
   progress { width: 240px; accent-color: var(--accent); }
-  #log {
-    flex: 1; background: #0b0e0a; border: 1px solid var(--edge); border-radius: 6px;
-    padding: 10px 12px; overflow-y: auto; white-space: pre-wrap; font-size: 12px; min-height: 200px;
-  }
+  #dataset-path { flex: 1; min-width: 200px; font-size: 12px; overflow-wrap: anywhere; }
+  #log { flex: 1; overflow-y: auto; min-height: 160px; }
   #log .stderr { color: var(--dim); }
   #log .sys { color: var(--accent); }
-  .note { color: var(--dim); font-size: 11.5px; }
+  #log .err { color: var(--err); }
+  #param-table table { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+  #param-table th, #param-table td { text-align: left; padding: 2px 8px 2px 0; vertical-align: top; }
+  #param-table th { color: var(--dim); font-weight: normal; }
+  #param-table tbody tr { cursor: pointer; }
+  #param-table tbody tr:hover td { background: var(--panel); }
+  #param-table code { color: var(--accent); }
 </style>
 </head>
 <body>
-  <h1>STUDIES</h1>
+  <div class="row">
+    <h1>STUDIES</h1>
+    <button id="to-launcher" class="quiet" title="Bring the launcher window forward">◂ LAUNCHER</button>
+  </div>
 
   <div class="box">
     <h2>CANONICAL MONTE CARLO STUDY</h2>
     <div class="row">
-      <label>mode</label>
+      <label for="study-mode">mode</label>
       <select id="study-mode"><option value="orbit" selected>orbit</option><option value="tactical">tactical</option></select>
-      <button id="study-quick">RUN QUICK (~4 min)</button>
-      <button id="study-full">RUN FULL (~25 min)</button>
-      <span class="note">the exact scripts and experiments the published datasets come from</span>
+      <button id="study-quick" title="Every experiment at one tenth scale. A smoke test: the file is written but never registered, so the Dashboard does not list it.">RUN QUICK (~4 min)</button>
+      <button id="study-full" title="The exact scripts and experiments the published datasets come from. Replaces the bundled dataset of the same name (identical numbers, today's date).">RUN FULL (~25 min)</button>
+      <span class="note">QUICK is a smoke test that never appears in the Dashboard · FULL replaces the bundled dataset and asks first</span>
     </div>
   </div>
 
   <div class="box">
     <h2>AD-HOC SWEEP</h2>
     <div class="row" style="margin-bottom:8px">
-      <label>label</label><input id="sw-label" type="text" size="26" placeholder="DF bearing error doubled">
-      <label>start</label><input id="sw-start" type="number" value="1" min="0">
-      <label>count</label><input id="sw-count" type="number" value="1000" min="1">
-      <label>mode</label>
+      <label for="sw-label">label</label><input id="sw-label" type="text" size="26" placeholder="DF bearing error doubled" required>
+      <label for="sw-start">start</label><input id="sw-start" type="number" value="1" min="0">
+      <label for="sw-count">count</label><input id="sw-count" type="number" value="1000" min="1">
+      <label for="sw-mode">mode</label>
       <select id="sw-mode"><option value="orbit" selected>orbit</option><option value="tactical">tactical</option></select>
     </div>
-    <div class="row" style="margin-bottom:8px">
-      <label style="align-self:flex-start">overrides&nbsp;JSON</label>
-      <textarea id="sw-overrides" placeholder='{"CUAS":{"BRG_SIGMA_DEG":8}}'></textarea>
+    <div class="row" style="margin-bottom:8px; align-items:flex-start">
+      <label for="sw-overrides">overrides&nbsp;JSON</label>
+      <div style="flex:1; min-width:280px">
+        <textarea id="sw-overrides" placeholder='{"CUAS":{"BRG_SIGMA_DEG":8}}'></textarea>
+        <div class="note" id="overrides-status" style="min-height:1.5em"></div>
+      </div>
     </div>
+    <details id="param-ref" style="margin-bottom:8px">
+      <summary class="note" style="cursor:pointer">parameter reference — every key the engine accepts, with default, unit and range; click a row to add it</summary>
+      <div id="param-table" class="well" style="max-height:200px; overflow:auto; margin-top:6px"></div>
+    </details>
+    <div class="field-err" id="sw-err"></div>
     <div class="row">
       <button id="sw-run">RUN PARALLEL</button>
       <button id="sw-run-canonical">RUN SINGLE-THREADED</button>
@@ -82,27 +73,76 @@
 
   <div class="row">
     <span id="status">idle</span>
+    <span id="elapsed"></span>
     <progress id="progress" max="100" value="0" hidden></progress>
     <button id="cancel" class="warn" disabled>CANCEL</button>
     <button id="open-dashboard">OPEN DASHBOARD</button>
   </div>
 
-  <div id="log"></div>
+  <div class="box" id="dataset-box" hidden>
+    <h2>LAST DATASET</h2>
+    <div class="row">
+      <code id="dataset-path"></code>
+      <button id="dataset-copy" class="quiet">COPY PATH</button>
+      <button id="dataset-reveal" class="quiet">REVEAL IN EXPLORER</button>
+      <button id="results-folder" class="quiet">OPEN RESULTS FOLDER</button>
+    </div>
+    <div class="note" id="dataset-note" style="margin-top:6px"></div>
+  </div>
 
+  <div id="log" class="well"></div>
+
+<script src="../shared/app.js"></script>
 <script>
-  const $ = (id) => document.getElementById(id);
+  const $ = app.$;
   const log = $("log");
   const status = $("status");
+  const elapsedEl = $("elapsed");
   const progress = $("progress");
   const cancelBtn = $("cancel");
   const buttons = ["study-quick", "study-full", "sw-run", "sw-run-canonical"].map($);
+  const fields = { label: $("sw-label"), start: $("sw-start"), count: $("sw-count"), overrides: $("sw-overrides") };
 
-  function setRunning(running, descr) {
+  let run = null; // { kind, descr, startedAtMs, expectedS, hasProgress, total } while a run is active
+  let ticker = null;
+  let dataset = null; // last dataset shown in the LAST DATASET box
+
+  const fmtDur = (ms) => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  };
+
+  function tick() {
+    if (run === null) return;
+    elapsedEl.textContent =
+      `elapsed ${fmtDur(Date.now() - run.startedAtMs)}` + (run.expectedS ? ` · expected ~${Math.round(run.expectedS / 60)} min` : "");
+  }
+
+  // Progress: the parallel sweep and the canonical study send
+  // {type:"progress"} lines (the study's are derived per experiment), the
+  // single-threaded sweep sends nothing until it is done, so its bar is
+  // indeterminate.
+  function setRunning(r) {
+    run = r;
+    const running = r !== null;
     buttons.forEach((b) => (b.disabled = running));
     cancelBtn.disabled = !running;
-    status.textContent = running ? `running: ${descr ?? ""}` : "idle";
+    status.textContent = running ? `running: ${r.descr}` : "idle";
     status.className = running ? "running" : "";
-    if (!running) progress.hidden = true;
+    if (running) {
+      if (r.kind === "study" && r.total) {
+        progress.hidden = false; progress.max = r.total; progress.value = 0;
+      } else if (!r.hasProgress) {
+        progress.hidden = false; progress.max = 1; progress.removeAttribute("value");
+      } else {
+        progress.hidden = true; // the first progress line reveals it
+      }
+      if (ticker === null) ticker = setInterval(tick, 1000);
+      tick();
+    } else {
+      progress.hidden = true; progress.max = 100; progress.value = 0;
+      if (ticker !== null) { clearInterval(ticker); ticker = null; }
+    }
   }
 
   function append(cls, line) {
@@ -114,7 +154,7 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  window.fpvApp.studies.onOutput(({ stream, line }) => {
+  function handleOutput({ stream, line }) {
     if (stream === "stdout") {
       try {
         const msg = JSON.parse(line);
@@ -130,28 +170,84 @@
         }
       } catch { /* plain line */ }
     }
-    append(stream === "stderr" ? "stderr" : stream === "sys" ? "sys" : "", line);
-  });
-  window.fpvApp.studies.onDone(({ code, descr }) => {
-    append("sys", `${descr} finished with exit code ${code}`);
-    setRunning(false);
+    if (stream === "sys") {
+      // A nonzero exit, a spawn failure or a refusal is not a success line.
+      const bad = /finished with exit code (?!0$)|^spawn error:|^refused:/.test(line);
+      append(bad ? "err" : "sys", line);
+      return;
+    }
+    append(stream === "stderr" ? "stderr" : "", line);
+  }
+
+  function showFieldError(field, message) {
+    for (const el of Object.values(fields)) el.classList.remove("invalid");
+    const err = $("sw-err");
+    if (!field || !message) { err.textContent = ""; return; }
+    const el = fields[field];
+    if (el) { el.classList.add("invalid"); el.focus(); }
+    err.textContent = `${field}: ${message}`;
+  }
+  for (const el of Object.values(fields)) el.addEventListener("input", () => showFieldError(null));
+
+  function showDataset(d) {
+    const box = $("dataset-box");
+    if (!d || !d.datasetFile) { box.hidden = true; dataset = null; return; }
+    dataset = d;
+    const sep = d.resultsDir.includes("\\") ? "\\" : "/";
+    $("dataset-path").textContent = d.resultsDir.replace(/[\\/]+$/, "") + sep + d.datasetFile;
+    let note;
+    if (d.code !== 0 && d.code !== null && d.code !== undefined) {
+      note = `the run ended with exit code ${d.code}; check the log before trusting this file`;
+    } else if (d.registered) {
+      note = d.reloaded > 0
+        ? `registered in the manifest · ${d.reloaded} open Dashboard window${d.reloaded > 1 ? "s" : ""} reloaded to show it`
+        : "registered in the manifest · open the Dashboard to see it";
+    } else {
+      note = "not registered in the manifest — quick runs are smoke tests, so the Dashboard will not list this file";
+    }
+    $("dataset-note").textContent = note;
+    box.hidden = false;
+  }
+
+  window.fpvApp.studies.onOutput(handleOutput);
+  window.fpvApp.studies.onDone((d) => {
+    setRunning(null);
+    elapsedEl.textContent = `took ${fmtDur(d.elapsedMs)}`;
+    showDataset(d);
   });
 
   async function start(opts) {
+    showFieldError(null);
     const r = await window.fpvApp.studies.start(opts);
-    if (!r.ok) { append("sys", `refused: ${r.error}`); return; }
-    setRunning(true, describe(opts));
+    if (!r.ok) {
+      append("err", `refused: ${r.error}`);
+      if (r.field && fields[r.field]) showFieldError(r.field, r.error);
+      return;
+    }
+    showDataset(null);
+    elapsedEl.textContent = "";
+    setRunning({ kind: opts.kind, descr: r.descr, startedAtMs: r.startedAtMs, expectedS: r.expectedS, hasProgress: r.hasProgress, total: r.total });
   }
-  const describe = (o) =>
-    o.kind === "study" ? `${o.quick ? "quick" : "full"} study (${o.mode})` : `${o.kind} "${o.label}" (${o.mode})`;
 
   $("study-quick").addEventListener("click", () => start({ kind: "study", quick: true, mode: $("study-mode").value }));
-  $("study-full").addEventListener("click", () => start({ kind: "study", quick: false, mode: $("study-mode").value }));
+  $("study-full").addEventListener("click", async () => {
+    const mode = $("study-mode").value;
+    const file = mode === "tactical" ? "monte-carlo-tactical.json" : "monte-carlo.json";
+    const ok = await app.confirm({
+      message: `Run the full ${mode} study?`,
+      detail: `About 25 minutes on one core. It rewrites the bundled ${file} in your results folder — identical numbers, today's date. CANCEL leaves the bundled file untouched.`,
+      confirmLabel: "Run full study",
+    });
+    if (ok) start({ kind: "study", quick: false, mode });
+  });
+  // Empty numeric fields are sent as undefined so main refuses them by name
+  // instead of anything being assumed.
+  const num = (el) => (el.value.trim() === "" ? undefined : Number(el.value));
   const sweepOpts = (kind) => ({
     kind,
     label: $("sw-label").value,
-    start: Number($("sw-start").value),
-    count: Number($("sw-count").value),
+    start: num($("sw-start")),
+    count: num($("sw-count")),
     mode: $("sw-mode").value,
     overrides: $("sw-overrides").value.trim() || undefined,
   });
@@ -159,8 +255,125 @@
   $("sw-run-canonical").addEventListener("click", () => start(sweepOpts("sweep")));
   $("cancel").addEventListener("click", () => window.fpvApp.studies.cancel());
   $("open-dashboard").addEventListener("click", () => window.fpvApp.openWindow("dashboard"));
+  $("to-launcher").addEventListener("click", () => window.fpvApp.openPanel("shell"));
 
-  window.fpvApp.studies.status().then((s) => setRunning(s.running, s.descr));
+  app.copyButton($("dataset-copy"), () => $("dataset-path").textContent);
+  $("dataset-reveal").addEventListener("click", async () => {
+    if (dataset === null) return;
+    const r = await window.fpvApp.studies.reveal(dataset.datasetFile);
+    if (!r.ok) $("dataset-note").textContent = r.error;
+  });
+  $("results-folder").addEventListener("click", async () => {
+    const r = await window.fpvApp.studies.openResultsFolder();
+    if (!r.ok) $("dataset-note").textContent = r.error;
+  });
+
+  // Overrides are checked against the engine's parameter table as they are
+  // typed; a run with a problem is refused with the same message.
+  const ovStatus = $("overrides-status");
+  async function validateOverridesNow() {
+    const text = fields.overrides.value;
+    if (text.trim() === "") {
+      fields.overrides.classList.remove("invalid");
+      app.setLine(ovStatus, "", "note");
+      return;
+    }
+    const r = await window.fpvApp.studies.validateOverrides(text);
+    if (r.ok) {
+      fields.overrides.classList.remove("invalid");
+      app.setLine(ovStatus, `${r.keys} override${r.keys === 1 ? "" : "s"} OK` + (r.warning ? ` · ${r.warning}` : ""), "note ok");
+    } else {
+      fields.overrides.classList.add("invalid");
+      const first = r.issues[0];
+      const more = r.issues.length > 1 ? ` · +${r.issues.length - 1} more` : "";
+      app.setLine(ovStatus, `${first.path}: ${first.message}${more}`, "note bad");
+    }
+  }
+  fields.overrides.addEventListener("input", app.debounce(validateOverridesNow, 300));
+
+  // The parameter reference: the engine's own table, built on first open.
+  let paramTableBuilt = false;
+  $("param-ref").addEventListener("toggle", async () => {
+    if (!$("param-ref").open || paramTableBuilt) return;
+    paramTableBuilt = true;
+    const box = $("param-table");
+    const s = await window.fpvApp.studies.schema();
+    if (!s.payload) {
+      box.textContent = `parameter table unavailable — ${s.error || "engine schema not loaded"}`;
+      return;
+    }
+    const table = document.createElement("table");
+    const head = document.createElement("thead");
+    head.innerHTML = "<tr><th>path</th><th>default</th><th>unit</th><th>range</th><th>meaning</th></tr>";
+    table.appendChild(head);
+    const body = document.createElement("tbody");
+    for (const p of s.payload.parameters) {
+      const tr = document.createElement("tr");
+      tr.title = `add ${p.path} at its default`;
+      const range = p.boolean ? "true / false" : p.range ? `${p.range[0]}–${p.range[1]}${p.integer ? " (integer)" : ""}` : "";
+      for (const [i, text] of [p.path, String(p.default), p.unit || "", range, p.description].entries()) {
+        const td = document.createElement("td");
+        if (i === 0) { const c = document.createElement("code"); c.textContent = text; td.appendChild(c); }
+        else td.textContent = text;
+        tr.appendChild(td);
+      }
+      tr.addEventListener("click", () => insertOverride(p));
+      body.appendChild(tr);
+    }
+    table.appendChild(body);
+    box.appendChild(table);
+    const foot = document.createElement("div");
+    foot.className = "note";
+    foot.style.marginTop = "6px";
+    foot.textContent = "not overridable: " + s.payload.not_overridable.map((n) => `${n.path} — ${n.reason}`).join(" · ");
+    box.appendChild(foot);
+  });
+  function insertOverride(p) {
+    let obj = {};
+    const text = fields.overrides.value.trim();
+    if (text !== "") {
+      try { obj = JSON.parse(text); } catch { app.setLine(ovStatus, "fix the JSON syntax before adding keys", "note bad"); return; }
+      if (typeof obj !== "object" || obj === null || Array.isArray(obj)) obj = {};
+    }
+    const parts = p.path.split(".");
+    let cur = obj;
+    for (const k of parts.slice(0, -1)) {
+      if (typeof cur[k] !== "object" || cur[k] === null || Array.isArray(cur[k])) cur[k] = {};
+      cur = cur[k];
+    }
+    const leaf = parts[parts.length - 1];
+    if (!(leaf in cur)) cur[leaf] = p.default;
+    fields.overrides.value = JSON.stringify(obj);
+    fields.overrides.dispatchEvent(new Event("input", { bubbles: true })); // persists and validates
+    fields.overrides.focus();
+  }
+
+  // Inputs come back as they were left, so a sweep can be re-run or tweaked
+  // without retyping the label and overrides.
+  app.remember("studies", {
+    studyMode: { el: "study-mode" },
+    label: { el: "sw-label" },
+    start: { el: "sw-start", type: "int" },
+    count: { el: "sw-count", type: "int" },
+    mode: { el: "sw-mode" },
+    overrides: { el: "sw-overrides" },
+  }).then(() => validateOverridesNow());
+
+  // A panel opened mid-run (or after one) replays what main kept: the log,
+  // the progress so far and the dataset the run produced.
+  window.fpvApp.studies.status().then((s) => {
+    const r = s.running ? s.run : s.last;
+    if (r) for (const entry of r.log) handleOutput(entry);
+    if (s.running) {
+      setRunning({ kind: s.run.kind, descr: s.run.descr, startedAtMs: s.run.startedAtMs, expectedS: s.run.expectedS, hasProgress: s.run.hasProgress, total: s.run.total });
+    } else {
+      setRunning(null);
+      if (s.last) {
+        elapsedEl.textContent = `took ${fmtDur(s.last.endedAtMs - s.last.startedAtMs)}`;
+        showDataset({ ...s.last, resultsDir: s.resultsDir, reloaded: 0 });
+      }
+    }
+  });
 </script>
 </body>
 </html>

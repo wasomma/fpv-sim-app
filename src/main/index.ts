@@ -7,11 +7,12 @@
  * session host (utilityProcess), studies runners, and the DIS gateway.
  */
 
-import { BrowserWindow, app, ipcMain } from "electron";
-import { readFileSync } from "node:fs";
+import { BrowserWindow, app, dialog, ipcMain, shell } from "electron";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { GATEWAY_PRESETS } from "./gateway/presets.js";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
-import { engineRoot, pinsFile } from "./paths.js";
+import { engineRoot, pinsFile, resultsDir } from "./paths.js";
 import { mcpHostStatus, restartMcpHost, setServerExtender, startMcpHost } from "./mcp/host.js";
 import { registerLiveTools } from "./mcp/live-tools.js";
 import { seedResultsIfEmpty } from "./results.js";
@@ -27,11 +28,18 @@ import {
   liveStop,
   type LiveStartOpts,
 } from "./sessions/session-manager.js";
-import { getSettings, regenerateMcpToken, setMcpPort } from "./settings.js";
-import { isScreenshots, prepareScreenshotsBoot, screenshotsAndExit } from "./screenshots.js";
-import { isSelfCheck, selfCheckAndExit } from "./self-check.js";
+import { flushSettings, getSettings, getUi, regenerateMcpToken, setMcpPort, setUi } from "./settings.js";
+import { isHeadless, isScreenshots, isSelfCheck } from "./mode.js";
+import { prepareScreenshotsBoot, screenshotsAndExit } from "./screenshots.js";
+import { selfCheckAndExit } from "./self-check.js";
+import {
+  loadOverridesSchema,
+  overridesSchemaPayload,
+  overridesSchemaState,
+  validateOverridesText,
+} from "./studies/overrides-schema.js";
 import { cancelStudy, startStudy, studyStatus, type StudyStartOpts } from "./studies/study-runner.js";
-import { createShellWindow, openAppPanel, openUiWindow } from "./windows.js";
+import { createShellWindow, openAppPanel, openUiWindow, showShellWindow } from "./windows.js";
 
 // Screenshot mode redirects userData to a scratch dir; it must happen before
 // the single-instance lock (derived from userData) and before anything reads
@@ -66,17 +74,18 @@ if (!gotLock) {
   }
 } else {
   app.on("second-instance", () => {
-    const win = BrowserWindow.getAllWindows()[0];
-    if (win !== undefined) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
-    }
+    // Launching the app again is how the launcher comes back after it was
+    // closed while a sim or panel window stayed open.
+    showShellWindow();
   });
 
   app.whenReady().then(async () => {
     installAppProtocol();
     const seeding = seedResultsIfEmpty();
     if (seeding.seeded) console.log(`results store seeded at ${seeding.dir}`);
+    // Before any run can start: study-start and live-start validate
+    // override keys synchronously against this schema.
+    await loadOverridesSchema();
 
     ipcMain.handle("open-ui-window", (_event, args: unknown) => {
       const a = (args ?? {}) as { page?: unknown; seed?: unknown; mode?: unknown; play?: unknown };
@@ -90,6 +99,10 @@ if (!gotLock) {
     });
 
     ipcMain.handle("open-app-panel", (_event, name: unknown) => {
+      if (name === "shell") {
+        showShellWindow();
+        return true;
+      }
       return openAppPanel(typeof name === "string" ? name : "") !== null;
     });
 
@@ -120,9 +133,62 @@ if (!gotLock) {
       };
     });
 
+    // Renderer-owned persisted state; main only validates key and size.
+    ipcMain.handle("ui-get", (_event, key: unknown) => (typeof key === "string" ? getUi(key) : null));
+    ipcMain.handle("ui-set", (_event, args: unknown) => {
+      const a = (args ?? {}) as { key?: unknown; value?: unknown };
+      if (typeof a.key !== "string") return { ok: false, error: "key must be a string" };
+      return setUi(a.key, a.value);
+    });
+
+    // Native confirm for destructive or long actions. Headless runs answer
+    // yes without a dialog: there is nobody to click and nothing to protect.
+    ipcMain.handle("ui-confirm", async (event, args: unknown) => {
+      if (isHeadless()) return true;
+      const a = (args ?? {}) as { message?: unknown; detail?: unknown; confirmLabel?: unknown; cancelLabel?: unknown };
+      const options: Electron.MessageBoxOptions = {
+        type: "question",
+        title: "FPV Sim",
+        message: typeof a.message === "string" ? a.message : "Are you sure?",
+        buttons: [
+          typeof a.confirmLabel === "string" ? a.confirmLabel : "OK",
+          typeof a.cancelLabel === "string" ? a.cancelLabel : "Cancel",
+        ],
+        defaultId: 0,
+        cancelId: 1,
+        noLink: true,
+      };
+      if (typeof a.detail === "string") options.detail = a.detail;
+      const win = BrowserWindow.fromWebContents(event.sender);
+      const { response } = win !== null ? await dialog.showMessageBox(win, options) : await dialog.showMessageBox(options);
+      return response === 0;
+    });
+
     ipcMain.handle("study-start", (_event, opts: unknown) => startStudy(opts as StudyStartOpts));
     ipcMain.handle("study-cancel", () => cancelStudy());
     ipcMain.handle("study-status", () => studyStatus());
+    // The engine's parameter table (for the panel's reference) and live
+    // validation of the overrides text as it is typed.
+    ipcMain.handle("study-schema", () => ({ ...overridesSchemaState(), payload: overridesSchemaPayload() }));
+    ipcMain.handle("study-validate-overrides", (_event, text: unknown) =>
+      validateOverridesText(typeof text === "string" ? text : ""),
+    );
+    // Reveal a dataset the runner wrote; only plain file names inside the
+    // results store are accepted.
+    ipcMain.handle("study-reveal", (_event, args: unknown) => {
+      const file = (args as { file?: unknown } | null)?.file;
+      if (typeof file !== "string" || file === "" || /[\\/]/.test(file) || file === "." || file === "..") {
+        return { ok: false, error: "not a dataset file name" };
+      }
+      const full = path.join(resultsDir(), file);
+      if (!existsSync(full)) return { ok: false, error: `${file} is not in the results folder` };
+      shell.showItemInFolder(full);
+      return { ok: true };
+    });
+    ipcMain.handle("results-open-folder", async () => {
+      const err = await shell.openPath(resultsDir());
+      return err === "" ? { ok: true } : { ok: false, error: err };
+    });
 
     ipcMain.handle("mcp-status", () => mcpHostStatus());
     ipcMain.handle("mcp-health", async () => {
@@ -137,6 +203,7 @@ if (!gotLock) {
       const { port, token } = getSettings().mcp;
       const url = `http://127.0.0.1:${port}/mcp`;
       return {
+        token, // so the panel can mask it in the displayed snippets
         cli: `claude mcp add --transport http fpv-sim-app ${url} --header "Authorization: Bearer ${token}"`,
         json: JSON.stringify(
           {
@@ -172,6 +239,7 @@ if (!gotLock) {
     );
     ipcMain.handle("live-configure-gateway", (_event, cfg: unknown) => liveConfigureGateway(cfg));
     ipcMain.handle("live-gateway-status", () => liveGatewayStatus());
+    ipcMain.handle("live-gateway-presets", () => GATEWAY_PRESETS);
 
     setServerExtender((server) => registerLiveTools(server));
     const mcpStart = await startMcpHost();
@@ -188,9 +256,81 @@ if (!gotLock) {
     createShellWindow();
   });
 
+  /*
+   * Quit guard. A study child process and a live session die with the
+   * app, so closing the last window (or quitting) while one is active asks
+   * first. Never in headless mode: there is nobody to answer, and the
+   * drivers exit through app.exit() anyway.
+   */
+  let quitConfirmed = false;
+  let quitPrompt: Promise<void> | null = null;
+
+  function busyDescription(): string | null {
+    const parts: string[] = [];
+    const s = studyStatus();
+    if (s.running) parts.push(`the ${s.descr ?? "study"} run`);
+    const l = liveStatus();
+    if (l.state === "running" || l.state === "paused") {
+      parts.push(`live session ${l.sessionId ?? ""} (${l.state})`);
+    }
+    return parts.length === 0 ? null : parts.join(" and ");
+  }
+
+  function requestQuit(): Promise<void> {
+    if (quitPrompt !== null) return quitPrompt;
+    quitPrompt = (async () => {
+      const busy = busyDescription();
+      if (quitConfirmed || busy === null) {
+        quitConfirmed = true;
+        app.quit();
+        return;
+      }
+      const { response } = await dialog.showMessageBox({
+        type: "question",
+        title: "FPV Sim",
+        message: "A run is still active",
+        detail:
+          `Quitting now stops ${busy}. A cancelled study writes no dataset; ` +
+          "a stopped live session ends for every DIS receiver as well.",
+        buttons: ["Cancel run and quit", "Keep running"],
+        defaultId: 1,
+        cancelId: 1,
+        noLink: true,
+      });
+      if (response !== 0) {
+        showShellWindow(); // the last window may be gone; leave the user one
+        return;
+      }
+      cancelStudy();
+      await liveStop().catch(() => undefined);
+      quitConfirmed = true;
+      app.quit();
+    })().finally(() => {
+      quitPrompt = null;
+    });
+    return quitPrompt;
+  }
+
+  // Windows is ending the user session (logoff/shutdown): never hold it up
+  // with a dialog. The event arrives per window.
+  app.on("browser-window-created", (_event, win) => {
+    win.on("session-end", () => {
+      quitConfirmed = true;
+    });
+  });
+
+  app.on("before-quit", (event) => {
+    // Debounced `ui` writes must not be lost to a quit in the same 250 ms.
+    flushSettings();
+    if (quitConfirmed || isHeadless() || busyDescription() === null) return;
+    event.preventDefault();
+    void requestQuit();
+  });
+
   app.on("window-all-closed", () => {
     // Self-check and screenshot mode open and destroy windows between steps;
     // quitting here would end the run after the first one.
-    if (!isSelfCheck() && !isScreenshots()) app.quit();
+    if (isHeadless()) return;
+    void requestQuit();
   });
 }

@@ -12,6 +12,97 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+### Added
+
+- **The panels remember their inputs.** The launcher's seed, mode and
+  autoplay, the Studies label, seed range, mode and overrides, and the
+  Live Ops seed, mode and speed come back as you left them, and the
+  GATEWAY box reopens with the last configuration that passed **STAGE**.
+  Arming stays explicit and memory-only: the restored text still has to
+  be staged. `settings.json` is now versioned (`"version": 2`) with a
+  `ui` section; files written by 0.2.x are upgraded in place.
+- A shared stylesheet and helper script for the app's own panels
+  (`src/renderer/shared/`), replacing four copies of the same palette.
+- **Windows remember where they were.** Each kind of window comes back at
+  the size and position it was left at, clamped to the connected displays,
+  and every window now has a minimum size.
+- **One window per panel.** DASHBOARD, STUDIES, MCP ENDPOINT and LIVE OPS
+  bring their existing window forward instead of stacking a second copy;
+  SIMULATION and 3D VIEWER still open a new window per click.
+- **The launcher comes back.** Every panel has a **◂ LAUNCHER** button,
+  and starting FPV Sim a second time reopens the launcher when it had been
+  closed (it used to focus whichever window happened to be first).
+- **Quit guard.** Closing the last window or quitting while a study or a
+  live session is active asks first — *Cancel run and quit* or *Keep
+  running* — instead of silently killing the run.
+- Window titles name their content: `Studies — FPV Sim`, `Simulation ·
+  seed 20260719 (orbit) — FPV Sim`, and so on, so two sim windows can be
+  told apart in the taskbar. Upstream windows are painted in their own
+  background colour before the page loads (no green flash).
+- **Studies feedback.** An elapsed-time counter beside the status (with
+  the expected duration for a study); a progress bar for every kind of run
+  — per seed for the parallel sweep, per experiment for the canonical
+  study, indeterminate for the single-threaded sweep; a red exit line when
+  a run fails or is cancelled; refusals repeated under the field that
+  caused them; a **LAST DATASET** box with the file's path, **COPY PATH**,
+  **REVEAL IN EXPLORER** and **OPEN RESULTS FOLDER**, plus a note saying
+  whether the file is registered in the manifest (quick runs are not).
+  Open Dashboard windows reload by themselves when a run registers a
+  dataset. **RUN FULL** asks before it overwrites the bundled dataset.
+  Reopening the panel during or after a run brings back the log, the
+  progress bar and the dataset box.
+- **Override keys are checked.** The Studies panel validates the overrides
+  JSON against the engine's own parameter table as you type — an unknown
+  key or an out-of-range value is named by path (`CUAS.BRG_SIGMA: unknown
+  key`, `CUAS.BRG_SIGMA_DEG: must be in 0.5..15`) and refused at run time —
+  and a collapsible **parameter reference** under the box lists every key
+  with its default, unit, range and meaning; clicking a row adds it.
+  `live_start_session` over MCP applies the same check. A misspelled key
+  no longer runs the stock configuration silently anywhere.
+- **MCP panel feedback.** **APPLY & RESTART** reports its result on the
+  panel (`restarted on port 8766 …`, or the refusal) instead of silently
+  snapping the field back; **REGENERATE TOKEN** asks first and says that
+  clients must be re-added; a **REFRESH** button and a five-second re-check
+  while the window is visible catch a host that has died; the bearer token
+  is masked in the on-screen snippets behind **SHOW TOKEN** (COPY still
+  copies the real one); the buttons are disabled while a restart is in
+  flight; a failed status query reads *STATUS UNAVAILABLE* instead of a
+  permanent *checking…*.
+- **Live Ops diagnostics.** While a gateway-armed session runs, the
+  GATEWAY box shows a status line plus a small table: PDUs sent by type,
+  what arrived on the socket and why anything was set aside (other
+  exercise, own echo, malformed, other PDU types — counters the gateway
+  always kept but never showed), the peers heard with their addresses, the
+  overlay count and the last error (the editor gives way to this display
+  until the session ends). A **preset…** menu fills the box with
+  one of Appendix C's four configurations (broadcast, unicast, multicast,
+  VBS4 through VBS Gateway with emitter function 5); **STAGE** warns —
+  without refusing — when the anchor is still 0°, 0° or unicast points at
+  loopback. A legend under the map explains the symbols. **RANDOM** picks
+  a seed. Refusals and abnormal ends go to a message line under the
+  header, and a session whose process failed reads `ABORTED — …` in red
+  rather than a green ENDEX. A panel opened mid-session replays the whole
+  event feed so far, without duplicates.
+- Manual **Appendix H** — a worked quick start for putting the engagement
+  inside an external live virtual simulation, with VBS4 through VBS
+  Gateway as the example: a fresh PC, the eight values both sides must
+  agree on, the exact VBS Gateway settings, the acceptance list and the
+  reverse path.
+
+### Changed
+
+- An empty **start** or **count** in the Studies panel is refused by name
+  instead of silently becoming 1 or 1000.
+- The VBS4 checklist, Appendix C and Appendix F now record that VBS
+  Gateway keeps only incoming emitter systems whose function is
+  Acquisition / Detection (5). A VBS4 session should stage
+  `emissions.uplink.function` and `emissions.video.function` as `5`; the
+  shipped default is still `0`.
+
+### Fixed
+
+- `refused: a adhoc run is already active` now reads `an adhoc run`.
+
 ## [0.2.1] — 2026-09-02
 
 ### Added

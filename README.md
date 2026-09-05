@@ -52,7 +52,8 @@ Grab `fpv-sim-app-setup-<version>.exe` from Releases and run it
 
 **New here? Read the [User Manual](docs/manual/README.md)** — installing,
 every window and panel, running Monte Carlo studies, reading the dashboard,
-and sending entities over DIS, with screenshots regenerated from each build.
+sending entities over DIS, and a worked VBS4 quick start (Appendix H),
+with screenshots regenerated from each build.
 A single-file PDF of the same manual is attached to every release.
 Release history is in [CHANGELOG.md](CHANGELOG.md).
 
@@ -64,7 +65,7 @@ cd fpv-sim-app
 npm install        # builds the fpv-sim-mcp git dependency via its prepare script
 npm run vendor     # vendor the pinned fpv-sim UI + engine copy into build/resources
 npm run build      # tsc
-npm test           # engine parity smoke, codec/geo/publisher/receive suites (60 tests)
+npm test           # engine parity smoke, codec/geo/publisher/receive, settings/window/studies suites (97 tests)
 npm run self-check # headless end-to-end: protocol, engine, studies, MCP, live, DIS loopback
 npm run screenshots # regenerate docs/manual/images from the app itself (scratch profile)
 npm run manual:pdf # build docs/manual/fpv-sim-manual.pdf with the bundled Electron

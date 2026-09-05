@@ -26,8 +26,9 @@ Click the **STUDIES** tile.
 |---|---|
 | **CANONICAL MONTE CARLO STUDY** | **mode** (orbit/tactical), **RUN QUICK (~4 min)**, **RUN FULL (~25 min)** |
 | **AD-HOC SWEEP** | **label**, **start**, **count**, **mode**, **overrides JSON**, **RUN PARALLEL**, **RUN SINGLE-THREADED** |
-| Status row | the status text (`idle` or `running: …`), a progress bar while a parallel sweep runs, **CANCEL**, **OPEN DASHBOARD** |
-| Log | everything the run prints, newest at the bottom (the last 800 lines are kept) |
+| Status row | the status text (`idle` or `running: …`), the elapsed time (with the expected duration for a study), a progress bar, **CANCEL**, **OPEN DASHBOARD** |
+| **LAST DATASET** | appears after a run: the full path of the file it wrote, **COPY PATH**, **REVEAL IN EXPLORER**, **OPEN RESULTS FOLDER**, and whether the Dashboard will list it |
+| Log | everything the run prints, newest at the bottom (the last 800 lines are shown; a panel reopened during or after a run gets the last 500 back) |
 
 Only one run — study or sweep — can be active at a time.
 
@@ -47,13 +48,13 @@ The question: *what happens when the DF sensors are twice as noisy?* The stock 1
 *Figure 6-2. The guided exercise filled in: label, 1000 seeds, orbit, and the bearing-error override.*
 
 4. Click **RUN PARALLEL**.
-   → *The status turns green (`running: adhoc "DF bearing error doubled" (orbit)`), a progress bar appears and fills, CANCEL becomes active, and the log reports how many worker threads it is using.*
+   → *The status turns green (`running: parallel sweep "DF bearing error doubled" 1..1000 (orbit)`), the elapsed time starts counting, a progress bar appears and fills, CANCEL becomes active, and the log reports how many worker threads it is using.*
 
 ![A sweep in progress](images/studies-running.png)
 *Figure 6-3. A parallel sweep in progress: green status, progress bar, CANCEL enabled.*
 
 5. Wait for it to finish — typically 5 to 60 seconds depending on your CPU.
-   → *The log ends with a green* `dataset` *line and the exit code:*
+   → *The log ends with a green* `dataset` *line and the exit code, and the status row shows how long it took:*
    ```text
    started: parallel sweep "DF bearing error doubled" 1..1000 (orbit)
    parallel sweep: seeds 1–1000 with overrides {"CUAS":{"BRG_SIGMA_DEG":8}} on 31 workers...
@@ -63,8 +64,10 @@ The question: *what happens when the DF sensors are twice as noisy?* The stock 1
    parallel sweep "DF bearing error doubled" 1..1000 (orbit) finished with exit code 0
    ```
 
+   *Above the log, the **LAST DATASET** box names the file the run wrote. **REVEAL IN EXPLORER** selects it in File Explorer; **COPY PATH** copies the full path. Any Dashboard window that was already open reloads by itself and lists the new dataset.*
+
 ![The finished sweep](images/studies-finished.png)
-*Figure 6-4. The finished sweep: the green dataset line is your answer key, then the exit code.*
+*Figure 6-4. The finished sweep: the green dataset line is your answer key, then the exit code; the LAST DATASET box points at the file.*
 
 > [!NOTE]
 > Your counts should read exactly **B 146 / O 144 / S 710** — BLUFOR wins, OPFOR wins, stalemates over seeds 1–1000. The engine is deterministic, so every PC gets the same numbers. If yours differ, your build has a different engine version (check the launcher footer).
@@ -81,16 +84,16 @@ The two **RUN** buttons in **CANONICAL MONTE CARLO STUDY** execute the exact scr
 | **RUN FULL (~25 min)** | 22,800 / 24,800 | `monte-carlo.json` (or `monte-carlo-tactical.json`) | **Yes** — it replaces the bundled dataset of the same name (identical numbers, today's date). |
 
 > [!WARNING]
-> **RUN QUICK** output never appears in the Dashboard. Use it only to check that the study machinery works. If you want a dataset you can analyze, run an ad-hoc sweep (6.3) or the full study.
+> **RUN QUICK** output never appears in the Dashboard. Use it only to check that the study machinery works. The note under the buttons says so, and the **LAST DATASET** box reads *not registered in the manifest* when it finishes. If you want a dataset you can analyze, run an ad-hoc sweep (6.3) or the full study.
 
 > [!WARNING]
-> **RUN FULL** overwrites the bundled `monte-carlo.json` entry in your results folder. Because the engine is deterministic the numbers come back identical, but the file's date changes. To restore the factory datasets, see [Appendix B](B-files-and-settings.md).
+> **RUN FULL** overwrites the bundled `monte-carlo.json` entry in your results folder, so it asks you to confirm first. Because the engine is deterministic the numbers come back identical, but the file's date changes. To restore the factory datasets, see [Appendix B](B-files-and-settings.md).
 
 Procedure:
 
 1. Choose the **mode**.
-2. Click **RUN FULL (~25 min)**.
-   → *The status turns green. There is **no progress bar** for studies; follow the log instead. It prints one block per experiment:*
+2. Click **RUN FULL (~25 min)** and confirm.
+   → *The status turns green, the elapsed time and the expected duration appear, and the progress bar advances once per finished experiment. E1 is almost half the run, so the bar sits at zero for the first ten minutes or so while the elapsed time keeps counting. The log prints one block per experiment:*
    ```text
    started: full study (orbit)
    E1 baseline (stock config)...
@@ -108,44 +111,46 @@ Procedure:
    Updated C:\Users\…\fpv-sim-app\results\index.json
    full study (orbit) finished with exit code 0
    ```
-   E1 is almost half of the total time. In tactical mode an extra E2 experiment, *no reserve hunter*, is added.
-3. Reload the Dashboard (Chapter 7) to see the refreshed dataset.
+   In tactical mode an extra E2 experiment, *no reserve hunter*, is added.
+3. Any Dashboard window that is open reloads by itself with the refreshed dataset; otherwise click **OPEN DASHBOARD** (Chapter 7).
 
-A quick run prints the same blocks at one tenth the size and ends with `Wrote …\monte-carlo-quick.json (… engagements)` and **no** `Updated …\index.json` line — that missing line is why it never shows up in the Dashboard.
+A quick run prints the same blocks at one tenth the size (every experiment at least 50 seeds) and ends with `Wrote …\monte-carlo-quick.json (… engagements)` and **no** `Updated …\index.json` line — that missing line is why it never shows up in the Dashboard, and why the **LAST DATASET** box says *not registered*.
 
 ## 6.5 Ad-hoc sweep reference
 
 | Field | Meaning | Rules |
 |---|---|---|
 | **label** | Name of the dataset in the Dashboard; also the file slug (lower-cased, non-alphanumerics become `-`, cut at 48 characters). | Required. |
-| **start** | First seed. | Integer ≥ 0. Default 1. |
-| **count** | Number of consecutive seeds. | Integer ≥ 1. Default 1000. |
+| **start** | First seed. | Integer ≥ 0. Default 1. An empty field is refused, not assumed. |
+| **count** | Number of consecutive seeds. | Integer 1 to 1,000,000. Default 1000. An empty field is refused, not assumed. |
 | **mode** | orbit or tactical. | |
-| **overrides JSON** | Engine parameter changes as a JSON object, or empty for the stock configuration. | Must be valid JSON. See 6.6. |
+| **overrides JSON** | Engine parameter changes as a JSON object, or empty for the stock configuration. | Valid JSON whose keys and values the engine accepts (checked as you type). See 6.6. |
 
 The two run buttons produce byte-identical datasets; they differ in how they get there.
 
 | Button | How it runs | Progress | When to use |
 |---|---|---|---|
 | **RUN PARALLEL** | A pool of worker threads (one per CPU core minus one) shares the seeds. | Progress bar plus the green `dataset` summary line. | Normally. |
-| **RUN SINGLE-THREADED** | The canonical `run-sweep.mjs` script from the fpv-sim project, one engagement at a time. | Log only. | When you want the literal published script, for example to reproduce a result outside the application with the same command. |
+| **RUN SINGLE-THREADED** | The canonical `run-sweep.mjs` script from the fpv-sim project, one engagement at a time. | Elapsed time and an indeterminate bar; the script reports only when it is done. | When you want the literal published script, for example to reproduce a result outside the application with the same command. |
 
 Other controls:
 
-- **CANCEL** kills the run. Datasets are written only at the very end, so a cancelled run leaves nothing behind — no partial file, no manifest entry.
-- **OPEN DASHBOARD** opens the Dashboard window.
-- Closing the Studies window does **not** cancel a run. Reopen it and the status row shows `running: …` again.
+- **CANCEL** kills the run. Datasets are written only at the very end, so a cancelled run leaves nothing behind — no partial file, no manifest entry. The log's final line then shows a nonzero exit code in red.
+- **OPEN DASHBOARD** opens the Dashboard window, or brings the open one forward.
+- Closing the Studies window does **not** cancel a run. Reopen it and the status row, the progress bar and the log come back as they were.
 
-Refusals are printed in the log rather than shown as dialogs:
+Refusals are printed in red in the log and, for the sweep fields, repeated under the fields with the offending input outlined:
 
-| Log line | Cause |
+| Message | Cause |
 |---|---|
-| `refused: a label is required` | Empty label. |
-| `refused: overrides is not valid JSON` | A syntax error in the overrides box (a missing brace or quote). |
-| `refused: a adhoc run is already active` (or `study`, `sweep`) | Another run is in progress; wait or **CANCEL** it. |
+| `label: a label is required` | Empty label. |
+| `start must be an integer in 0..4294967295` / `count must be an integer in 1..1000000` | An empty or non-integer field. |
+| `overrides is not valid JSON` | A syntax error in the overrides box (a missing brace or quote). |
+| `overrides: CUAS.BRG_SIGMA: unknown key` / `…: must be in 0.5..15` | A key the engine does not have, or a value outside its range; the line under the box already said so. |
+| `refused: an adhoc run is already active` (or `a study`, `a sweep`) | Another run is in progress; wait or **CANCEL** it. |
 
 ![A refusal in the log](images/studies-refused-label.png)
-*Figure 6-5. Refusals appear in the log: here RUN PARALLEL with an empty label.*
+*Figure 6-5. A refusal: RUN PARALLEL with an empty label is reported in the log and under the fields.*
 
 ## 6.6 Choosing overrides
 
@@ -158,15 +163,17 @@ Overrides are a JSON object whose sections and keys mirror the engine's configur
 | Make OPFOR as disciplined as BLUFOR (the E2 "OPFOR adopts BLUFOR discipline" arm) | `{"TEAMS":{"OPFOR":{"uplinkOn":4,"uplinkOff":13,"videoOn":3,"videoOff":7}}}` |
 | Tactical mode without the reserve hunter-killer and with bigger packages | `{"TACTICAL":{"RESERVE_HUNTER":false,"SORTIES":{"BLUFOR":7,"OPFOR":7}}}` |
 
-[Appendix D](D-overrides-quick-reference.md) lists the most useful keys with their defaults and ranges; the full table (every tunable, unit and rationale) is `PARAMETERS.md` in the fpv-sim project, and the MCP tool `get_config_schema` (Chapter 8) returns the same information to an AI assistant.
+The box is checked against the engine's own parameter table as you type. The line under it reads `1 override OK`, or names the first problem — `CUAS.BRG_SIGMA: unknown key`, `CUAS.BRG_SIGMA_DEG: must be in 0.5..15` — and a run with such a problem is refused with the same message, so a misspelled key can no longer run the stock value behind your back. The **parameter reference** under the box (click to expand) is the complete table: every key the engine accepts with its default, unit, range and meaning; clicking a row adds that key at its default to the JSON, ready to edit.
 
-> [!WARNING]
-> The overrides box is checked for JSON **syntax only**. A misspelled key such as `"BRG_SIGMA"` is silently ignored and the sweep runs with the stock value — yet the dataset still records your text as its overrides. When a result surprises you by matching the baseline exactly, check the spelling against Appendix D.
+[Appendix D](D-overrides-quick-reference.md) lists the most useful keys; the full table with rationale is `PARAMETERS.md` in the fpv-sim project, and the MCP tool `get_config_schema` (Chapter 8) returns the same table to an AI assistant.
+
+> [!NOTE]
+> Releases before this one checked the box for JSON syntax only, so an old dataset whose overrides carry a misspelled key was in fact run stock. Its manifest entry still records the typed text; if an old result matches the baseline exactly, that is why.
 
 ## 6.7 Managing datasets
 
 - **Same label, same day** — the new file overwrites the old one (the name includes only the date), and the manifest entry is replaced.
-- **Deleting a dataset** — delete its file from `%APPDATA%\fpv-sim-app\results` and remove its entry from `index.json` in the same folder (a plain-text JSON list; delete the whole `{ … }` block for that file). Reload the Dashboard.
+- **Deleting a dataset** — **OPEN RESULTS FOLDER** (in the LAST DATASET box) opens `%APPDATA%\fpv-sim-app\results`; delete the file and remove its entry from `index.json` in the same folder (a plain-text JSON list; delete the whole `{ … }` block for that file). Reload the Dashboard.
 - **Factory reset** — delete the entire `results` folder while FPV Sim is closed. The next start recreates it with the three bundled datasets. Your own sweeps are gone, so copy any you want to keep first.
 - **Sharing a dataset** — send the JSON file together with its `index.json` entry; the recipient drops both into their own results folder.
 

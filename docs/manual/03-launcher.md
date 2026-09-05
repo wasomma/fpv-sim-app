@@ -7,7 +7,7 @@ The launcher is the small window that opens when you start FPV Sim. Everything e
 
 ## 3.1 The six tiles
 
-Each tile is a button. Clicking it opens a **new window**; the launcher stays open, and you may have several windows open at once (two Simulation windows on different seeds, for example).
+Each tile is a button. **SIMULATION** and **3D VIEWER** open a **new window** every time, so you can have two Simulation windows on different seeds side by side. **DASHBOARD**, **STUDIES**, **MCP ENDPOINT** and **LIVE OPS** open one window each: clicking the tile again brings that window to the front instead of opening a second copy. The launcher stays open throughout.
 
 | Tile | Opens | Window size | Chapter |
 |---|---|---|---|
@@ -18,7 +18,7 @@ Each tile is a button. Clicking it opens a **new window**; the launcher stays op
 | **MCP ENDPOINT** | The MCP Endpoint panel | 1100 × 780 | 8 |
 | **LIVE OPS** | The Live Ops panel (real-time sessions and the DIS gateway) | 1100 × 780 | 9, 10 |
 
-The first three tiles show the original browser pages of the fpv-sim project, served unchanged from inside the application. The last three are the application's own panels. All windows can be resized; the sizes above are what they open at.
+The first three tiles show the original browser pages of the fpv-sim project, served unchanged from inside the application. The last three are the application's own panels. All windows can be resized; the sizes above are what they open at the first time. Each kind of window remembers the size and position you leave it at, and comes back there next time — clamped to the screen, so a window last used on a monitor that is no longer connected reopens on the main display.
 
 ## 3.2 The launch bar
 
@@ -54,9 +54,10 @@ Quote the whole line when you report a problem.
 
 ## 3.4 Window behaviour worth knowing
 
-- **Single instance.** Starting FPV Sim while it is already running does not open a second copy; it brings the existing launcher to the front.
+- **Single instance.** Starting FPV Sim while it is already running does not open a second copy; it brings the launcher to the front, or reopens it if you had closed it.
+- **Getting the launcher back.** Every panel has a **◂ LAUNCHER** button in its top row. Starting FPV Sim again (Start menu or desktop shortcut) does the same.
 - **Closing windows.** Closing a Simulation, Dashboard or panel window never stops anything running in the background: a sweep started in the Studies panel keeps running, and a Live Ops session keeps going. Reopen the panel to see its progress.
-- **Closing the last window quits the application** — and *that* does stop a running sweep or live session. Keep the launcher open while long runs are in progress.
+- **Closing the last window quits the application** — and *that* does stop a running sweep or live session. If one is active, FPV Sim asks first: **Cancel run and quit** stops it and exits, **Keep running** brings the launcher back and leaves the run alone. The same question appears if you quit any other way while a run is active.
 - **Links to the web** (for example **READ THE STUDY** in the Dashboard) open in your default browser, not inside the application.
 
 ## 3.5 The hidden menu and Developer Tools

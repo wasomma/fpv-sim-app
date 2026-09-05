@@ -13,7 +13,7 @@ FPV Sim can stream a live session as **IEEE 1278.1 Distributed Interactive Simul
 The gateway is part of a live session (Chapter 9). It is armed by **staging** a JSON configuration; the *next* session you start then publishes DIS. Three facts shape everything below:
 
 1. **Staging happens in the Live Ops panel's GATEWAY box** (or through the MCP tool `live_configure_gateway`, 10.9). The configuration is validated when you press **STAGE** and every problem is reported with its exact key path.
-2. **The staged configuration lives in memory.** It applies to every session you start for the rest of this run of FPV Sim and is forgotten when the application closes. Stage it again after every launch.
+2. **The staged configuration lives in memory.** It applies to every session you start for the rest of this run of FPV Sim and is disarmed when the application closes. The text you last staged comes back in the GATEWAY box on the next launch, so re-arming is one press of **STAGE**.
 3. **Staging is refused while a session is running or paused.** Press **STOP** first.
 
 What goes on the wire, in order, for the default orbit seed at 1×:
@@ -32,7 +32,7 @@ Traffic is light. The committed 60-second reference capture of this seed holds 2
 
 ## 10.2 Step A — stage the gateway
 
-1. Open the **LIVE OPS** tile. The GATEWAY box shows the status line `no gateway config staged — sessions run app-local`, a **STAGE** button and a text box pre-filled with a minimal configuration:
+1. Open the **LIVE OPS** tile. The GATEWAY box shows the status line `no gateway config staged — sessions run app-local`, a **STAGE** button and a text box pre-filled with a minimal configuration (after the first successful **STAGE** it holds whatever you staged last; the **preset…** menu in the box's title fills it with any of the [Appendix C](C-gateway-config-reference.md) configurations):
    ```json
    {"network":{"mode":"broadcast","port":3000},
     "dis":{"exerciseId":1},
@@ -42,7 +42,7 @@ Traffic is light. The committed 60-second reference capture of this seed holds 2
 
    | Key | Set it to |
    |---|---|
-   | `anchor.lat0Deg`, `anchor.lon0Deg` | The latitude and longitude, in decimal degrees, where the south-west corner of the 4 km × 4 km AO should sit. **Change these**: the validator accepts the default 0°, 0°, which puts your entities in the Gulf of Guinea. |
+   | `anchor.lat0Deg`, `anchor.lon0Deg` | The latitude and longitude, in decimal degrees, where the south-west corner of the 4 km × 4 km AO should sit. **Change these**: the validator accepts the default 0°, 0°, which puts your entities in the Gulf of Guinea — **STAGE** then adds a yellow line, *staged, but check: anchor is 0°, 0°*. |
    | `network.mode`, `network.port` | `broadcast` on port `3000` reaches everything on a flat LAN, including the sending PC. For a specific receiver use unicast: `"network":{"mode":"unicast","unicastDestinations":["192.168.1.20"],"port":3000}`. |
    | `dis.exerciseId` | Must match the receiver's exercise ID. `1` is the usual default. |
 
@@ -58,20 +58,20 @@ If the JSON has a syntax error the line reads `invalid JSON: …`; if a key is u
 *Figure 10-2. A typo in the gateway JSON is refused with the exact path.*
 
 > [!WARNING]
-> The staged configuration is lost when FPV Sim closes. After every launch, open Live Ops and press **STAGE** again before starting a session that others are supposed to see.
+> The staged configuration is disarmed when FPV Sim closes. After every launch, open Live Ops — the GATEWAY box already holds the text you last staged — and press **STAGE** again before starting a session that others are supposed to see.
 
 ## 10.3 Step B — start the session
 
 4. Set **seed** `20260719`, **mode** **orbit**, **speed** **1× (real time)**.
 5. Click **START**.
    → *The first time a session opens a network socket, Windows shows a **Windows Security Alert** headed "Windows Defender Firewall has blocked some features of this app", naming **FPV Sim** as the publisher-less app. Tick the network types you actually use — **Private networks** is enough for a lab LAN — and click **Allow access**. Windows asks once and remembers; you will not see it on later sessions unless the rule is removed.*
-   → *Within a second the GATEWAY box switches to the live status:* `running — session live-… seed 20260719 (orbit) at 1x · tx espdu 6, emission 0, fire 0, detonation 0, startResume 1, stopFreeze 0 · peers 0 · overlay 0`, *and the `espdu` and `emission` counters climb as the engagement proceeds.*
+   → *Within a second the GATEWAY box switches to the live status:* `running — session live-… seed 20260719 (orbit) at 1x`, *with a small table under it —* `tx espdu 6 · emission 0 · fire 0 · detonation 0 · startResume 1 · stopFreeze 0 · 1 kB`, `rx pdus 0 · …`, `peers 0`, `overlay 0 external tracks` *— and the `espdu` and `emission` counters climb as the engagement proceeds.*
 
 ![A gateway-armed session](images/live-ops-running.png)
 *Figure 10-3. A gateway-armed session at real time: the GATEWAY box shows the session, its speed and the PDU counters.*
 
 ![The GATEWAY box while publishing](images/live-ops-gateway-crop.png)
-*Figure 10-4. The GATEWAY box while publishing. `tx` counts PDUs by type; `peers` counts remote senders heard; `overlay` counts external entities on the map.*
+*Figure 10-4. The GATEWAY box while publishing — the editor gives way to the live status until the session ends. `tx` counts PDUs sent by type; `rx` counts what arrived on the socket and why anything was set aside (another exercise ID, the app's own echo, malformed, other PDU types); `peers` counts remote senders heard; `overlay` counts external entities on the map.*
 
 > [!NOTE]
 > Run DIS sessions at **1× (real time)**. The gateway scales velocities so receivers extrapolate correctly at higher speeds, but above 8× (`publish.maxSpeedFactor`) remote smoothing degrades and the status line says so.
@@ -193,4 +193,4 @@ The Live Ops panel reflects whatever the assistant does.
 - [ ] Receiver's firewall allows inbound UDP 3000; sender allowed through Windows Security Alert.
 - [ ] On multi-homed PCs: unicast, or `network.interface` set.
 
-Next: Chapter 11 for VBS4 Gateway settings, terrain correlation and HLA.
+Next: Chapter 11 for VBS4 Gateway settings, terrain correlation and HLA, or [Appendix H](H-vbs4-quick-start.md) for a worked example that takes a fresh PC through this chapter, the VBS Gateway settings and the reverse path in one sitting.

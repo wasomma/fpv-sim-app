@@ -17,6 +17,9 @@ VBS4 speaks DIS through its standard **VBS Gateway**. The lab procedure is `docs
 > [!IMPORTANT]
 > Do not run the VBS Gateway's DIS and HLA adapters at the same time.
 
+> [!TIP]
+> [Appendix H](H-vbs4-quick-start.md) walks the same checklist as a worked example, from a fresh PC to a VBS4 vehicle on the Live Ops map, with the exact VBS Gateway settings and the one value VBS Gateway insists on for emitter systems.
+
 ## 11.2 HLA federations
 
 FPV Sim has no native HLA federate. `docs/INTEROP.md` describes the bridged topology — FPV Sim → DIS → a DIS/HLA bridge such as the Pitch DIS Adapter → the RTI, under RPR-FOM 2.0 — with a table mapping each PDU to its RPR-FOM object or interaction class, and the seam where a native federate could be added later. The same document is the reference for the wire contract: every PDU type, the time-scaling rules across the DIS boundary, the receive path and the georeferencing.

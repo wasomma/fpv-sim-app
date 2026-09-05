@@ -35,7 +35,7 @@ The seven tools marked "No" are annotated read-only, so a well-behaved client ma
 - Out-of-range arguments are rejected before the simulation runs, with a message naming the argument.
 
 > [!NOTE]
-> The batch tools validate override *keys* against the parameter table; the live tools accept any JSON object and let the engine ignore what it does not recognise. A key you misspell in a live session is therefore dropped silently, exactly as in the Studies panel. Copy keys from [Appendix D](D-overrides-quick-reference.md).
+> Every tool that takes overrides — batch and live alike — validates the *keys* and *ranges* against the parameter table before anything runs. `live_start_session` with a misspelled key returns `{"ok": false, "error": "overrides: CUAS.BRG_SIGMA: unknown key"}` rather than starting a stock session. Copy keys from [Appendix D](D-overrides-quick-reference.md) or call `get_config_schema`.
 
 ## E.3 `run_engagement`
 

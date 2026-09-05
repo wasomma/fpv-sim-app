@@ -1,22 +1,22 @@
 /*
  * Per-user app settings (%APPDATA%/fpv-sim-app/settings.json).
+ *
  * The MCP bearer token is generated on first load and persists until
- * regenerated from the MCP panel.
+ * regenerated from the MCP panel. The `ui` bag holds renderer-owned state
+ * (last-used inputs, last staged gateway text, window bounds); writes to
+ * it are debounced because they arrive on every keystroke and every
+ * window move. Shape and migration live in settings-schema.ts.
  */
 
 import { app } from "electron";
 import { randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { type AppSettings, normalizeSettings, validateUiEntry } from "./settings-schema.js";
 
-export interface AppSettings {
-  mcp: {
-    port: number;
-    token: string;
-  };
-}
+export type { AppSettings };
 
-const DEFAULT_PORT = 8765;
+const SAVE_DEBOUNCE_MS = 250;
 
 function settingsPath(): string {
   return path.join(app.getPath("userData"), "settings.json");
@@ -27,28 +27,74 @@ function newToken(): string {
 }
 
 let cached: AppSettings | null = null;
+let dirty = false;
+let timer: ReturnType<typeof setTimeout> | null = null;
 
 export function getSettings(): AppSettings {
   if (cached !== null) return cached;
-  let raw: Partial<AppSettings> = {};
+  let raw: unknown = {};
   try {
-    raw = JSON.parse(readFileSync(settingsPath(), "utf8")) as Partial<AppSettings>;
+    raw = JSON.parse(readFileSync(settingsPath(), "utf8"));
   } catch {
     /* first run */
   }
-  const port = typeof raw.mcp?.port === "number" && raw.mcp.port >= 1024 && raw.mcp.port <= 65535
-    ? raw.mcp.port
-    : DEFAULT_PORT;
-  const token = typeof raw.mcp?.token === "string" && raw.mcp.token.length >= 16 ? raw.mcp.token : newToken();
-  cached = { mcp: { port, token } };
-  if (raw.mcp?.token !== token || raw.mcp?.port !== port) saveSettings(cached);
+  const { settings, changed } = normalizeSettings(raw, newToken);
+  cached = settings;
+  if (changed) saveSettings(cached);
   return cached;
 }
 
+function writeNow(): void {
+  if (cached === null) return;
+  mkdirSync(app.getPath("userData"), { recursive: true });
+  writeFileSync(settingsPath(), JSON.stringify(cached, null, 2) + "\n");
+  dirty = false;
+}
+
+/** Write immediately (used for the MCP port/token, which the host reads on restart). */
 export function saveSettings(next: AppSettings): void {
   cached = next;
-  mkdirSync(app.getPath("userData"), { recursive: true });
-  writeFileSync(settingsPath(), JSON.stringify(next, null, 2) + "\n");
+  if (timer !== null) {
+    clearTimeout(timer);
+    timer = null;
+  }
+  writeNow();
+}
+
+/** Coalesce a burst of `ui` writes into one disk write. */
+export function saveSettingsSoon(): void {
+  dirty = true;
+  if (timer !== null) return;
+  timer = setTimeout(() => {
+    timer = null;
+    if (dirty) writeNow();
+  }, SAVE_DEBOUNCE_MS);
+}
+
+/** Flush a pending debounced write (called from before-quit). */
+export function flushSettings(): void {
+  if (timer !== null) {
+    clearTimeout(timer);
+    timer = null;
+  }
+  if (dirty) writeNow();
+}
+
+/** One entry of the renderer-owned `ui` bag, or null when unset. */
+export function getUi(key: string): unknown {
+  const v = getSettings().ui[key];
+  return v === undefined ? null : v;
+}
+
+/** Replace (or, with null, delete) one `ui` entry. Validated and debounced. */
+export function setUi(key: string, value: unknown): { ok: boolean; error?: string } {
+  const check = validateUiEntry(key, value);
+  if (!check.ok) return { ok: false, error: check.error };
+  const s = getSettings();
+  if (check.value === null) delete s.ui[key];
+  else s.ui[key] = check.value;
+  saveSettingsSoon();
+  return { ok: true };
 }
 
 export function regenerateMcpToken(): string {

@@ -12,13 +12,14 @@ FPV Sim runs a small **Model Context Protocol (MCP)** server on your own PC. Any
 Click the **MCP ENDPOINT** tile.
 
 ![The MCP Endpoint panel](images/mcp-running.png)
-*Figure 8-1. The MCP Endpoint panel with the endpoint RUNNING and both copy-paste snippets. (The token shown is a placeholder; yours is a random 32-character secret.)*
+*Figure 8-1. The MCP Endpoint panel with the endpoint RUNNING and both copy-paste snippets. (The token shown is a placeholder; yours is a random 32-character secret, and the panel keeps it hidden until you click SHOW TOKEN.)*
 
 | Element | Meaning |
 |---|---|
-| **STATUS** | **RUNNING — http://127.0.0.1:8765/mcp** when the server is up and healthy; **LISTENING BUT UNHEALTHY** if it is up but not answering; **DOWN — port 8765 is in use** (or another reason) if it could not start. |
-| **port** + **APPLY & RESTART** | Change the TCP port (1024–65535) and restart the server. Every client must then be re-added with the new address. |
-| **REGENERATE TOKEN** | Replace the bearer token with a new random one. Every existing client stops working until it is re-added with the new snippet. |
+| **STATUS** + **REFRESH** | **RUNNING — http://127.0.0.1:8765/mcp** when the server is up and healthy; **LISTENING BUT UNHEALTHY** if it is up but not answering; **DOWN — port 8765 is in use** (or another reason) if it could not start. The line is re-checked every five seconds while the window is visible; **REFRESH** checks now. |
+| **port** + **APPLY & RESTART** | Change the TCP port (1024–65535) and restart the server. The line under the buttons reports the result — `restarted on port 8766 …` or `refused: port must be an integer in 1024..65535` — and every client must then be re-added with the new address. |
+| **REGENERATE TOKEN** | Replace the bearer token with a new random one, after a confirmation. Every existing client stops working until it is re-added with the new snippet. |
+| **SHOW TOKEN** / **HIDE TOKEN** | The snippets below show the token as `••••••••••••` until you ask to see it. **COPY** always copies the real snippet. |
 | **CONNECT — CLAUDE CODE (CLI)** + **COPY** | A one-line `claude mcp add …` command carrying the address and the token. |
 | **CONNECT — .mcp.json** + **COPY** | The same connection as a JSON block for a project's `.mcp.json` file. |
 
@@ -31,7 +32,7 @@ The server listens on `127.0.0.1` only. Nothing outside your PC can reach it, wh
 
 1. In the panel, confirm **STATUS** reads **RUNNING**.
 2. Under **CONNECT — CLAUDE CODE (CLI)**, click **COPY**.
-   → *The button reads **COPIED** for a moment.*
+   → *The button reads **COPIED** for a moment. The copied command carries the real token even while the panel shows it masked.*
 3. Open PowerShell (or Windows Terminal) in the folder you will work from and paste the command:
    ```text
    claude mcp add --transport http fpv-sim-app http://127.0.0.1:8765/mcp --header "Authorization: Bearer <your token>"

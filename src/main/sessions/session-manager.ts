@@ -11,6 +11,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { GatewayStatus, OverlayTrack, TickView } from "../../shared/gateway-slot.js";
 import { validateGatewayConfig } from "../gateway/config.js";
+import { gatewayWarnings } from "../gateway/presets.js";
+import { validateOverridesValue } from "../studies/overrides-schema.js";
 
 export interface LiveStartOpts {
   seed: number;
@@ -104,9 +106,13 @@ export function liveStatus(): {
   };
 }
 
-/** Stage a gateway config for the next session (validated immediately). */
-export function liveConfigureGateway(cfg: unknown): { ok: boolean; error?: string } {
-  const { issues } = validateGatewayConfig(cfg);
+/**
+ * Stage a gateway config for the next session (validated immediately).
+ * `warnings` are advisory: the config is staged, but something about it
+ * is usually a mistake (the untouched 0°,0° anchor).
+ */
+export function liveConfigureGateway(cfg: unknown): { ok: boolean; error?: string; warnings?: string[] } {
+  const { issues, config } = validateGatewayConfig(cfg);
   if (issues.length > 0) {
     return { ok: false, error: issues.map((i) => `${i.path}: ${i.message}`).join("; ") };
   }
@@ -114,7 +120,8 @@ export function liveConfigureGateway(cfg: unknown): { ok: boolean; error?: strin
     return { ok: false, error: "a session is active; the new gateway config applies to the next session" };
   }
   pendingGatewayCfg = cfg;
-  return { ok: true };
+  const warnings = config ? gatewayWarnings(config) : [];
+  return warnings.length > 0 ? { ok: true, warnings } : { ok: true };
 }
 
 export function liveGatewayStatus(): GatewayStatus & { pendingConfig: boolean } {
@@ -153,6 +160,12 @@ export function liveStart(opts: LiveStartOpts): { ok: boolean; sessionId?: strin
   const seed = opts.seed;
   if (!Number.isInteger(seed) || seed < 0 || seed > 4294967295) {
     return { ok: false, error: "seed must be an integer in 0..4294967295" };
+  }
+  // Same strictness as the Studies panel and the batch tools: the engine
+  // would merge a misspelled key silently, so refuse it here by path.
+  if (opts.overrides !== undefined) {
+    const check = validateOverridesValue(opts.overrides);
+    if (!check.ok) return { ok: false, error: `overrides: ${check.error}` };
   }
   const mode = opts.mode === "tactical" ? "tactical" : "orbit";
   const speed = typeof opts.speed === "number" ? Math.min(60, Math.max(0.25, opts.speed)) : 1;
@@ -197,7 +210,9 @@ export function liveStart(opts: LiveStartOpts): { ok: boolean; sessionId?: strin
       session.gatewayStatus = msg.gateway;
       session.overlay = msg.overlay;
       if (msg.view.eventsTail.length > 0) session.events.push(...msg.view.eventsTail);
-      broadcast("live-snapshot", { status: liveStatus(), view: msg.view, overlay: msg.overlay });
+      // `cursor` = events accumulated so far, so a panel that replayed the
+      // backlog can tell which of this tail it has already shown.
+      broadcast("live-snapshot", { status: liveStatus(), view: msg.view, overlay: msg.overlay, cursor: session.events.length });
     } else if (msg.type === "ended") {
       session.state = "ended";
       session.endedReason = msg.reason;

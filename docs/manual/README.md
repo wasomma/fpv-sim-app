@@ -1,6 +1,6 @@
 # FPV Sim — User Manual
 
-*Describes FPV Sim **0.2.1** with engine fpv-sim-mcp **0.3.0** and UI pin `7050617` (Electron 44). Your own versions are printed in the footer of the launcher window (see [Figure 3-1](03-launcher.md)). Figures were regenerated from this build on 2026-09-02.*
+*Describes FPV Sim **0.2.1** with engine fpv-sim-mcp **0.3.0** and UI pin `7050617` (Electron 44). Your own versions are printed in the footer of the launcher window (see [Figure 3-1](03-launcher.md)). Figures were regenerated from this build on 2026-09-05.*
 
 FPV Sim is a Windows desktop application for a **force-on-force engagement between two teams, each fielding an armed FPV small-UAS and two counter-UAS direction-finding nodes**. Both teams hunt each other's ground control station by its radio emissions. The application bundles the interactive simulation, a Monte Carlo study runner, a results dashboard, a WebGPU 3D viewer, a local MCP endpoint for AI-assistant control, and a native DIS gateway that streams the live engagement to other simulators such as VBS4.
 
@@ -11,9 +11,9 @@ FPV Sim is a Windows desktop application for a **force-on-force engagement betwe
 
 Analysts, trainers and interoperability engineers who run FPV Sim on a Windows PC. No programming, Node.js or Python is required for anything in the numbered chapters. A few optional tools (`dis-listen`, `terrain-export`, the open-dis cross-check) live only in the developer checkout of the source repository; every place that needs one says so explicitly.
 
-## Four paths through this manual
+## Five paths through this manual
 
-Each of the four outcomes below is covered by one self-contained chapter. Each of those chapters starts with a "Before you start" box and can be followed from top to bottom without reading anything else.
+Each of the five outcomes below is covered by one self-contained chapter or appendix. Each of those chapters starts with a "Before you start" box and can be followed from top to bottom without reading anything else.
 
 | I want to… | Read | Time |
 |---|---|---|
@@ -21,6 +21,7 @@ Each of the four outcomes below is covered by one self-contained chapter. Each o
 | Run a Monte Carlo simulation myself | [Chapter 6 — Running Monte Carlo studies](06-studies.md) | 5 min for the guided sweep, ~25 min for the full study |
 | Analyze the results in the dashboard | [Chapter 7 — Analyzing results in the Dashboard](07-dashboard.md) | 10 min |
 | Send my entities out over DIS | [Chapter 10 — Sending your entities over DIS](10-dis.md) | 20 min plus network setup |
+| Put my engagement inside VBS4, or another live virtual simulation, starting from a fresh PC | [Appendix H — Use case: quick start with an external live virtual simulation (VBS4)](H-vbs4-quick-start.md) | about 1 hour, including the install |
 
 ## Contents
 
@@ -45,6 +46,7 @@ Appendices
 - [E. MCP tools reference](E-mcp-tools-reference.md)
 - [F. Troubleshooting](F-troubleshooting.md)
 - [G. Frequently asked questions](G-faq.md)
+- [H. Use case: quick start with an external live virtual simulation (VBS4)](H-vbs4-quick-start.md)
 
 ## How this manual is written
 

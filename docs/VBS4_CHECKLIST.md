@@ -6,6 +6,10 @@ one machine — `reuseAddr` lets the gateway, `dis-listen`, and VBS share
 a port), Windows Firewall allowing UDP on the DIS port (default 3000)
 inbound on both ends.
 
+A worked, installer-only version of this checklist — fresh PC, the exact
+VBS Gateway settings, the acceptance list, the reverse path — is the
+manual's [Appendix H](manual/H-vbs4-quick-start.md).
+
 Fill in per-site values first: anchor lat/lon (pick the AO location —
 flat coastal terrain correlates best), exercise ID, network mode
 (broadcast for a flat lab LAN; multicast with an explicit interface on
@@ -33,6 +37,13 @@ dissector) — no malformed-packet warnings across a full engagement.
   matching `dis.exerciseId` (default 1), UDP port matching
   `network.port` (default 3000), same broadcast/multicast scheme.
 - Geofilter: off, or a region enclosing the anchor's 4×4 km box.
+- Site ID 1 (`dis.siteId`; VBS Gateway ignores traffic from other site
+  IDs) and a Gateway Application ID other than 3001 (it ignores its own).
+- Emitter function 5: stage `emissions.uplink.function` and
+  `emissions.video.function` as `5`. VBS Gateway keeps only incoming
+  emitter systems whose function is Acquisition / Detection (5) (VBS
+  Gateway manual 26.1.1, §10.6.1); the shipped default is 0, and with it
+  the EE acceptance line in step 4 cannot pass.
 
 ## 2. Terrain correlation (optional but the better demo)
 

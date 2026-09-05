@@ -361,7 +361,14 @@ function buildGroups(hidden: boolean): Group[] {
         c.waitFor(
           `/RUNNING/.test(document.getElementById("status").textContent) && document.getElementById("snippet-cli").textContent.length > 0`,
         ),
-      shots: [{ id: "mcp-running", caption: "The MCP Endpoint panel with the endpoint RUNNING and both copy-paste snippets (placeholder token)." }],
+      shots: [
+        {
+          id: "mcp-running",
+          caption: "The MCP Endpoint panel with the endpoint RUNNING and both copy-paste snippets (placeholder token).",
+          // The panel masks the token by default; the figure shows the placeholder.
+          setup: (c) => c.click("#show-token"),
+        },
+      ],
     },
     {
       name: "studies",

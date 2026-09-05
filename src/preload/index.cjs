@@ -16,10 +16,23 @@ contextBridge.exposeInMainWorld("fpvApp", {
   openWindow: (page, opts) => ipcRenderer.invoke("open-ui-window", { page, ...(opts || {}) }),
   openPanel: (name) => ipcRenderer.invoke("open-app-panel", name),
   info: () => ipcRenderer.invoke("app-info"),
+  ui: {
+    // Renderer-owned persisted state (settings.json `ui` bag): last-used
+    // inputs, the last staged gateway text, window bounds. Opaque JSON.
+    get: (key) => ipcRenderer.invoke("ui-get", key),
+    set: (key, value) => ipcRenderer.invoke("ui-set", { key, value }),
+    // Native confirm: { message, detail?, confirmLabel?, cancelLabel? } -> boolean.
+    // Headless runs answer true without showing anything.
+    confirm: (opts) => ipcRenderer.invoke("ui-confirm", opts),
+  },
   studies: {
     start: (opts) => ipcRenderer.invoke("study-start", opts),
     cancel: () => ipcRenderer.invoke("study-cancel"),
     status: () => ipcRenderer.invoke("study-status"),
+    reveal: (file) => ipcRenderer.invoke("study-reveal", { file }),
+    openResultsFolder: () => ipcRenderer.invoke("results-open-folder"),
+    schema: () => ipcRenderer.invoke("study-schema"),
+    validateOverrides: (text) => ipcRenderer.invoke("study-validate-overrides", text),
     onOutput: (cb) => subscribe("study-output", cb),
     onDone: (cb) => subscribe("study-done", cb),
   },
@@ -40,6 +53,7 @@ contextBridge.exposeInMainWorld("fpvApp", {
     snapshot: (eventsAfter) => ipcRenderer.invoke("live-snapshot", eventsAfter),
     configureGateway: (cfg) => ipcRenderer.invoke("live-configure-gateway", cfg),
     gatewayStatus: () => ipcRenderer.invoke("live-gateway-status"),
+    gatewayPresets: () => ipcRenderer.invoke("live-gateway-presets"),
     onSnapshot: (cb) => subscribe("live-snapshot", cb),
     onEnded: (cb) => subscribe("live-ended", cb),
   },
