@@ -36,6 +36,11 @@ export function resultsDir(): string {
   return path.join(app.getPath("userData"), "results");
 }
 
+/** Window icon for dev runs; packaged windows inherit the exe's embedded icon. */
+export function devWindowIcon(): string | null {
+  return app.isPackaged ? null : path.join(appRoot, "assets", "icon", "icon.ico");
+}
+
 /** Preload script for the app's own panels (plain CJS, not compiled). */
 export function preloadPath(): string {
   return app.isPackaged

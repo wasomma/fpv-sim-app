@@ -16,6 +16,7 @@
   },
   "scripts": {
     "vendor": "node scripts/vendor-ui.mjs",
+    "icon": "electron scripts/make-icon.mjs",
     "build": "tsc",
     "start": "electron .",
     "self-check": "electron . --self-check",

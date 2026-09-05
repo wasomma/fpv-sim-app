@@ -14,6 +14,12 @@ All simulation data is notional and unclassified.
 
 ### Added
 
+- **An app icon.** A top-down FPV quad held in a sensor reticle, drawn in
+  the panels' palette, replaces the stock Electron icon on the installer,
+  the exe and every window (a simplified variant keeps the small taskbar
+  sizes legible). Masters live in `assets/icon/`; `npm run icon`
+  regenerates `icon.ico` from them.
+
 - **The panels remember their inputs.** The launcher's seed, mode and
   autoplay, the Studies label, seed range, mode and overrides, and the
   Live Ops seed, mode and speed come back as you left them, and the

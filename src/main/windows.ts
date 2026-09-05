@@ -17,7 +17,7 @@
 
 import { BrowserWindow, screen, shell } from "electron";
 import { isHeadless } from "./mode.js";
-import { preloadPath } from "./paths.js";
+import { devWindowIcon, preloadPath } from "./paths.js";
 import { getUi, setUi } from "./settings.js";
 import { type SavedBounds, fitBounds, isSavedBounds, titleForUiUrl, uiKindForUrl } from "./window-layout.js";
 
@@ -158,7 +158,9 @@ function makeWindow(kind: WindowKind, opts: OpenOpts, preload: string | null): B
   const saved = headless ? undefined : savedBoundsFor(kind);
   const displays = screen.getAllDisplays().map((d) => d.workArea);
   const placement = fitBounds(saved, displays, screen.getPrimaryDisplay().workArea, spec);
+  const icon = devWindowIcon();
   const win = new BrowserWindow({
+    ...(icon !== null ? { icon } : {}),
     ...(placement.x !== undefined && placement.y !== undefined ? { x: placement.x, y: placement.y } : {}),
     width: placement.width,
     height: placement.height,
