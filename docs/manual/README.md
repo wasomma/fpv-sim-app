@@ -27,7 +27,7 @@ Each of the five outcomes below is covered by one self-contained chapter or appe
 
 1. [What FPV Sim is](01-overview.md) — the engagement, the four phases, the EMCON lesson, the six tiles
 2. [Installing FPV Sim](02-install.md) — requirements, download, SmartScreen, the installer, first launch, upgrading, uninstalling
-3. [The launcher window](03-launcher.md) — tiles, the launch bar, the version footer, window behaviour
+3. [The launcher window](03-launcher.md) — tiles, the launch bar, the status strip, the version footer, window behaviour, the menu and keyboard shortcuts
 4. [The Simulation window](04-simulation.md) — every control, reading the map, Unit Detail, the Event Log, ENDEX, tactical mode
 5. [The 3D Viewer](05-viewer3d.md) — camera, scene layers, the detectability field, the WebGPU requirement
 6. [Running Monte Carlo studies](06-studies.md) — the guided sweep, the canonical study, ad-hoc sweeps, overrides, managing datasets

@@ -2,18 +2,18 @@
      collapse below ~2 device pixels, so this keeps only a chunky solid quad.
      Regenerate rasters with: npm run icon (scripts/make-icon.mjs). -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <rect x="16" y="16" width="992" height="992" rx="200" fill="#12160f" stroke="#2a3325" stroke-width="16"/>
+  <rect x="16" y="16" width="992" height="992" rx="200" fill="#10161a" stroke="#1d2930" stroke-width="16"/>
 
-  <g stroke="#a7d129" stroke-width="96" stroke-linecap="round">
+  <g stroke="#ffb454" stroke-width="96" stroke-linecap="round">
     <path d="M512 512 L 307 307"/>
     <path d="M512 512 L 717 307"/>
     <path d="M512 512 L 307 717"/>
     <path d="M512 512 L 717 717"/>
   </g>
-  <circle cx="307" cy="307" r="150" fill="#a7d129"/>
-  <circle cx="717" cy="307" r="150" fill="#a7d129"/>
-  <circle cx="307" cy="717" r="150" fill="#a7d129"/>
-  <circle cx="717" cy="717" r="150" fill="#a7d129"/>
-  <rect x="368" y="368" width="288" height="288" rx="72" fill="#a7d129"/>
-  <circle cx="512" cy="512" r="56" fill="#12160f"/>
+  <circle cx="307" cy="307" r="150" fill="#ffb454"/>
+  <circle cx="717" cy="307" r="150" fill="#ffb454"/>
+  <circle cx="307" cy="717" r="150" fill="#ffb454"/>
+  <circle cx="717" cy="717" r="150" fill="#ffb454"/>
+  <rect x="368" y="368" width="288" height="288" rx="72" fill="#ffb454"/>
+  <circle cx="512" cy="512" r="56" fill="#0b0e10"/>
 </svg>

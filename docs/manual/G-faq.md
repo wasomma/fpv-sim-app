@@ -43,7 +43,7 @@ It forgets the *arming*, not the text. A staged configuration is deliberately di
 No. A live session run to its end produces exactly the batch result for the same seed, mode and overrides; pacing, pausing and publishing cannot change the outcome. Received DIS entities are display-only.
 
 **Which version am I running?**
-Read the launcher footer: `app 0.2.1 · engine fpv-sim-mcp 0.3.0 · ui pin 7050617 · …` (Chapter 3.3).
+Read the launcher footer: `app 0.2.1 · engine fpv-sim-mcp 0.3.0 · ui pin 7050617 · …` (Chapter 3.4), or open **Help ▸ About FPV Sim**.
 
 **Where is the source code and what is the licence?**
 [github.com/wasomma/fpv-sim-app](https://github.com/wasomma/fpv-sim-app), under the PolyForm Strict License 1.0.0. The simulation and engine it wraps are [fpv-sim](https://github.com/wasomma/fpv-sim) and [fpv-sim-mcp](https://github.com/wasomma/fpv-sim-mcp).

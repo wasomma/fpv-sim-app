@@ -341,9 +341,12 @@ function buildGroups(hidden: boolean): Group[] {
       width: 860,
       height: 640,
       open: () => place(createShellWindow(winOpts), 860, 640),
-      ready: (c) => c.waitFor(`document.getElementById("footer").textContent.startsWith("app ")`),
+      ready: async (c) => {
+        await c.waitFor(`document.getElementById("version").textContent.startsWith("app ")`);
+        await c.waitFor(`/RUNNING/.test(document.getElementById("st-mcp-text").textContent)`);
+      },
       shots: [
-        { id: "shell-launcher", caption: "The launcher window: six tiles, the launch bar, and the version footer." },
+        { id: "shell-launcher", caption: "The launcher window: six tiles, the launch bar, the status strip, and the version footer." },
         {
           id: "shell-tactical",
           caption: "Launch bar with MODE set to tactical.",

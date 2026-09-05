@@ -81,9 +81,9 @@ const PAGE_HELPERS = `
     c.width = 744;
     c.height = 584;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#22261f";
+    ctx.fillStyle = "#1a2229";
     ctx.fillRect(0, 0, c.width, c.height);
-    ctx.fillStyle = "#9aa08d";
+    ctx.fillStyle = "#8fa0a8";
     ctx.font = "13px monospace";
     await draw(ctx, fullUrl, 24, 36, 512, 1);
     ctx.fillText("512px (icon.svg)", 24, 26);

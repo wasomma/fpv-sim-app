@@ -1,19 +1,20 @@
-<!-- App icon master (48px and up). Palette matches src/renderer/shared/app.css:
-     bg/panel greens, accent #a7d129, accent-dim #5d7a1a. A top-down FPV quad
-     held inside a sensor reticle — the engagement the app simulates.
+<!-- App icon master (48px and up). Palette matches src/renderer/shared/app.css
+     (the upstream sim's): slate ground #0b0e10/#10161a, edge #1d2930, accent
+     #ffb454; the reticle is a muted BLUFOR blue. A top-down FPV quad held
+     inside a sensor reticle — the engagement the app simulates.
      Regenerate rasters with: npm run icon (scripts/make-icon.mjs). -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
     <radialGradient id="bg" cx="50%" cy="44%" r="75%">
-      <stop offset="0%" stop-color="#1c2418"/>
-      <stop offset="100%" stop-color="#0b0e0a"/>
+      <stop offset="0%" stop-color="#18222a"/>
+      <stop offset="100%" stop-color="#0b0e10"/>
     </radialGradient>
   </defs>
 
-  <rect x="10" y="10" width="1004" height="1004" rx="188" fill="url(#bg)" stroke="#2a3325" stroke-width="12"/>
+  <rect x="10" y="10" width="1004" height="1004" rx="188" fill="url(#bg)" stroke="#1d2930" stroke-width="12"/>
 
   <!-- sensor reticle, behind the airframe -->
-  <g stroke="#5d7a1a" fill="none">
+  <g stroke="#2f6f8f" fill="none">
     <circle cx="512" cy="512" r="352" stroke-width="24"/>
     <g stroke-width="30" stroke-linecap="round">
       <path d="M512 116 V 210"/>
@@ -24,26 +25,26 @@
   </g>
 
   <!-- quad, top-down -->
-  <g stroke="#a7d129" stroke-width="62" stroke-linecap="round">
+  <g stroke="#ffb454" stroke-width="62" stroke-linecap="round">
     <path d="M512 512 L 322 322"/>
     <path d="M512 512 L 702 322"/>
     <path d="M512 512 L 322 702"/>
     <path d="M512 512 L 702 702"/>
   </g>
   <g>
-    <circle cx="322" cy="322" r="122" fill="#a7d129"/>
-    <circle cx="322" cy="322" r="54" fill="#0b0e0a"/>
-    <circle cx="322" cy="322" r="20" fill="#a7d129"/>
-    <circle cx="702" cy="322" r="122" fill="#a7d129"/>
-    <circle cx="702" cy="322" r="54" fill="#0b0e0a"/>
-    <circle cx="702" cy="322" r="20" fill="#a7d129"/>
-    <circle cx="322" cy="702" r="122" fill="#a7d129"/>
-    <circle cx="322" cy="702" r="54" fill="#0b0e0a"/>
-    <circle cx="322" cy="702" r="20" fill="#a7d129"/>
-    <circle cx="702" cy="702" r="122" fill="#a7d129"/>
-    <circle cx="702" cy="702" r="54" fill="#0b0e0a"/>
-    <circle cx="702" cy="702" r="20" fill="#a7d129"/>
+    <circle cx="322" cy="322" r="122" fill="#ffb454"/>
+    <circle cx="322" cy="322" r="54" fill="#0b0e10"/>
+    <circle cx="322" cy="322" r="20" fill="#ffb454"/>
+    <circle cx="702" cy="322" r="122" fill="#ffb454"/>
+    <circle cx="702" cy="322" r="54" fill="#0b0e10"/>
+    <circle cx="702" cy="322" r="20" fill="#ffb454"/>
+    <circle cx="322" cy="702" r="122" fill="#ffb454"/>
+    <circle cx="322" cy="702" r="54" fill="#0b0e10"/>
+    <circle cx="322" cy="702" r="20" fill="#ffb454"/>
+    <circle cx="702" cy="702" r="122" fill="#ffb454"/>
+    <circle cx="702" cy="702" r="54" fill="#0b0e10"/>
+    <circle cx="702" cy="702" r="20" fill="#ffb454"/>
   </g>
-  <rect x="404" y="404" width="216" height="216" rx="54" fill="#a7d129"/>
-  <circle cx="512" cy="512" r="40" fill="#10140f"/>
+  <rect x="404" y="404" width="216" height="216" rx="54" fill="#ffb454"/>
+  <circle cx="512" cy="512" r="40" fill="#0b0e10"/>
 </svg>

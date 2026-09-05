@@ -65,12 +65,12 @@ cd fpv-sim-app
 npm install        # builds the fpv-sim-mcp git dependency via its prepare script
 npm run vendor     # vendor the pinned fpv-sim UI + engine copy into build/resources
 npm run build      # tsc
-npm test           # engine parity smoke, codec/geo/publisher/receive, settings/window/studies suites (97 tests)
+npm test           # engine parity smoke, codec/geo/publisher/receive, settings/window/studies/menu suites (108 tests)
 npm run self-check # headless end-to-end: protocol, engine, studies, MCP, live, DIS loopback
 npm run screenshots # regenerate docs/manual/images from the app itself (scratch profile)
 npm run manual:pdf # build docs/manual/fpv-sim-manual.pdf with the bundled Electron
 npm start          # launch the app
-npm run dist       # NSIS installer -> out/
+npm run dist       # NSIS installer -> out/ (builds the manual PDF first; Help ▸ User Manual opens it)
 ```
 
 `npm install` runs the git dependency's build through npm's script

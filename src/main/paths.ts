@@ -6,6 +6,7 @@
  */
 
 import { app } from "electron";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,6 +40,18 @@ export function resultsDir(): string {
 /** Window icon for dev runs; packaged windows inherit the exe's embedded icon. */
 export function devWindowIcon(): string | null {
   return app.isPackaged ? null : path.join(appRoot, "assets", "icon", "icon.ico");
+}
+
+/**
+ * The user manual as a single PDF, or null when this build carries none.
+ * Packaged builds ship it in extraResources (npm run dist builds it
+ * first); a dev checkout has one after `npm run manual:pdf`.
+ */
+export function manualPdf(): string | null {
+  const file = app.isPackaged
+    ? path.join(process.resourcesPath, "manual", "fpv-sim-manual.pdf")
+    : path.join(appRoot, "docs", "manual", "fpv-sim-manual.pdf");
+  return existsSync(file) ? file : null;
 }
 
 /** Preload script for the app's own panels (plain CJS, not compiled). */

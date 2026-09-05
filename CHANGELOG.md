@@ -14,6 +14,21 @@ All simulation data is notional and unclassified.
 
 ### Added
 
+- **An application menu with shortcuts.** <kbd>Ctrl</kbd>+<kbd>0</kbd>
+  brings the launcher back and <kbd>Ctrl</kbd>+<kbd>1</kbd> …
+  <kbd>Ctrl</kbd>+<kbd>6</kbd> open the six tiles from any window; **File**
+  also opens the results and settings folders; **View** has Reload, zoom,
+  full screen and Developer Tools; **Help** opens the user manual
+  (<kbd>F1</kbd> — the PDF bundled with the installer, or the online copy),
+  the changelog, the issue tracker, and an **About** box that copies the
+  version line. The bar stays hidden until <kbd>Alt</kbd>, as before.
+- **A status strip on the launcher.** Three cells say what the study
+  runner, the live session and the MCP endpoint are doing (`running ·
+  parallel sweep "…" · 1:23`, `orbit · seed 20260719 · T+02:13 · … · DIS`,
+  `RUNNING · 127.0.0.1:8765`, or the failure), refreshed every second
+  while something runs; each cell opens its panel. **RANDOM** picks a seed
+  on the launch bar, <kbd>Enter</kbd> in the seed field launches, and the
+  footer gained **COPY** (the version line) and **MANUAL**.
 - **An app icon.** A top-down FPV quad held in a sensor reticle, drawn in
   the panels' palette, replaces the stock Electron icon on the installer,
   the exe and every window (a simplified variant keeps the small taskbar
@@ -97,6 +112,16 @@ All simulation data is notional and unclassified.
 
 ### Changed
 
+- **The panels look like the sim.** The launcher, Studies, MCP Endpoint
+  and Live Ops adopt the Simulation window's palette — slate ground,
+  orange accent, outlined uppercase buttons — and its BLUFOR/OPFOR blue
+  and red replace the panels' own pair, so nothing but the content changes
+  when you cross from a panel to the sim. Success is now green, errors
+  red, throughout. Every text colour clears WCAG 4.5:1 on its background
+  (the dim label grey and the destroyed-unit grey on the Live Ops map were
+  lifted for that). The app icon was redrawn in the same palette.
+- `npm run dist` builds the manual PDF first and the installer ships it,
+  so **Help ▸ User Manual** works offline.
 - An empty **start** or **count** in the Studies panel is refused by name
   instead of silently becoming 1 or 1000.
 - The VBS4 checklist, Appendix C and Appendix F now record that VBS

@@ -29,6 +29,10 @@ extraResources:
     to: runners
     filter:
       - "*.mjs"
+  # Help → User Manual opens this; `npm run dist` builds it first (predist),
+  # and the release workflow runs manual:pdf before electron-builder.
+  - from: docs/manual/fpv-sim-manual.pdf
+    to: manual/fpv-sim-manual.pdf
 
 win:
   icon: assets/icon/icon.ico

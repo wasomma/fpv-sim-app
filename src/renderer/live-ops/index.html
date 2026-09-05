@@ -29,7 +29,7 @@
     aspect-ratio: 1; flex: 0 0 auto;
   }
   #legend { font-size: 10.5px; line-height: 1.45; }
-  #legend .blu { color: var(--blu); } #legend .opf { color: var(--opf); } #legend .ext { color: #b9c2b0; }
+  #legend .blu { color: var(--blu); } #legend .opf { color: var(--opf); } #legend .ext { color: #9fb0b8; }
   .box { padding: 8px 10px; }
   .box h2 { font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
   .box h2 .hint { white-space: nowrap; }
@@ -37,14 +37,14 @@
   table { border-collapse: collapse; width: 100%; font-size: 12px; }
   th, td { text-align: left; padding: 2px 8px 2px 0; white-space: nowrap; }
   th { color: var(--dim); font-weight: normal; }
-  .BLUFOR { color: var(--blu); } .OPFOR { color: var(--opf); } .SYS { color: var(--accent); }
+  .BLUFOR { color: var(--blu); } .OPFOR { color: var(--opf); } .SYS { color: var(--ok); }
   #events { flex: 1; overflow-y: auto; padding: 8px 10px; min-height: 90px; }
   #events .ABORT { color: var(--err); }
   #entities-box { overflow-y: auto; max-height: 300px; }
-  .endcard { color: var(--accent); }
+  .endcard { color: var(--ok); }
   .row { flex-wrap: nowrap; }
   #gateway { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  #gateway-line.ok { color: var(--accent); }
+  #gateway-line.ok { color: var(--ok); }
   #gateway-line.bad { color: var(--err); }
   #gateway-kv { margin-top: 4px; font-size: 11.5px; }
   #gateway-kv dd.bad { color: var(--err); }
@@ -73,7 +73,7 @@
         <option value="2">2×</option><option value="4">4×</option><option value="8">8×</option>
         <option value="20">20×</option><option value="60">60×</option>
       </select>
-      <button id="start">START</button>
+      <button id="start" class="primary">START</button>
       <button id="pause" disabled>PAUSE</button>
       <button id="stop" class="warn" disabled>STOP</button>
       <span class="lag" id="lag"></span>
@@ -136,22 +136,28 @@
   const X = (x) => (x / WORLD) * cv.width;
   const Y = (y) => cv.height - (y / WORLD) * cv.height;
 
+  // Map colours follow the shared stylesheet's tokens (one palette for the
+  // table, the legend and the canvas); the grid, the destroyed grey and the
+  // external-track grey are the map's own.
+  const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const MAP = { grid: "#1a242b", destroyed: "#7b8a90", external: "#9fb0b8", BLUFOR: token("--blu"), OPFOR: token("--opf"), accent: token("--accent") };
+
   function draw() {
     ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.strokeStyle = "#22301f"; ctx.lineWidth = 1;
+    ctx.strokeStyle = MAP.grid; ctx.lineWidth = 1;
     for (let g = 0; g <= WORLD; g += 500) {
       ctx.beginPath(); ctx.moveTo(X(g), 0); ctx.lineTo(X(g), cv.height); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, Y(g)); ctx.lineTo(cv.width, Y(g)); ctx.stroke();
     }
     if (lastView === null) return;
-    const colors = { BLUFOR: "#6ea8fe", OPFOR: "#ff8f5e" };
+    const colors = { BLUFOR: MAP.BLUFOR, OPFOR: MAP.OPFOR };
 
     if (lastView.objective) {
       const o = lastView.objective;
-      ctx.strokeStyle = "#a7d12955"; ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = MAP.accent + "55"; ctx.setLineDash([6, 5]);
       ctx.beginPath(); ctx.arc(X(o.x), Y(o.y), (o.r / WORLD) * cv.width, 0, 7); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "#a7d12999"; ctx.font = "11px monospace";
+      ctx.fillStyle = MAP.accent + "99"; ctx.font = "11px monospace";
       ctx.fillText(o.name, X(o.x) + 6, Y(o.y) - 6);
     }
     for (const side of ["BLUFOR", "OPFOR"]) {
@@ -163,7 +169,7 @@
       }
     }
     for (const e of lastView.entities) {
-      const c = e.destroyed || e.downed ? "#5a5f56" : colors[e.side];
+      const c = e.destroyed || e.downed ? MAP.destroyed : colors[e.side];
       ctx.fillStyle = c; ctx.strokeStyle = c;
       const x = X(e.x), y = Y(e.y);
       if (e.kind === "gcs") {
@@ -183,7 +189,7 @@
       }
     }
     // External DIS entities: read-only overlay, never engine-affecting.
-    ctx.fillStyle = "#b9c2b0"; ctx.strokeStyle = "#b9c2b0"; ctx.font = "10px monospace";
+    ctx.fillStyle = MAP.external; ctx.strokeStyle = MAP.external; ctx.font = "10px monospace";
     for (const t of overlayTracks) {
       if (t.outsideWorld) continue;
       const x = X(t.x), y = Y(t.y);

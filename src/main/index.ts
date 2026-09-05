@@ -8,14 +8,18 @@
  */
 
 import { BrowserWindow, app, dialog, ipcMain, shell } from "electron";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
+import { appInfo } from "./app-info.js";
 import { GATEWAY_PRESETS } from "./gateway/presets.js";
+import { installAppMenu, openHelp } from "./menu.js";
+import { isHelpTarget } from "./menu-spec.js";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
-import { engineRoot, pinsFile, resultsDir } from "./paths.js";
+import { resultsDir } from "./paths.js";
 import { mcpHostStatus, restartMcpHost, setServerExtender, startMcpHost } from "./mcp/host.js";
 import { registerLiveTools } from "./mcp/live-tools.js";
 import { seedResultsIfEmpty } from "./results.js";
+import { buildStrip } from "./status-strip.js";
 import {
   liveConfigureGateway,
   liveGatewayStatus,
@@ -81,6 +85,7 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     installAppProtocol();
+    installAppMenu();
     const seeding = seedResultsIfEmpty();
     if (seeding.seeded) console.log(`results store seeded at ${seeding.dir}`);
     // Before any run can start: study-start and live-start validate
@@ -106,32 +111,28 @@ if (!gotLock) {
       return openAppPanel(typeof name === "string" ? name : "") !== null;
     });
 
-    ipcMain.handle("app-info", () => {
-      let pins: unknown = null;
-      try {
-        pins = JSON.parse(readFileSync(pinsFile(), "utf8"));
-      } catch {
-        /* vendor step not run yet */
-      }
-      let engineVersion = "unknown";
-      try {
-        // The dependency's exports map blocks specifier access to its
-        // package.json — read it by filesystem path instead.
-        engineVersion = (
-          JSON.parse(readFileSync(path.join(engineRoot(), "package.json"), "utf8")) as { version: string }
-        ).version;
-      } catch {
-        /* dependency not installed */
-      }
-      return {
-        appVersion: app.getVersion(),
-        electron: process.versions.electron,
-        node: process.versions.node,
-        chrome: process.versions.chrome,
-        engineVersion,
-        pins,
-      };
+    ipcMain.handle("app-info", () => appInfo());
+
+    // The launcher's status strip: what the three services are doing,
+    // already formatted (status-strip.ts) so the panel only paints it.
+    ipcMain.handle("app-status", () => {
+      const s = studyStatus();
+      const last =
+        s.last === null
+          ? null
+          : { descr: s.last.descr, code: s.last.code, startedAtMs: s.last.startedAtMs, endedAtMs: s.last.endedAtMs };
+      return buildStrip(
+        { running: s.running, descr: s.descr, startedAtMs: s.startedAtMs, last },
+        liveStatus(),
+        mcpHostStatus(),
+        Date.now(),
+      );
     });
+
+    // Help → the same places the Help menu goes.
+    ipcMain.handle("open-help", (_event, target: unknown) =>
+      isHelpTarget(target) ? openHelp(target) : { ok: false, opened: "", error: "unknown help target" },
+    );
 
     // Renderer-owned persisted state; main only validates key and size.
     ipcMain.handle("ui-get", (_event, key: unknown) => (typeof key === "string" ? getUi(key) : null));

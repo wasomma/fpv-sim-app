@@ -35,17 +35,18 @@ interface KindSpec {
   title: string;
 }
 
-const APP_BG = "#10140f"; // src/renderer/shared/app.css --bg
-const UI_BG = "#0b0e10"; // upstream index.html / viewer3d.html / dashboard.html --bg
+// One ground for every page: the upstream pages' --bg, which the app's
+// own panels adopt in src/renderer/shared/app.css.
+const PAGE_BG = "#0b0e10";
 
 const SPEC: Record<WindowKind, KindSpec> = {
-  shell: { width: 860, height: 640, minWidth: 640, minHeight: 480, background: APP_BG, single: true, title: "FPV Sim" },
-  studies: { width: 1100, height: 780, minWidth: 720, minHeight: 520, background: APP_BG, single: true, title: "Studies — FPV Sim" },
-  mcp: { width: 1100, height: 780, minWidth: 720, minHeight: 520, background: APP_BG, single: true, title: "MCP Endpoint — FPV Sim" },
-  "live-ops": { width: 1100, height: 780, minWidth: 720, minHeight: 520, background: APP_BG, single: true, title: "Live Ops — FPV Sim" },
-  sim: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: UI_BG, single: false, title: "Simulation — FPV Sim" },
-  dashboard: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: UI_BG, single: true, title: "Dashboard — FPV Sim" },
-  viewer3d: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: UI_BG, single: false, title: "3D Viewer — FPV Sim" },
+  shell: { width: 860, height: 640, minWidth: 640, minHeight: 480, background: PAGE_BG, single: true, title: "FPV Sim" },
+  studies: { width: 1100, height: 780, minWidth: 720, minHeight: 520, background: PAGE_BG, single: true, title: "Studies — FPV Sim" },
+  mcp: { width: 1100, height: 780, minWidth: 720, minHeight: 520, background: PAGE_BG, single: true, title: "MCP Endpoint — FPV Sim" },
+  "live-ops": { width: 1100, height: 780, minWidth: 720, minHeight: 520, background: PAGE_BG, single: true, title: "Live Ops — FPV Sim" },
+  sim: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: PAGE_BG, single: false, title: "Simulation — FPV Sim" },
+  dashboard: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: PAGE_BG, single: true, title: "Dashboard — FPV Sim" },
+  viewer3d: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: PAGE_BG, single: false, title: "3D Viewer — FPV Sim" },
 };
 
 const UI_PAGES: Record<string, string> = {

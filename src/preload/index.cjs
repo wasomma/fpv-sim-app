@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld("fpvApp", {
   openWindow: (page, opts) => ipcRenderer.invoke("open-ui-window", { page, ...(opts || {}) }),
   openPanel: (name) => ipcRenderer.invoke("open-app-panel", name),
   info: () => ipcRenderer.invoke("app-info"),
+  // The launcher's status strip: {studies, live, mcp: {text, cls}, busy}.
+  status: () => ipcRenderer.invoke("app-status"),
+  // "manual" | "changelog" | "issues" — the same targets as the Help menu.
+  openHelp: (target) => ipcRenderer.invoke("open-help", target),
   ui: {
     // Renderer-owned persisted state (settings.json `ui` bag): last-used
     // inputs, the last staged gateway text, window bounds. Opaque JSON.

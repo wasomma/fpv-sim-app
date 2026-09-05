@@ -47,7 +47,7 @@ A 4 km × 4 km plan view with a 500 m grid, the same frame as the Simulation win
 | Grey symbol | Destroyed or downed. |
 | Hollow grey diamond with a label | An **external** entity received over DIS (an overlay track, Chapter 10). Display only. |
 
-Blue is BLUFOR, orange-red is OPFOR.
+Blue is BLUFOR, red is OPFOR — the same two colours as the Simulation window.
 
 ### GATEWAY
 
