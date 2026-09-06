@@ -37,7 +37,7 @@ The gateway configuration is a JSON object staged from the Live Ops GATEWAY box 
  "anchor":{"lat0Deg":21.35,"lon0Deg":-157.95}}
 ```
 
-Replace the anchor with your own latitude and longitude in every case. The same four blocks are the **preset…** menu in the Live Ops GATEWAY box; picking one fills the text box, and **STAGE** is still yours to press.
+Replace the anchor with your own latitude and longitude in every case. The same four blocks are the **preset…** menu in the Live Ops GATEWAY box; picking one fills the text box, and **STAGE** is still yours to press. The **FORM** button in the same box shows this whole reference as an editable field table — every key in C.2 with its default, range and meaning — with edits rewriting the JSON underneath (Chapter 10.2).
 
 ## C.2 All keys
 

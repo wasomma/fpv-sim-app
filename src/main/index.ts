@@ -11,6 +11,8 @@ import { BrowserWindow, app, dialog, ipcMain, shell } from "electron";
 import { copyFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { appInfo } from "./app-info.js";
+import { DEFAULT_GATEWAY_CONFIG, validateGatewayConfig } from "./gateway/config.js";
+import { GATEWAY_FORM_SECTIONS } from "./gateway/form-schema.js";
 import { GATEWAY_PRESETS } from "./gateway/presets.js";
 import { installAppMenu, openHelp } from "./menu.js";
 import { isHelpTarget } from "./menu-spec.js";
@@ -303,6 +305,13 @@ if (!gotLock) {
     ipcMain.handle("live-configure-gateway", (_event, cfg: unknown) => liveConfigureGateway(cfg));
     ipcMain.handle("live-gateway-status", () => liveGatewayStatus());
     ipcMain.handle("live-gateway-presets", () => GATEWAY_PRESETS);
+    // The FORM view of the GATEWAY box: the field table plus the defaults
+    // it diffs against, and a validate-only pass with STAGE's exact verdict.
+    ipcMain.handle("live-gateway-form", () => ({ sections: GATEWAY_FORM_SECTIONS, defaults: DEFAULT_GATEWAY_CONFIG }));
+    ipcMain.handle("live-gateway-check", (_event, cfg: unknown) => {
+      const { issues } = validateGatewayConfig(cfg);
+      return { ok: issues.length === 0, issues };
+    });
 
     setServerExtender((server) => registerLiveTools(server));
     const mcpStart = await startMcpHost();

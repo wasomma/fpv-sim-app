@@ -133,6 +133,18 @@ All simulation data is notional and unclassified.
   restoring or moving a dataset no longer means hand-editing
   `index.json`, and the manual's recipes now go through the box. The
   self-check deletes its probe dataset through the same code path.
+- **The gateway configuration as a form.** A **FORM** button in the
+  GATEWAY box swaps the JSON text for a field editor: the ~60 keys of
+  Appendix C in their ten groups, each with its default, allowed range,
+  unit and one-line meaning as a tooltip. Edits rewrite the JSON
+  underneath in the presets' own compact style — keys at their default
+  stay out of the text, keys the text already spelled out stay in — so
+  **STAGE**, the **preset…** menu and the remembered text all work
+  unchanged, and **JSON** swaps the text back. Keys that differ from the
+  defaults are highlighted and counted per group, and every value is
+  checked as you type by the same validator **STAGE** uses, refusals
+  named at the exact field. The field table is held to the config schema
+  by a unit test, so a config change that forgets the form fails CI.
 - Manual **Appendix H** — a worked quick start for putting the engagement
   inside an external live virtual simulation, with VBS4 through VBS
   Gateway as the example: a fresh PC, the eight values both sides must

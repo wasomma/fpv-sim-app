@@ -57,6 +57,11 @@ If the JSON has a syntax error the line reads `invalid JSON: …`; if a key is u
 ![A refused configuration](images/live-ops-stage-refused.png)
 *Figure 10-2. A typo in the gateway JSON is refused with the exact path.*
 
+Prefer fields over JSON? Click **FORM** in the box's title. The same configuration appears as ten collapsible groups — every key with its default, allowed range and one-line meaning, the whole of [Appendix C](C-gateway-config-reference.md) in the app — and every edit rewrites the JSON underneath it, so the two views can never disagree. Keys that differ from the defaults are highlighted and counted per group, values are checked as you type with the exact message **STAGE** would give, and **JSON** brings the text back. The **preset…** menu and **STAGE** work the same in either view.
+
+![The FORM view of the gateway editor](images/live-ops-gateway-form.png)
+*Figure 10-3. FORM: the same configuration as fields. The note line counts the keys that differ from the defaults — here the two anchor coordinates — and groups holding a changed key open themselves.*
+
 > [!WARNING]
 > The staged configuration is disarmed when FPV Sim closes. After every launch, open Live Ops — the GATEWAY box already holds the text you last staged — and press **STAGE** again before starting a session that others are supposed to see.
 
@@ -68,10 +73,10 @@ If the JSON has a syntax error the line reads `invalid JSON: …`; if a key is u
    → *Within a second the GATEWAY box switches to the live status:* `running — session live-… seed 20260719 (orbit) at 1x`, *with a small table under it —* `tx espdu 6 · emission 0 · fire 0 · detonation 0 · startResume 1 · stopFreeze 0 · 1 kB`, `rx pdus 0 · …`, `peers 0`, `overlay 0 external tracks` *— and the `espdu` and `emission` counters climb as the engagement proceeds.*
 
 ![A gateway-armed session](images/live-ops-running.png)
-*Figure 10-3. A gateway-armed session at real time: the GATEWAY box shows the session, its speed and the PDU counters.*
+*Figure 10-4. A gateway-armed session at real time: the GATEWAY box shows the session, its speed and the PDU counters.*
 
 ![The GATEWAY box while publishing](images/live-ops-gateway-crop.png)
-*Figure 10-4. The GATEWAY box while publishing — the editor gives way to the live status until the session ends. `tx` counts PDUs sent by type; `rx` counts what arrived on the socket and why anything was set aside (another exercise ID, the app's own echo, malformed, other PDU types); `peers` counts remote senders heard; `overlay` counts external entities on the map.*
+*Figure 10-5. The GATEWAY box while publishing — the editor gives way to the live status until the session ends. `tx` counts PDUs sent by type; `rx` counts what arrived on the socket and why anything was set aside (another exercise ID, the app's own echo, malformed, other PDU types); `peers` counts remote senders heard; `overlay` counts external entities on the map.*
 
 > [!NOTE]
 > Run DIS sessions at **1× (real time)**. The gateway scales velocities so receivers extrapolate correctly at higher speeds, but above 8× (`publish.maxSpeedFactor`) remote smoothing degrades and the status line says so.
@@ -87,13 +92,13 @@ Pick one of the two.
    → *Rows with protocol **DIS** appear — a few per second while the entities are emplaced, several times that once the drones are moving. The Info column names the PDU type: Start/Resume PDU once, then Entity State PDU and Electromagnetic Emission PDU, and one Detonation PDU when the strike lands.*
 
 ![DIS PDUs in Wireshark](images/manual/wireshark-dis-list.png)
-*Figure 10-5. Your first PDUs in Wireshark: Start/Resume, six Entity States, then emissions.*
+*Figure 10-6. Your first PDUs in Wireshark: Start/Resume, six Entity States, then emissions.*
 
 8. Click any **Entity State PDU** row and expand *Distributed Interactive Simulation* in the details pane.
    → *Entity ID site 1, application 3001, entity 1; Force ID 1 (friendly); Entity Marking `B-GCS`; Entity Type kind 1 (platform); Entity Location as earth-centred X/Y/Z metres (about −5,507,000 / −2,231,000 / 2,309,000 for the example anchor at 21.35°, −157.95°).*
 
 ![An Entity State PDU decoded](images/manual/wireshark-espdu-detail.png)
-*Figure 10-6. Reading an Entity State PDU: entity ID, force, marking and location.*
+*Figure 10-7. Reading an Entity State PDU: entity ID, force, marking and location.*
 
 Wireshark decodes DIS automatically on UDP port 3000. If you chose another port, right-click a row, choose **Decode As…** and pick **DIS**. A committed reference capture of the first 60 seconds of this exact seed, `docs/captures/seed-20260719-orbit.pcap` in the source repository, opens in Wireshark with no setup for comparison.
 
@@ -138,7 +143,7 @@ dis-listen: broadcast port 3000 anchor 21.35,-157.95 — ctrl-c to stop
 The gateway also listens. Entity State PDUs from other senders on the same exercise ID appear on the Live Ops map as hollow grey diamonds with their marking, and the GATEWAY box counts them: `peers 1 · overlay 1`.
 
 ![An external entity as an overlay track](images/live-ops-overlay-track.png)
-*Figure 10-7. An external DIS entity (`VBS-EXT-1`) received on the wire renders as a grey diamond overlay; the box reads peers 1 · overlay 1.*
+*Figure 10-8. An external DIS entity (`VBS-EXT-1`) received on the wire renders as a grey diamond overlay; the box reads peers 1 · overlay 1.*
 
 Rules of the overlay:
 
@@ -171,7 +176,7 @@ All under site **1**, application **3001** (`dis.siteId`, `dis.applicationId`), 
 | **Multi-homed PC, multicast** | `multicast` plus `network.interface` set to the LAN adapter's IPv4 | Multicast on Windows needs the interface named explicitly. |
 
 ![Inbound firewall rule](images/manual/firewall-inbound-rule.png)
-*Figure 10-8. Receiving PC: the inbound rule's **Protocols and Ports** tab — protocol UDP, local port 3000.*
+*Figure 10-9. Receiving PC: the inbound rule's **Protocols and Ports** tab — protocol UDP, local port 3000.*
 
 ## 10.9 The automation route: MCP
 

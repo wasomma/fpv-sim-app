@@ -71,6 +71,10 @@ contextBridge.exposeInMainWorld("fpvApp", {
     configureGateway: (cfg) => ipcRenderer.invoke("live-configure-gateway", cfg),
     gatewayStatus: () => ipcRenderer.invoke("live-gateway-status"),
     gatewayPresets: () => ipcRenderer.invoke("live-gateway-presets"),
+    // The FORM view: { sections, defaults }, and a validate-only check
+    // returning { ok, issues: [{path, message}] } without staging anything.
+    gatewayForm: () => ipcRenderer.invoke("live-gateway-form"),
+    checkGateway: (cfg) => ipcRenderer.invoke("live-gateway-check", cfg),
     onSnapshot: (cb) => subscribe("live-snapshot", cb),
     onEnded: (cb) => subscribe("live-ended", cb),
   },

@@ -50,6 +50,21 @@
   #gateway-kv dd.bad { color: var(--err); }
   #gateway-warn { font-size: 11.5px; margin-top: 4px; }
   #gateway-warn:empty { display: none; }
+  /* FORM view of the gateway editor, generated from main's field table. */
+  #gateway-view { font-size: 10px; padding: 2px 8px; }
+  #gateway-form { margin-top: 6px; max-height: 44vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  #gateway-form-note:empty { display: none; }
+  .gw-sec summary { cursor: pointer; font-size: 11px; color: var(--dim); }
+  .gw-sec summary .gw-name { font-weight: 600; letter-spacing: .12em; color: var(--ink); }
+  .gw-sec summary .gw-count { color: var(--accent); margin-left: 6px; }
+  .gw-grid { display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; padding: 6px 2px 6px 14px; align-items: center; }
+  .gw-grid label { font-size: 11.5px; letter-spacing: 0; }
+  .gw-grid label.mod { color: var(--accent); }
+  .gw-row { display: flex; gap: 6px; align-items: center; min-width: 0; }
+  .gw-row input, .gw-row select { padding: 2px 6px; font-size: 11.5px; }
+  .gw-row input[type="number"] { width: 96px; }
+  .gw-row input.gw-wide { flex: 1; min-width: 120px; width: auto; }
+  .gw-row .hint { letter-spacing: 0; }
   .hint { color: var(--dim); font-size: 11px; letter-spacing: 0; }
   textarea { margin-top: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.4; }
   /* SETUP: the overrides and the sim-time limit for the next START, folded
@@ -127,6 +142,7 @@
           <select id="gateway-preset" title="Fill the box from a ready-made configuration (you still edit the anchor and press STAGE)">
             <option value="">preset…</option>
           </select>
+          <button id="gateway-view" class="quiet" title="Edit the same configuration as a form: every key with its default, range and meaning">FORM</button>
         </h2>
         <div class="row">
           <div id="gateway">
@@ -139,6 +155,9 @@
         <textarea id="gateway-cfg" rows="4" spellcheck="false" title="Gateway config JSON — staged in memory until the app closes; the last staged text is restored on the next launch">{"network":{"mode":"broadcast","port":3000},
  "dis":{"exerciseId":1},
  "anchor":{"lat0Deg":21.35,"lon0Deg":-157.95}}</textarea>
+        <div id="gateway-form" hidden>
+          <div class="note" id="gateway-form-note"></div>
+        </div>
       </div>
     </div>
     <div class="col">
@@ -319,7 +338,7 @@
    * a short line plus a key/value block (tx and rx counters, peers,
    * overlay, last error); otherwise the staging state — "configured for
    * next session" or "no gateway config staged". */
-  let gatewayLive = false, lastGateway = null;
+  let gatewayLive = false, lastGateway = null, formMode = false;
   const RX_LABELS = {
     pdus: "pdus", bytes: "bytes", ignoredExercise: "other exercise", ignoredSelf: "own echo",
     malformed: "malformed", otherTypes: "other PDU types", selfHeard: "self-heard",
@@ -333,8 +352,10 @@
   // While a gateway-armed session runs the box is a status display; the
   // editor (which cannot be staged until STOP anyway) comes back after.
   function showEditor(on) {
-    $("gateway-cfg").hidden = !on;
+    $("gateway-cfg").hidden = !on || formMode;
+    $("gateway-form").hidden = !on || !formMode;
     $("gateway-preset").hidden = !on;
+    $("gateway-view").hidden = !on;
     $("gateway-hint").textContent = on ? "· DIS for the next session" : "· live status · the editor returns after STOP";
   }
   function setGateway(text, cls) {
@@ -427,10 +448,18 @@
     $("gateway-cfg").value = p.text;
     $("gateway-warn").textContent = "";
     setGateway(`preset loaded: ${p.hint}`, "");
+    if (formMode) gwRefresh(JSON.parse(p.text)); // the form shows what the preset filled in
   });
 
   $("stage").addEventListener("click", async () => {
     $("gateway-warn").textContent = "";
+    // In FORM view an unparseable input holds the JSON at its last good
+    // value — staging that would silently ignore what is on screen.
+    if (formMode && gwLocalErr.size > 0) {
+      const [p, msg] = gwLocalErr.entries().next().value;
+      setGateway(`refused: ${p}: ${msg}`, "bad");
+      return;
+    }
     let cfg;
     try {
       cfg = JSON.parse($("gateway-cfg").value);
@@ -449,6 +478,268 @@
       if (mem) mem.commit("gatewayText");
     } else {
       setGateway(`refused: ${r.error}`, "bad");
+    }
+  });
+
+  /* ---------------- GATEWAY form view ----------------
+   * FORM and JSON are two views of the same text: opening the form parses
+   * the box, an edit writes back the smallest equivalent patch (keys that
+   * differ from the defaults, plus keys the text already spelled out) in
+   * the presets' one-section-per-line style, and STAGE reads the text
+   * exactly as before. The field table and every verdict come from main,
+   * so the form cannot disagree with STAGE. */
+  let gwSchema = null; // { sections, defaults }, fetched once
+  const gwInputs = new Map(); // path -> { field, input, label, section }
+  const gwPresent = new Set(); // paths the text spells out (kept on write-back)
+  let gwLocalErr = new Map(); // path -> why this input has no value right now
+  let gwCheckSeq = 0;
+
+  const gwLeaf = (obj, path) => path.split(".").reduce((c, k) => (c !== null && typeof c === "object" ? c[k] : undefined), obj);
+  const gwEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const gwStatus = (text, cls) => app.setLine($("gateway-form-note"), text, cls ? `note ${cls}` : "note");
+  const gwHelp = (f) => `${f.path} — ${f.help}`;
+
+  function gwRead(f, input) {
+    if (f.type === "bool") return { ok: true, value: input.checked };
+    if (f.type === "enum") {
+      const numeric = typeof f.options[0].value === "number";
+      return { ok: true, value: numeric ? Number(input.value) : input.value };
+    }
+    const s = String(input.value).trim();
+    if (f.type === "int" || f.type === "num") {
+      if (s === "") return { ok: false, error: "a value is required" };
+      const n = Number(s);
+      if (!Number.isFinite(n)) return { ok: false, error: "a number is required" };
+      return { ok: true, value: n };
+    }
+    if (f.type === "ip-or-null") return { ok: true, value: s === "" ? null : s };
+    if (f.type === "ip-list") return { ok: true, value: s === "" ? [] : s.split(/[\s,]+/).filter(Boolean) };
+    if (f.type === "u16-pair") {
+      const parts = s === "" ? [] : s.split(/[\s,]+/).filter(Boolean).map(Number);
+      if (parts.length !== 2 || !parts.every((n) => Number.isInteger(n) && n >= 0 && n <= 65535)) {
+        return { ok: false, error: "two integers, comma-separated" };
+      }
+      return { ok: true, value: parts };
+    }
+    return { ok: true, value: s }; // ip
+  }
+
+  function gwWriteInput(f, input, v) {
+    if (f.type === "bool") input.checked = v === true;
+    else if (f.type === "ip-or-null") input.value = v === null || v === undefined ? "" : String(v);
+    else if (f.type === "ip-list" || f.type === "u16-pair") input.value = Array.isArray(v) ? v.join(", ") : String(v ?? "");
+    else input.value = v === undefined || v === null ? "" : String(v);
+  }
+
+  const gwRangeText = (f) => {
+    const range =
+      f.min !== undefined && f.max !== undefined ? `${f.minExclusive ? ">" : ""}${f.min}–${f.max}`
+      : f.min !== undefined ? `${f.minExclusive ? ">" : "≥"} ${f.min}`
+      : "";
+    return [f.unit, range].filter(Boolean).join(" · ");
+  };
+
+  function gwBuild() {
+    const root = $("gateway-form");
+    for (const sec of gwSchema.sections) {
+      const det = document.createElement("details");
+      det.className = "gw-sec";
+      const sum = document.createElement("summary");
+      const name = document.createElement("span"); name.className = "gw-name"; name.textContent = sec.key.toUpperCase();
+      const hint = document.createElement("span"); hint.className = "hint"; hint.textContent = " " + sec.hint;
+      const count = document.createElement("span"); count.className = "gw-count";
+      sum.append(name, hint, count);
+      det.appendChild(sum);
+      const grid = document.createElement("div");
+      grid.className = "gw-grid";
+      for (const f of sec.fields) {
+        const label = document.createElement("label");
+        label.textContent = f.path.slice(sec.key.length + 1);
+        const row = document.createElement("div");
+        row.className = "gw-row";
+        let input;
+        if (f.type === "enum") {
+          input = document.createElement("select");
+          for (const o of f.options) {
+            const opt = document.createElement("option");
+            opt.value = String(o.value); opt.textContent = o.label;
+            input.appendChild(opt);
+          }
+        } else if (f.type === "bool") {
+          input = document.createElement("input"); input.type = "checkbox";
+        } else if (f.type === "int" || f.type === "num") {
+          input = document.createElement("input"); input.type = "number";
+          if (f.min !== undefined) input.min = String(f.min);
+          if (f.max !== undefined) input.max = String(f.max);
+          if (f.type === "num") input.step = "any";
+        } else {
+          input = document.createElement("input"); input.type = "text"; input.spellcheck = false;
+          if (f.type === "ip-list") input.classList.add("gw-wide");
+        }
+        label.title = input.title = gwHelp(f);
+        label.htmlFor = input.id = `gw-${f.path.replace(/\./g, "-")}`;
+        input.addEventListener(f.type === "bool" || f.type === "enum" ? "change" : "input", () => gwEdit(f.path));
+        row.appendChild(input);
+        const range = gwRangeText(f);
+        if (range) { const r = document.createElement("span"); r.className = "hint"; r.textContent = range; row.appendChild(r); }
+        grid.append(label, row);
+        gwInputs.set(f.path, { field: f, input, label, section: det });
+      }
+      det.appendChild(grid);
+      root.appendChild(det);
+    }
+  }
+
+  // Every path's current value; unparseable inputs land in gwLocalErr instead.
+  function gwValues() {
+    gwLocalErr = new Map();
+    const values = new Map();
+    for (const [path, { field, input }] of gwInputs) {
+      const r = gwRead(field, input);
+      if (r.ok) values.set(path, r.value);
+      else gwLocalErr.set(path, r.error);
+    }
+    return values;
+  }
+
+  // Changed-key highlights, per-section counts, local-error marks.
+  function gwMark(values) {
+    let total = 0;
+    const perSec = new Map();
+    for (const [path, { field, input, label, section }] of gwInputs) {
+      const changed = values.has(path) && !gwEq(values.get(path), gwLeaf(gwSchema.defaults, path));
+      label.classList.toggle("mod", changed);
+      if (changed) { total++; perSec.set(section, (perSec.get(section) || 0) + 1); }
+      input.classList.toggle("invalid", gwLocalErr.has(path));
+      input.title = gwLocalErr.has(path) ? `${path}: ${gwLocalErr.get(path)}` : gwHelp(field);
+    }
+    for (const det of new Set([...gwInputs.values()].map((x) => x.section))) {
+      const n = perSec.get(det) || 0;
+      det.querySelector(".gw-count").textContent = n > 0 ? `· ${n} changed` : "";
+    }
+    return total;
+  }
+
+  function gwSetPath(root, path, v) {
+    const parts = path.split(".");
+    let cur = root;
+    for (const p of parts.slice(0, -1)) {
+      if (typeof cur[p] !== "object" || cur[p] === null) cur[p] = {};
+      cur = cur[p];
+    }
+    cur[parts[parts.length - 1]] = v;
+  }
+  function gwPatchOf(values) {
+    const out = {};
+    for (const sec of gwSchema.sections) {
+      for (const f of sec.fields) {
+        if (!values.has(f.path)) continue;
+        const v = values.get(f.path);
+        if (gwPresent.has(f.path) || !gwEq(v, gwLeaf(gwSchema.defaults, f.path))) gwSetPath(out, f.path, v);
+      }
+    }
+    return out;
+  }
+  const gwSerialize = (patch) => {
+    const keys = Object.keys(patch);
+    if (keys.length === 0) return "{}";
+    return "{" + keys.map((k) => `${JSON.stringify(k)}:${JSON.stringify(patch[k])}`).join(",\n ") + "}";
+  };
+
+  // The full validator's verdict (STAGE's exact check), decorated per field.
+  async function gwRunCheck(patch, changed) {
+    const seq = ++gwCheckSeq;
+    let r;
+    try { r = await window.fpvApp.live.checkGateway(patch); }
+    catch { r = { ok: false, issues: [{ path: "gateway", message: "check unavailable — STAGE still validates" }] }; }
+    if (seq !== gwCheckSeq) return; // superseded by a newer edit
+    for (const [path, { field, input, section }] of gwInputs) {
+      if (gwLocalErr.has(path)) continue;
+      const issue = (r.issues || []).find((i) => i.path === path);
+      input.classList.toggle("invalid", issue !== undefined);
+      input.title = issue ? `${path}: ${issue.message}` : gwHelp(field);
+      if (issue) section.open = true;
+    }
+    if (r.ok) {
+      gwStatus(changed === 0 ? "every key at its default" : `all keys OK — ${changed} differ${changed === 1 ? "s" : ""} from the defaults`, "ok");
+    } else {
+      const first = r.issues[0];
+      const more = r.issues.length > 1 ? ` · +${r.issues.length - 1} more` : "";
+      gwStatus(`${first.path}: ${first.message}${more}`, "bad");
+    }
+  }
+  const gwCheckSoon = app.debounce((patch, changed) => { gwRunCheck(patch, changed); }, 300);
+
+  function gwSync() {
+    const values = gwValues();
+    const changed = gwMark(values);
+    if (gwLocalErr.size > 0) {
+      const [p, msg] = gwLocalErr.entries().next().value;
+      const more = gwLocalErr.size > 1 ? ` · +${gwLocalErr.size - 1} more` : "";
+      gwStatus(`${p}: ${msg}${more} — the JSON keeps its last good value`, "bad");
+      return; // hold the text until the input parses again
+    }
+    const patch = gwPatchOf(values);
+    $("gateway-cfg").value = gwSerialize(patch);
+    gwCheckSoon(patch, changed);
+  }
+  function gwEdit(path) {
+    gwPresent.add(path); // a touched key stays spelled out in the text
+    gwSync();
+  }
+
+  // (Re)load every input from a parsed patch: on open, and when a preset fills the box.
+  function gwRefresh(patch) {
+    gwPresent.clear();
+    for (const [path, { field, input }] of gwInputs) {
+      const v = gwLeaf(patch, path);
+      if (v !== undefined) gwPresent.add(path);
+      gwWriteInput(field, input, v === undefined ? gwLeaf(gwSchema.defaults, path) : v);
+    }
+    const values = gwValues();
+    const changed = gwMark(values);
+    for (const [path, { section }] of gwInputs) {
+      if (values.has(path) && !gwEq(values.get(path), gwLeaf(gwSchema.defaults, path))) section.open = true;
+    }
+    gwRunCheck(gwLocalErr.size === 0 ? gwPatchOf(values) : patch, changed);
+  }
+
+  async function gwOpen() {
+    const text = $("gateway-cfg").value.trim();
+    let patch = {};
+    if (text !== "") {
+      try { patch = JSON.parse(text); }
+      catch (err) { setGateway(`the form needs valid JSON first — ${err.message}`, "bad"); return; }
+      if (patch === null || typeof patch !== "object" || Array.isArray(patch)) {
+        setGateway("the form needs a JSON object", "bad"); return;
+      }
+    }
+    if (gwSchema === null) {
+      try { gwSchema = await window.fpvApp.live.gatewayForm(); }
+      catch { setGateway("the form is unavailable — its field table failed to load", "bad"); return; }
+      gwBuild();
+    }
+    // Keys the form has no field for would be dropped on the first edit;
+    // refuse instead, naming the first one (same posture as STAGE).
+    let check = { ok: true, issues: [] };
+    try { check = await window.fpvApp.live.checkGateway(patch); } catch { /* the form still opens; STAGE keeps the verdict */ }
+    const structural = (check.issues || []).find((i) => i.message === "unknown key" || i.message === "expected an object");
+    if (structural) {
+      setGateway(`the form cannot show this JSON — ${structural.path}: ${structural.message}`, "bad");
+      return;
+    }
+    gwRefresh(patch);
+    formMode = true;
+    $("gateway-view").textContent = "JSON";
+    showEditor(true);
+  }
+  $("gateway-view").addEventListener("click", () => {
+    if (formMode) {
+      formMode = false;
+      $("gateway-view").textContent = "FORM";
+      showEditor(true);
+    } else {
+      gwOpen();
     }
   });
 

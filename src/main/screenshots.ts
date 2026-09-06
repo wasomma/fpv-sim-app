@@ -744,10 +744,27 @@ function buildGroups(hidden: boolean): Group[] {
           clip: (c) => c.rectOf("#gateway-box", 6),
         },
         {
+          id: "live-ops-gateway-form",
+          caption: "FORM: the same configuration as fields — every key with its default, range and meaning; edits keep the JSON in step.",
+          setup: async (c) => {
+            await c.click("#gateway-view");
+            await c.waitFor(
+              `!document.getElementById("gateway-form").hidden && document.querySelectorAll("#gateway-form .gw-sec").length >= 10`,
+            );
+            await c.waitFor(`/all keys OK/.test(document.getElementById("gateway-form-note").textContent)`);
+            // ANCHOR opened itself (2 changed keys); open NETWORK too so the figure shows fields.
+            await c.js(`(() => { document.querySelector("#gateway-form .gw-sec").open = true; return true; })()`);
+          },
+          clip: (c) => c.rectOf("#gateway-box", 6),
+        },
+        {
           id: "live-ops-running",
           caption: "A gateway-armed session at 1×: entities, events, and PDU counters climbing.",
           timeoutMs: 90000,
           setup: async (c) => {
+            // Back to the JSON view so the later editor shots match the panel as it opens.
+            await c.click("#gateway-view");
+            await c.waitFor(`document.getElementById("gateway-form").hidden`);
             livePort = await freeUdpPort();
             const started = liveStart({
               seed: 20260719,
