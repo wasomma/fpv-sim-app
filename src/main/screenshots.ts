@@ -315,6 +315,24 @@ const DASH_PROV_HAS = (needle: string) => `document.getElementById("prov").textC
 const WALKTHROUGH_LABEL = "DF bearing error doubled";
 const WALKTHROUGH_OVERRIDES = `{"CUAS":{"BRG_SIGMA_DEG":8}}`;
 
+/*
+ * dashboard.html only reveals #content after every card is rendered, yet a
+ * committed dashboard-overview once caught the "Loading results…"
+ * placeholder with an empty page: the frame on screen can lag the DOM the
+ * waits inspect. So readiness demands the visible artifacts themselves —
+ * placeholder hidden, content revealed, a chart svg in the DOM, the
+ * walkthrough sweep's provenance — and the first shot re-asserts all of it
+ * right before capturing instead of trusting the group ready() from
+ * moments earlier.
+ */
+const dashReady = async (c: Ctx): Promise<void> => {
+  await c.waitFor(`document.getElementById("status").hidden`, 20000);
+  await c.waitFor(`!document.getElementById("content").hidden`, 20000);
+  await c.waitFor(`document.querySelector("#charts .card svg") !== null`, 20000);
+  // Newest manifest entry loads by default — the walkthrough sweep just written.
+  await c.waitFor(DASH_PROV_HAS(WALKTHROUGH_LABEL), 20000);
+};
+
 function buildGroups(hidden: boolean): Group[] {
   const winOpts = { show: false, backgroundThrottling: false };
   const place = (win: BrowserWindow, w: number, h: number): BrowserWindow => {
@@ -456,13 +474,13 @@ function buildGroups(hidden: boolean): Group[] {
       width: 1440,
       height: 920,
       open: ui(1440, 920, "app://ui/dashboard.html"),
-      ready: async (c) => {
-        await c.waitFor(`!document.getElementById("content").hidden`, 20000);
-        // Newest manifest entry loads by default — the walkthrough sweep just written.
-        await c.waitFor(DASH_PROV_HAS(WALKTHROUGH_LABEL), 20000);
-      },
+      ready: dashReady,
       shots: [
-        { id: "dashboard-overview", caption: "The Dashboard right after the exercise: your ad-hoc dataset is selected." },
+        {
+          id: "dashboard-overview",
+          caption: "The Dashboard right after the exercise: your ad-hoc dataset is selected.",
+          setup: dashReady,
+        },
         { id: "dashboard-tiles-adhoc", caption: "Summary tiles for the doubled-bearing-error sweep.", clip: (c) => c.rectOf("#tiles", 8) },
         { id: "dashboard-seeds", caption: "Notable engagements — WATCH opens the exact battle behind a statistic.", clip: (c) => c.rectOf("#seedsCard", 8) },
         {
