@@ -312,7 +312,15 @@
   }
 
   async function refreshDatasets() {
-    dsData = await window.fpvApp.results.list();
+    // A failed listing must say so, not leave a silently empty box — a
+    // renderer newer than its main process lands here, for example.
+    try {
+      dsData = await window.fpvApp.results.list();
+    } catch (err) {
+      $("ds-count").textContent = "unavailable";
+      setDsMsg(`datasets unavailable — ${err.message}`, "bad");
+      return;
+    }
     renderDatasets();
     if (dsData.error) setDsMsg(`the manifest could not be read — ${dsData.error}`, "bad");
   }

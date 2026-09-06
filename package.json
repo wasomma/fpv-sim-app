@@ -27,7 +27,7 @@
     "terrain-export": "node dist/src/main/gateway/terrain/export-cli.js",
     "interop-check": "tsc && node scripts/interop-check.mjs",
     "test": "tsc && node --test \"dist/test/**/*.test.js\"",
-    "predist": "npm run manual:pdf",
+    "predist": "npm run build && npm run manual:pdf",
     "dist": "electron-builder --publish never"
   },
   "dependencies": {
