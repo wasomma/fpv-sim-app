@@ -118,6 +118,21 @@ All simulation data is notional and unclassified.
   returns the same facts as `overrideKeys` and `maxSimS`. The MCP tool
   could already do this; the panel could not. The self-check gained a
   step proving a misspelled key is refused before a session starts.
+- **Datasets are managed from the app.** A collapsible **DATASETS** box
+  on the Studies panel lists every manifest entry — label, kind, mode,
+  run count, date, file — with **RENAME** (edits the label in place),
+  **EXPORT** (copies the file through a save dialog), **REVEAL**, and
+  **DELETE** (file and manifest entry together, after a confirm). Files
+  in the results folder the manifest does not list — quick runs,
+  hand-copied datasets — appear below with **REGISTER**, which rebuilds
+  a manifest entry from the provenance inside the file, and a deleted
+  bundled dataset gets a **RESTORE** button that brings the factory copy
+  back. Every change reloads any open Dashboard; while a run is active
+  the manifest belongs to the runner and mutations are refused; the
+  manifest is rewritten atomically, unknown fields preserved. Retiring,
+  restoring or moving a dataset no longer means hand-editing
+  `index.json`, and the manual's recipes now go through the box. The
+  self-check deletes its probe dataset through the same code path.
 - Manual **Appendix H** — a worked quick start for putting the engagement
   inside an external live virtual simulation, with VBS4 through VBS
   Gateway as the example: a fresh PC, the eight values both sides must

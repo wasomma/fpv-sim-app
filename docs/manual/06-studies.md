@@ -28,6 +28,7 @@ Click the **STUDIES** tile.
 | **AD-HOC SWEEP** | **label**, **start**, **count**, **mode**, **overrides JSON**, **RUN PARALLEL**, **RUN SINGLE-THREADED** |
 | Status row | the status text (`idle` or `running: …`), the elapsed time (with the expected duration for a study), a progress bar, **CANCEL**, **OPEN DASHBOARD** |
 | **LAST DATASET** | appears after a run: the full path of the file it wrote, **COPY PATH**, **REVEAL IN EXPLORER**, **OPEN RESULTS FOLDER**, and whether the Dashboard will list it |
+| **DATASETS** | the manifest, editable (click to expand): **RENAME** / **EXPORT** / **REVEAL** / **DELETE** per dataset, **REGISTER** for files the manifest does not list, **RESTORE** for a deleted bundled dataset (6.7) |
 | Log | everything the run prints, newest at the bottom (the last 800 lines are shown; a panel reopened during or after a run gets the last 500 back) |
 
 Only one run — study or sweep — can be active at a time.
@@ -87,7 +88,7 @@ The two **RUN** buttons in **CANONICAL MONTE CARLO STUDY** execute the exact scr
 > **RUN QUICK** output never appears in the Dashboard. Use it only to check that the study machinery works. The note under the buttons says so, and the **LAST DATASET** box reads *not registered in the manifest* when it finishes. If you want a dataset you can analyze, run an ad-hoc sweep (6.3) or the full study.
 
 > [!WARNING]
-> **RUN FULL** overwrites the bundled `monte-carlo.json` entry in your results folder, so it asks you to confirm first. Because the engine is deterministic the numbers come back identical, but the file's date changes. To restore the factory datasets, see [Appendix B](B-files-and-settings.md).
+> **RUN FULL** overwrites the bundled `monte-carlo.json` entry in your results folder, so it asks you to confirm first. Because the engine is deterministic the numbers come back identical, but the file's date changes. A bundled dataset you deleted comes back with **RESTORE** in the DATASETS box (6.7); a full factory reset is in [Appendix B](B-files-and-settings.md).
 
 Procedure:
 
@@ -172,9 +173,34 @@ The box is checked against the engine's own parameter table as you type. The lin
 
 ## 6.7 Managing datasets
 
+The **DATASETS** box under the status row is the manifest, editable. Collapsed, its header line still summarizes the store (`4 in the manifest · 1 not listed`); click it to expand. Opening the box re-reads the folder, and **REFRESH** does the same on demand — after copying a file in by hand, for example.
+
+![The DATASETS box](images/studies-datasets.png)
+*Figure 6-6. The DATASETS box opened after the guided exercise: the new sweep on top, the bundled datasets under it.*
+
+Each manifest entry shows its label, kind, mode, run count, date and file name, with four buttons:
+
+| Button | Effect |
+|---|---|
+| **RENAME** | Edits the label the Dashboard shows, in place (<kbd>Enter</kbd> or **SAVE** commits, <kbd>Esc</kbd> cancels). The file name never changes. |
+| **EXPORT** | Copies the dataset file wherever you point the save dialog — a share, a stick, an e-mail draft. |
+| **REVEAL** | Selects the file in File Explorer. |
+| **DELETE** | Asks first, then removes the file **and** its manifest entry together. There is no undo — except for a bundled dataset, which can be restored (below). |
+
+Below the entries, the box lists `.json` files in the results folder that the manifest does **not** list: quick-run smoke tests (which stay unregistered by design) and files copied in by hand. **REGISTER** rebuilds a manifest entry from the provenance inside such a file, so the Dashboard lists it with its original label, date and run count; **DELETE** removes the file.
+
+The box enforces the rules so you cannot break the store:
+
+- While a run is active, every mutating button is greyed out and the operations are refused — the run rewrites the manifest when it finishes.
+- Every change reloads any open Dashboard window; the line under the box says what happened.
+- An entry whose file is gone is flagged *file missing*: **DELETE** retires the dangling entry, and a bundled dataset offers **RESTORE** instead of EXPORT/REVEAL.
+- A bundled dataset you deleted entirely appears at the bottom under *bundled datasets not present* with a **RESTORE** button that copies the factory file and its entry back.
+
+Other notes:
+
 - **Same label, same day** — the new file overwrites the old one (the name includes only the date), and the manifest entry is replaced.
-- **Deleting a dataset** — **OPEN RESULTS FOLDER** (in the LAST DATASET box) opens `%APPDATA%\fpv-sim-app\results`; delete the file and remove its entry from `index.json` in the same folder (a plain-text JSON list; delete the whole `{ … }` block for that file). Reload the Dashboard.
-- **Factory reset** — delete the entire `results` folder while FPV Sim is closed. The next start recreates it with the three bundled datasets. Your own sweeps are gone, so copy any you want to keep first.
-- **Sharing a dataset** — send the JSON file together with its `index.json` entry; the recipient drops both into their own results folder.
+- **Factory reset** — delete the entire `results` folder while FPV Sim is closed. The next start recreates it with the three bundled datasets. Your own sweeps are gone, so **EXPORT** any you want to keep first.
+- **Sharing a dataset** — **EXPORT** it; the recipient drops the file into their own results folder (`%APPDATA%\fpv-sim-app\results`) and clicks **REGISTER** in their DATASETS box. Everything the Dashboard shows travels inside the file.
+- Hand-editing `index.json` still works ([Appendix B](B-files-and-settings.md)) but is no longer needed for any of this.
 
 Appendix B has the exact layout of the folder.

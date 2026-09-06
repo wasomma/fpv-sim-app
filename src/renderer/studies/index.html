@@ -13,6 +13,22 @@
   #elapsed { color: var(--dim); font-size: 12px; }
   progress { width: 240px; accent-color: var(--ok); }
   #dataset-path { flex: 1; min-width: 200px; font-size: 12px; overflow-wrap: anywhere; }
+  /* The DATASETS box: collapsed to its summary line until opened, one
+     compact row per manifest entry, capped so the log keeps room. */
+  #datasets-box summary {
+    cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  #ds-count { margin-left: 10px; letter-spacing: normal; text-transform: none; font-weight: normal; }
+  #ds-list { max-height: 200px; overflow-y: auto; margin-top: 8px; }
+  #datasets-box button { padding: 2px 8px; font-size: 11px; letter-spacing: .08em; }
+  .ds-row { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-top: 1px solid var(--edge); }
+  .ds-row:first-child { border-top: none; padding-top: 0; }
+  .ds-info { flex: 1; min-width: 200px; }
+  .ds-info .note { display: block; overflow-wrap: anywhere; }
+  .ds-label { color: var(--bright); }
+  .ds-section { margin-top: 8px; letter-spacing: .08em; text-transform: uppercase; }
+  #ds-msg { overflow-wrap: anywhere; }
   #log { flex: 1; overflow-y: auto; min-height: 160px; }
   #log .stderr { color: var(--dim); }
   #log .sys { color: var(--ok); }
@@ -83,6 +99,17 @@
     <div class="note" id="dataset-note" style="margin-top:6px"></div>
   </div>
 
+  <div class="box" id="datasets-box">
+    <details id="ds-details">
+      <summary title="Every dataset the manifest lists, plus files in the results folder it does not">DATASETS<span class="note" id="ds-count"></span></summary>
+      <div id="ds-list"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="ds-refresh" class="quiet" title="Re-read the manifest and the results folder — after copying a file in by hand, for example">REFRESH</button>
+        <span class="note" id="ds-msg"></span>
+      </div>
+    </details>
+  </div>
+
   <div id="log" class="well"></div>
 
 <script src="../shared/app.js"></script>
@@ -120,6 +147,7 @@
     const running = r !== null;
     buttons.forEach((b) => (b.disabled = running));
     cancelBtn.disabled = !running;
+    updateDsDisabled();
     status.textContent = running ? `running: ${r.descr}` : "idle";
     status.className = running ? "running" : "";
     if (running) {
@@ -207,6 +235,7 @@
     setRunning(null);
     elapsedEl.textContent = `took ${fmtDur(d.elapsedMs)}`;
     showDataset(d);
+    refreshDatasets(); // a finished run may have added or replaced an entry
   });
 
   async function start(opts) {
@@ -260,6 +289,262 @@
     const r = await window.fpvApp.studies.openResultsFolder();
     if (!r.ok) $("dataset-note").textContent = r.error;
   });
+
+  /* ---- DATASETS: the manifest, editable ----------------------------
+   * One row per manifest entry, then the .json files the manifest does
+   * not list (quick runs, hand-copied files), then bundled datasets
+   * that are gone entirely. Mutations go through main, which refuses
+   * them while a run is active and reloads any open dashboard.
+   */
+  const dsList = $("ds-list");
+  let dsData = null; // last results.list() payload
+  let dsEditing = null; // file whose label is being edited inline
+
+  const setDsMsg = (text, cls) => app.setLine($("ds-msg"), text, cls ? `note ${cls}` : "note");
+  const reloadedSuffix = (r) =>
+    r.reloaded > 0 ? ` · ${r.reloaded} open Dashboard window${r.reloaded > 1 ? "s" : ""} reloaded` : "";
+  const fmtBytes = (n) =>
+    n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} kB` : `${n} B`;
+  const isQuickFile = (file) => /-quick\.json$/.test(file);
+
+  function updateDsDisabled() {
+    for (const b of dsList.querySelectorAll("button[data-mut]")) b.disabled = run !== null;
+  }
+
+  async function refreshDatasets() {
+    dsData = await window.fpvApp.results.list();
+    renderDatasets();
+    if (dsData.error) setDsMsg(`the manifest could not be read — ${dsData.error}`, "bad");
+  }
+
+  function dsButton(text, opts) {
+    const b = document.createElement("button");
+    b.textContent = text;
+    if (opts.warn) b.classList.add("warn");
+    if (opts.mut) b.dataset.mut = "1"; // disabled while a run is active
+    if (opts.title) b.title = opts.title;
+    b.addEventListener("click", opts.onClick);
+    return b;
+  }
+
+  function dsSection(text) {
+    const div = document.createElement("div");
+    div.className = "note ds-section";
+    div.textContent = text;
+    return div;
+  }
+
+  function dsRow(buttons) {
+    const row = document.createElement("div");
+    row.className = "ds-row";
+    const info = document.createElement("div");
+    info.className = "ds-info";
+    row.appendChild(info);
+    for (const b of buttons) row.appendChild(b);
+    return { row, info };
+  }
+
+  function dsEntryRow(entry) {
+    const label = entry.label || "Full study"; // the dashboard's own defaults
+    const bundled = dsData.bundled.includes(entry.file);
+    const editing = dsEditing === entry.file;
+    const buttons = [];
+    let input = null;
+    if (editing) {
+      buttons.push(
+        dsButton("SAVE", { mut: true, onClick: () => commitRename(entry.file, input.value) }),
+        dsButton("CANCEL", { onClick: cancelRename }),
+      );
+    } else {
+      buttons.push(
+        dsButton("RENAME", {
+          mut: true,
+          title: "Change the label the Dashboard shows; the file name stays",
+          onClick: () => {
+            dsEditing = entry.file;
+            renderDatasets();
+          },
+        }),
+      );
+      if (entry.missing) {
+        if (bundled) buttons.push(dsButton("RESTORE", { mut: true, title: "Copy the factory file back", onClick: () => dsRestore(entry.file) }));
+      } else {
+        buttons.push(
+          dsButton("EXPORT", { title: "Copy the dataset file somewhere else", onClick: () => dsExport(entry.file) }),
+          dsButton("REVEAL", { title: "Select the file in File Explorer", onClick: () => dsReveal(entry.file) }),
+        );
+      }
+      buttons.push(dsButton("DELETE", { mut: true, warn: true, onClick: () => dsDelete(entry.file, { label, registered: true, bundled }) }));
+    }
+    const { row, info } = dsRow(buttons);
+    if (editing) {
+      input = document.createElement("input");
+      input.type = "text";
+      input.value = label;
+      input.style.width = "100%";
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") commitRename(entry.file, input.value);
+        if (e.key === "Escape") cancelRename();
+      });
+      info.appendChild(input);
+      queueMicrotask(() => {
+        input.focus();
+        input.select();
+      });
+    } else {
+      const l = document.createElement("span");
+      l.className = "ds-label";
+      l.textContent = label;
+      info.appendChild(l);
+    }
+    const runs = typeof entry.total_runs === "number" ? entry.total_runs.toLocaleString("en-US") : "?";
+    const date = typeof entry.generated === "string" ? entry.generated.slice(0, 10) : "?";
+    const meta = document.createElement("span");
+    meta.className = "note";
+    meta.textContent = `${entry.kind || "study"} · ${entry.mode || "orbit"} · ${runs} runs · ${date} · ${entry.file}`;
+    if (entry.missing) {
+      const bad = document.createElement("span");
+      bad.className = "bad";
+      bad.textContent = " · file missing";
+      meta.appendChild(bad);
+    }
+    info.appendChild(meta);
+    return row;
+  }
+
+  function dsUnregRow(u) {
+    const buttons = [];
+    if (!isQuickFile(u.file)) {
+      buttons.push(
+        dsButton("REGISTER", {
+          mut: true,
+          title: "Add a manifest entry rebuilt from the provenance inside the file, so the Dashboard lists it",
+          onClick: () => dsRegister(u.file),
+        }),
+      );
+    }
+    buttons.push(
+      dsButton("REVEAL", { title: "Select the file in File Explorer", onClick: () => dsReveal(u.file) }),
+      dsButton("DELETE", { mut: true, warn: true, onClick: () => dsDelete(u.file, { registered: false }) }),
+    );
+    const { row, info } = dsRow(buttons);
+    const l = document.createElement("span");
+    l.className = "ds-label";
+    l.textContent = u.file;
+    info.appendChild(l);
+    const meta = document.createElement("span");
+    meta.className = "note";
+    meta.textContent = fmtBytes(u.bytes) + (isQuickFile(u.file) ? " · quick-run smoke test, never registered" : "");
+    info.appendChild(meta);
+    return row;
+  }
+
+  function dsRestoreRow(file) {
+    const { row, info } = dsRow([
+      dsButton("RESTORE", { mut: true, title: "Copy the factory file back and re-add its manifest entry", onClick: () => dsRestore(file) }),
+    ]);
+    const l = document.createElement("span");
+    l.className = "ds-label";
+    l.textContent = file;
+    info.appendChild(l);
+    return row;
+  }
+
+  function renderDatasets() {
+    dsList.textContent = "";
+    if (dsData === null) return;
+    for (const entry of dsData.datasets) dsList.appendChild(dsEntryRow(entry));
+    if (dsData.datasets.length === 0 && !dsData.error) dsList.appendChild(dsSection("the manifest lists no datasets"));
+    if (dsData.unregistered.length > 0) {
+      dsList.appendChild(dsSection("in the folder but not listed — the Dashboard cannot see these"));
+      for (const u of dsData.unregistered) dsList.appendChild(dsUnregRow(u));
+    }
+    const listed = new Set(dsData.datasets.map((e) => e.file));
+    const onDisk = new Set(dsData.unregistered.map((u) => u.file));
+    const gone = dsData.bundled.filter((b) => !listed.has(b) && !onDisk.has(b));
+    if (gone.length > 0) {
+      dsList.appendChild(dsSection("bundled datasets not present"));
+      for (const file of gone) dsList.appendChild(dsRestoreRow(file));
+    }
+    // The collapsed box still says what is inside.
+    const missing = dsData.datasets.filter((e) => e.missing).length;
+    const parts = [`${dsData.datasets.length} in the manifest`];
+    if (missing > 0) parts.push(`${missing} file${missing > 1 ? "s" : ""} missing`);
+    if (dsData.unregistered.length > 0) parts.push(`${dsData.unregistered.length} not listed`);
+    if (gone.length > 0) parts.push(`${gone.length} bundled gone`);
+    $("ds-count").textContent = dsData.error ? "manifest unreadable" : parts.join(" · ");
+    updateDsDisabled();
+  }
+
+  function cancelRename() {
+    dsEditing = null;
+    renderDatasets();
+  }
+
+  async function commitRename(file, value) {
+    const r = await window.fpvApp.results.relabel(file, value);
+    dsEditing = null;
+    if (!r.ok) {
+      setDsMsg(`refused: ${r.error}`, "bad");
+      renderDatasets();
+      return;
+    }
+    await refreshDatasets();
+    setDsMsg(`relabeled ${file}${reloadedSuffix(r)}`, "ok");
+  }
+
+  async function dsDelete(file, opts) {
+    const what = opts.registered ? `dataset "${opts.label}"` : `file ${file}`;
+    const detail = (opts.registered
+      ? `Removes ${file} from the results folder and its entry from the manifest. `
+      : `Removes ${file} from the results folder (it is not listed in the manifest). `) +
+      (opts.bundled ? "A bundled dataset can be restored afterwards from this box." : "There is no undo.");
+    const ok = await app.confirm({ message: `Delete ${what}?`, detail, confirmLabel: "Delete" });
+    if (!ok) return;
+    const r = await window.fpvApp.results.remove(file);
+    if (!r.ok) {
+      setDsMsg(`refused: ${r.error}`, "bad");
+      return;
+    }
+    await refreshDatasets();
+    setDsMsg(`deleted ${file}${reloadedSuffix(r)}`, "ok");
+  }
+
+  async function dsRegister(file) {
+    const r = await window.fpvApp.results.register(file);
+    if (!r.ok) {
+      setDsMsg(`refused: ${r.error}`, "bad");
+      return;
+    }
+    await refreshDatasets();
+    setDsMsg(`registered ${file} as "${r.label}"${reloadedSuffix(r)}`, "ok");
+  }
+
+  async function dsRestore(file) {
+    const r = await window.fpvApp.results.restore(file);
+    if (!r.ok) {
+      setDsMsg(`refused: ${r.error}`, "bad");
+      return;
+    }
+    await refreshDatasets();
+    setDsMsg(`restored ${file}${reloadedSuffix(r)}`, "ok");
+  }
+
+  async function dsReveal(file) {
+    const r = await window.fpvApp.studies.reveal(file);
+    if (!r.ok) setDsMsg(r.error, "bad");
+  }
+
+  $("ds-refresh").addEventListener("click", async () => {
+    await refreshDatasets();
+    if (!dsData.error) setDsMsg("");
+  });
+  // Opening the box re-reads the folder, so a file copied in by hand
+  // shows up without a REFRESH press.
+  $("ds-details").addEventListener("toggle", () => {
+    if ($("ds-details").open) refreshDatasets();
+  });
+  refreshDatasets();
 
   // Overrides are checked against the engine's parameter table as they are
   // typed; a run with a problem is refused with the same message. The box,

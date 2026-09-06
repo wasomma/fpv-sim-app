@@ -1,11 +1,11 @@
 {
-  "generated": "2026-09-06T01:42:52.856Z",
+  "generated": "2026-09-06T02:08:46.701Z",
   "appVersion": "0.2.1",
   "electron": "44.0.0",
   "chrome": "152.0.7977.54",
   "engineVersion": "0.3.0",
   "pins": {
-    "generated": "2026-09-06T00:56:16.025Z",
+    "generated": "2026-09-06T01:52:12.472Z",
     "fpv_sim_commit": "7050617a4ee2d8e35ad676a31268b6c101511fe5",
     "fpv_sim_mcp_version": "0.3.0",
     "fpv_sim_mcp_resolved": "git+ssh://git@github.com/wasomma/fpv-sim-mcp.git#f848528d7ba5069480522b7b3d5b7e02d9881b0f"
@@ -58,8 +58,8 @@
       "file": "studies-idle.png",
       "width": 1100,
       "height": 780,
-      "bytes": 48251,
-      "sha256": "ba5859a8db3f5217f99488da0e3c257d3f353da77f321051649a509faaee840d",
+      "bytes": 50896,
+      "sha256": "b0ebcd4c37249b4c391be9800d16c03a691f0b885cdb0fc44611c2524b24bb6b",
       "caption": "The Studies panel before any run.",
       "skipped": null,
       "error": null
@@ -71,8 +71,8 @@
       "file": "studies-refused-label.png",
       "width": 1100,
       "height": 780,
-      "bytes": 52672,
-      "sha256": "290c9c67a20d88bb6880d2c65d980918c754d7e01c37a4e76b00260641c90aab",
+      "bytes": 55187,
+      "sha256": "8326beb8fc2a98d8698130e9f4f523cac9e3b47896c3c13548243ba63e6149cb",
       "caption": "Refusals appear in the log: RUN PARALLEL with an empty label.",
       "skipped": null,
       "error": null
@@ -84,8 +84,8 @@
       "file": "studies-overrides-filled.png",
       "width": 1100,
       "height": 780,
-      "bytes": 49647,
-      "sha256": "0d4c7a2f139f9c17e86d1e330d35af7ab297446113f1b70f4e08fd20c1d6c0d1",
+      "bytes": 52192,
+      "sha256": "ed6c2c6616fd026a5530b40ef284672132d7e4aa58c923c54ad4a4cb186db3cd",
       "caption": "The guided exercise filled in: label, 1000 seeds, orbit, and the bearing-error override.",
       "skipped": null,
       "error": null
@@ -97,8 +97,8 @@
       "file": "studies-running.png",
       "width": 1100,
       "height": 780,
-      "bytes": 66017,
-      "sha256": "86f694642621c911f7b4cedda8bb8126be0a2d4d2ca50eba758a3df224447bc3",
+      "bytes": 68356,
+      "sha256": "35b483a3b4e1cff2aa208cbf1710ba2c2872f743528c2b280c69d45ce6f304cf",
       "caption": "A parallel sweep in progress: green status, progress bar, CANCEL enabled.",
       "skipped": null,
       "error": null
@@ -110,21 +110,34 @@
       "file": "studies-finished.png",
       "width": 1100,
       "height": 780,
-      "bytes": 96362,
-      "sha256": "a3df7ceb4831d3faded87e35adeaec47af853667045525c369ae6d760c0e58b3",
+      "bytes": 93790,
+      "sha256": "d2efec19e4e893fa6e13efe594e0d9eaf643e61835b1442d8ddbdbba6d1ece5d",
       "caption": "The finished sweep: the green dataset line is the answer key, then the exit code.",
+      "skipped": null,
+      "error": null
+    },
+    {
+      "id": "studies-datasets",
+      "group": "studies",
+      "order": 9,
+      "file": "studies-datasets.png",
+      "width": 1045,
+      "height": 273,
+      "bytes": 40370,
+      "sha256": "484f9ed3f98f9c0fba01271c2e6aae1bd044d32415d91aed055efc96edfc0453",
+      "caption": "The DATASETS box opened after the sweep: every manifest entry with RENAME, EXPORT, REVEAL and DELETE.",
       "skipped": null,
       "error": null
     },
     {
       "id": "dashboard-overview",
       "group": "dashboard",
-      "order": 9,
+      "order": 10,
       "file": "dashboard-overview.png",
       "width": 1440,
       "height": 920,
-      "bytes": 26336,
-      "sha256": "044b11b04fd07fcd205a146aadcc5930d54bbb8698e94a7be12eaa95a71297c1",
+      "bytes": 114734,
+      "sha256": "c6831e9f38de5368bdad8f2005f753037c589e5b90ca8c958ad1a2887b033509",
       "caption": "The Dashboard right after the exercise: your ad-hoc dataset is selected.",
       "skipped": null,
       "error": null
@@ -132,7 +145,7 @@
     {
       "id": "dashboard-tiles-adhoc",
       "group": "dashboard",
-      "order": 10,
+      "order": 11,
       "file": "dashboard-tiles-adhoc.png",
       "width": 1160,
       "height": 122,
@@ -145,7 +158,7 @@
     {
       "id": "dashboard-seeds",
       "group": "dashboard",
-      "order": 11,
+      "order": 12,
       "file": "dashboard-seeds.png",
       "width": 1160,
       "height": 186,
@@ -158,7 +171,7 @@
     {
       "id": "dashboard-provenance",
       "group": "dashboard",
-      "order": 12,
+      "order": 13,
       "file": "dashboard-provenance.png",
       "width": 1160,
       "height": 134,
@@ -171,7 +184,7 @@
     {
       "id": "dashboard-tiles-full",
       "group": "dashboard",
-      "order": 13,
+      "order": 14,
       "file": "dashboard-tiles-full.png",
       "width": 1161,
       "height": 114,
@@ -184,7 +197,7 @@
     {
       "id": "dashboard-full-overview",
       "group": "dashboard",
-      "order": 14,
+      "order": 15,
       "file": "dashboard-full-overview.png",
       "width": 1440,
       "height": 920,
@@ -197,7 +210,7 @@
     {
       "id": "dashboard-dose",
       "group": "dashboard",
-      "order": 15,
+      "order": 16,
       "file": "dashboard-dose.png",
       "width": 1161,
       "height": 490,
@@ -210,7 +223,7 @@
     {
       "id": "dashboard-tooltip",
       "group": "dashboard",
-      "order": 16,
+      "order": 17,
       "file": "dashboard-tooltip.png",
       "width": 1161,
       "height": 490,
@@ -223,7 +236,7 @@
     {
       "id": "dashboard-paired",
       "group": "dashboard",
-      "order": 17,
+      "order": 18,
       "file": "dashboard-paired.png",
       "width": 1161,
       "height": 418,
@@ -236,7 +249,7 @@
     {
       "id": "dashboard-histograms",
       "group": "dashboard",
-      "order": 18,
+      "order": 19,
       "file": "dashboard-histograms.png",
       "width": 1161,
       "height": 302,
@@ -249,7 +262,7 @@
     {
       "id": "dashboard-adhoc-only",
       "group": "dashboard",
-      "order": 19,
+      "order": 20,
       "file": "dashboard-adhoc-only.png",
       "width": 1440,
       "height": 920,
@@ -262,7 +275,7 @@
     {
       "id": "dashboard-tactical",
       "group": "dashboard",
-      "order": 20,
+      "order": 21,
       "file": "dashboard-tactical.png",
       "width": 1440,
       "height": 920,
@@ -275,7 +288,7 @@
     {
       "id": "dashboard-tactical-paired",
       "group": "dashboard",
-      "order": 21,
+      "order": 22,
       "file": "dashboard-tactical-paired.png",
       "width": 1161,
       "height": 496,
@@ -288,7 +301,7 @@
     {
       "id": "dashboard-header",
       "group": "dashboard",
-      "order": 22,
+      "order": 23,
       "file": "dashboard-header.png",
       "width": 1425,
       "height": 78,
@@ -301,7 +314,7 @@
     {
       "id": "sim-emplacement",
       "group": "sim",
-      "order": 23,
+      "order": 24,
       "file": "sim-emplacement.png",
       "width": 1440,
       "height": 920,
@@ -314,7 +327,7 @@
     {
       "id": "sim-controls",
       "group": "sim",
-      "order": 24,
+      "order": 25,
       "file": "sim-controls.png",
       "width": 377,
       "height": 415,
@@ -327,7 +340,7 @@
     {
       "id": "sim-search-collect",
       "group": "sim",
-      "order": 25,
+      "order": 26,
       "file": "sim-search-collect.png",
       "width": 1440,
       "height": 920,
@@ -340,7 +353,7 @@
     {
       "id": "sim-rf-coverage",
       "group": "sim",
-      "order": 26,
+      "order": 27,
       "file": "sim-rf-coverage.png",
       "width": 1440,
       "height": 920,
@@ -353,7 +366,7 @@
     {
       "id": "sim-fix-lobs-ellipses",
       "group": "sim",
-      "order": 27,
+      "order": 28,
       "file": "sim-fix-lobs-ellipses.png",
       "width": 1440,
       "height": 920,
@@ -366,7 +379,7 @@
     {
       "id": "sim-hud",
       "group": "sim",
-      "order": 28,
+      "order": 29,
       "file": "sim-hud.png",
       "width": 1068,
       "height": 210,
@@ -379,7 +392,7 @@
     {
       "id": "sim-event-log",
       "group": "sim",
-      "order": 29,
+      "order": 30,
       "file": "sim-event-log.png",
       "width": 377,
       "height": 296,
@@ -392,7 +405,7 @@
     {
       "id": "sim-unit-detail-drone",
       "group": "sim",
-      "order": 30,
+      "order": 31,
       "file": "sim-unit-detail-drone.png",
       "width": 377,
       "height": 250,
@@ -405,7 +418,7 @@
     {
       "id": "sim-unit-detail-gcs",
       "group": "sim",
-      "order": 31,
+      "order": 32,
       "file": "sim-unit-detail-gcs.png",
       "width": 377,
       "height": 230,
@@ -418,7 +431,7 @@
     {
       "id": "sim-attack",
       "group": "sim",
-      "order": 32,
+      "order": 33,
       "file": "sim-attack.png",
       "width": 1440,
       "height": 920,
@@ -431,7 +444,7 @@
     {
       "id": "sim-endex",
       "group": "sim",
-      "order": 33,
+      "order": 34,
       "file": "sim-endex.png",
       "width": 1440,
       "height": 920,
@@ -444,7 +457,7 @@
     {
       "id": "sim-tactical",
       "group": "sim-tactical",
-      "order": 34,
+      "order": 35,
       "file": "sim-tactical.png",
       "width": 1440,
       "height": 920,
@@ -457,12 +470,12 @@
     {
       "id": "viewer3d-default",
       "group": "viewer3d",
-      "order": 35,
+      "order": 36,
       "file": "viewer3d-default.jpg",
       "width": 1440,
       "height": 920,
-      "bytes": 130982,
-      "sha256": "2e68036bbfd3ed77682e45ad27b695834172c2d078a9c7bd79de7fa3856bd750",
+      "bytes": 130988,
+      "sha256": "e307b5b637d47f4f7a622623c55291183f49976413511a2a8717e1404921e353",
       "caption": "The 3D Viewer at T+03:00: terrain in relief, drones at altitude, LOBs and ellipses draped on the ground.",
       "skipped": null,
       "error": null
@@ -470,12 +483,12 @@
     {
       "id": "viewer3d-detectability",
       "group": "viewer3d",
-      "order": 36,
+      "order": 37,
       "file": "viewer3d-detectability.jpg",
       "width": 1440,
       "height": 920,
-      "bytes": 149386,
-      "sha256": "658ada024f8713cac27d4d26c22bb2400a555d47ada20d9a61e84066e7e585a6",
+      "bytes": 149389,
+      "sha256": "7a6dbdc92ef9ee88093d6db32894f09729a2ebcee6837ba86211611516890474",
       "caption": "Detectability Field: where a BLUFOR uplink would be heard by OPFOR's DF nodes.",
       "skipped": null,
       "error": null
@@ -483,7 +496,7 @@
     {
       "id": "viewer3d-controls",
       "group": "viewer3d",
-      "order": 37,
+      "order": 38,
       "file": "viewer3d-controls.png",
       "width": 341,
       "height": 502,
@@ -496,7 +509,7 @@
     {
       "id": "viewer3d-fallback",
       "group": "viewer3d",
-      "order": 38,
+      "order": 39,
       "file": null,
       "width": null,
       "height": null,
@@ -509,7 +522,7 @@
     {
       "id": "live-ops-idle",
       "group": "live-ops",
-      "order": 39,
+      "order": 40,
       "file": "live-ops-idle.png",
       "width": 1100,
       "height": 780,
@@ -522,7 +535,7 @@
     {
       "id": "live-ops-setup",
       "group": "live-ops",
-      "order": 40,
+      "order": 41,
       "file": "live-ops-setup.png",
       "width": 1076,
       "height": 132,
@@ -535,7 +548,7 @@
     {
       "id": "live-ops-stage-refused",
       "group": "live-ops",
-      "order": 41,
+      "order": 42,
       "file": "live-ops-stage-refused.png",
       "width": 500,
       "height": 180,
@@ -548,7 +561,7 @@
     {
       "id": "live-ops-staged",
       "group": "live-ops",
-      "order": 42,
+      "order": 43,
       "file": "live-ops-staged.png",
       "width": 500,
       "height": 191,
@@ -561,12 +574,12 @@
     {
       "id": "live-ops-running",
       "group": "live-ops",
-      "order": 43,
+      "order": 44,
       "file": "live-ops-running.png",
       "width": 1100,
       "height": 780,
-      "bytes": 143955,
-      "sha256": "3b3b6a00e7e7dc0b364e3b39593030513bed0ad9fb4ca48fb10befc0709dfe10",
+      "bytes": 143999,
+      "sha256": "801f99cc1d4edfe2b5e897b59e29e8fb1e9f44e966a08bd722d64baaa0dfe058",
       "caption": "A gateway-armed session at 1×: entities, events, and PDU counters climbing.",
       "skipped": null,
       "error": null
@@ -574,12 +587,12 @@
     {
       "id": "live-ops-overlay-track",
       "group": "live-ops",
-      "order": 44,
+      "order": 45,
       "file": "live-ops-overlay-track.png",
       "width": 1100,
       "height": 780,
-      "bytes": 146381,
-      "sha256": "06e77c8ac6b60354f79bc4d26b281c9bebaae86bfd92d36096a4a71a51068154",
+      "bytes": 146894,
+      "sha256": "90a839bb477b55e01bc48f0751a7057f223e7508e4a012ad65f7769297a596b6",
       "caption": "An external DIS entity received on the wire renders as a gray diamond overlay (peers 1 · overlay 1).",
       "skipped": null,
       "error": null
@@ -587,12 +600,12 @@
     {
       "id": "live-ops-gateway-crop",
       "group": "live-ops",
-      "order": 45,
+      "order": 46,
       "file": "live-ops-gateway-crop.png",
       "width": 485,
       "height": 217,
-      "bytes": 26476,
-      "sha256": "bd241a486c967c5262926119896743c15ebc3169375a7d761f01ad5d42c7f386",
+      "bytes": 27160,
+      "sha256": "a44fe58b610d13476e49a9ec6123832dc9eaded625ce0109294521bf5f08b79f",
       "caption": "The GATEWAY box while publishing.",
       "skipped": null,
       "error": null
@@ -600,12 +613,12 @@
     {
       "id": "live-ops-entities-crop",
       "group": "live-ops",
-      "order": 46,
+      "order": 47,
       "file": "live-ops-entities-crop.png",
       "width": 575,
       "height": 246,
-      "bytes": 19517,
-      "sha256": "2c54a70352f422ecd8af0fa7fa7280f324711222050cf74ea41df3140fa9c6c3",
+      "bytes": 19748,
+      "sha256": "52631a64169b675ef92ba5ed40b1325cccb44bf643a15f677cde384847dd38f9",
       "caption": "The ENTITIES table: id, kind, state, battery, speed, altitude, emitters keyed.",
       "skipped": null,
       "error": null
@@ -613,7 +626,7 @@
     {
       "id": "live-ops-paused",
       "group": "live-ops",
-      "order": 47,
+      "order": 48,
       "file": "live-ops-paused.png",
       "width": 1072,
       "height": 73,
@@ -626,12 +639,12 @@
     {
       "id": "live-ops-endex",
       "group": "live-ops",
-      "order": 48,
+      "order": 49,
       "file": "live-ops-endex.png",
       "width": 1100,
       "height": 780,
-      "bytes": 162175,
-      "sha256": "d8fb46cd8092be61d272ebaa5762ed8eb6beaf4938b20f2a3233cd31238a8b9b",
+      "bytes": 162487,
+      "sha256": "3d4713710f7713fe0129b7da820767a945f4f9a91d33c106faeae708e9f1562e",
       "caption": "ENDEX: the outcome and reason in the header and as the last SYS event.",
       "skipped": null,
       "error": null

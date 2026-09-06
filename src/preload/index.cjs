@@ -40,6 +40,19 @@ contextBridge.exposeInMainWorld("fpvApp", {
     onOutput: (cb) => subscribe("study-output", cb),
     onDone: (cb) => subscribe("study-done", cb),
   },
+  results: {
+    // The DATASETS box: every manifest entry (with a `missing` flag),
+    // .json files the manifest does not list, and the bundled set.
+    list: () => ipcRenderer.invoke("results-list"),
+    // Mutations are refused while a run is active; each one reloads any
+    // open dashboard window and reports how many (`reloaded`).
+    remove: (file) => ipcRenderer.invoke("results-delete", { file }),
+    relabel: (file, label) => ipcRenderer.invoke("results-relabel", { file, label }),
+    register: (file) => ipcRenderer.invoke("results-register", { file }),
+    restore: (file) => ipcRenderer.invoke("results-restore", { file }),
+    // Native save dialog; { ok: true, to: null } means the user cancelled.
+    export: (file) => ipcRenderer.invoke("results-export", { file }),
+  },
   mcp: {
     status: () => ipcRenderer.invoke("mcp-status"),
     health: () => ipcRenderer.invoke("mcp-health"),

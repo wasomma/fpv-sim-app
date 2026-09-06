@@ -53,12 +53,15 @@ The Dashboard shows exactly what this list contains: a dataset file that is not 
 
 ### Common operations
 
-| Task | How |
-|---|---|
-| Retire a dataset | Close the Dashboard. Delete the dataset file and its `{ … }` entry in `index.json` (keep the JSON valid — mind the commas). Reopen the Dashboard. |
-| Restore the factory datasets | Close FPV Sim. Delete the whole `results` folder. Start FPV Sim: the folder is recreated with the three bundled datasets. Your own sweeps are gone unless you copied them out first. |
-| Move results to another PC | Copy the dataset file and paste its manifest entry into the other PC's `index.json`. |
-| Back up everything | Copy `%APPDATA%\fpv-sim-app`. |
+Since this release the **DATASETS** box on the Studies panel does all of these from inside the app (Chapter 6.7); the by-hand routes below still work.
+
+| Task | In the app | By hand |
+|---|---|---|
+| Retire a dataset | **STUDIES ▸ DATASETS ▸ DELETE** — removes the file and its entry together and reloads any open Dashboard. | Close the Dashboard. Delete the dataset file and its `{ … }` entry in `index.json` (keep the JSON valid — mind the commas). Reopen the Dashboard. |
+| Restore a deleted bundled dataset | **STUDIES ▸ DATASETS ▸ RESTORE** — copies the factory file and its entry back. | — |
+| Restore the whole factory store | — | Close FPV Sim. Delete the whole `results` folder. Start FPV Sim: the folder is recreated with the three bundled datasets. Your own sweeps are gone unless you exported them first. |
+| Move results to another PC | **STUDIES ▸ DATASETS ▸ EXPORT** here; copy the file into the other PC's `results` folder; there, **DATASETS ▸ REGISTER** rebuilds the entry from the file. | Copy the dataset file and paste its manifest entry into the other PC's `index.json`. |
+| Back up everything | — | Copy `%APPDATA%\fpv-sim-app`. |
 
 ## B.3 Settings
 

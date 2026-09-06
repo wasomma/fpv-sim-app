@@ -26,6 +26,7 @@ Symptoms are grouped by where you meet them. Include the launcher footer line (`
 | `refused: overrides is not valid JSON` | A syntax error in the overrides box. | Check braces and quotes; copy an example from Appendix D. |
 | `refused: count must be an integer in 1..1000000` (or `start …`) | An empty or non-numeric field. Nothing is assumed for you. | Fill it in. |
 | `refused: an adhoc run is already active` | One run at a time. | Wait, or **CANCEL**. |
+| The DATASETS buttons are greyed out | A run is active; it rewrites the manifest when it finishes. | Wait, or **CANCEL**. |
 | The study seems frozen | The progress bar advances once per finished experiment, and E1 (about half the run) takes ten minutes or more. | Watch the elapsed time in the status row; the log prints a line when each experiment finishes. |
 | A sweep with overrides matches the stock numbers exactly | The dataset was made by a 0.2.x build, which ignored misspelled keys silently. Current builds refuse them by path. | Re-run the sweep; the line under the overrides box confirms the keys before you start. |
 | `refused: overrides: CUAS.BRG_SIGMA: unknown key` (or `…: must be in 0.5..15`) | A key the engine does not have, or a value outside its range. | Open the **parameter reference** under the box and click the key you meant. |
@@ -35,9 +36,9 @@ Symptoms are grouped by where you meet them. Include the launcher footer line (`
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| My sweep is not in the **DATASET** list | It was a **RUN QUICK** study, which is never registered (the LAST DATASET box says *not registered in the manifest*); or the dataset was copied in by hand while the Dashboard was open. | For a quick study, run an ad-hoc sweep or the full study instead; for a hand-copied file press <kbd>Ctrl</kbd>+<kbd>R</kbd>. Runs from the Studies panel reload open Dashboards by themselves. |
+| My sweep is not in the **DATASET** list | It was a **RUN QUICK** study, which is never registered (the LAST DATASET box says *not registered in the manifest*); or the dataset file was copied in by hand, so no manifest entry exists. | For a quick study, run an ad-hoc sweep or the full study instead; for a hand-copied file, **STUDIES ▸ DATASETS ▸ REGISTER** (Chapter 6.7) — the Dashboard reloads by itself. |
 | No **Dose response** or **Paired comparisons** card | An ad-hoc dataset is selected. | Expected. Those cards exist only for the canonical study. |
-| "Could not load `results/index.json`" | The manifest is missing or invalid JSON (usually after hand-editing). | Fix the JSON or restore the factory datasets (Appendix B). |
+| "Could not load `results/index.json`" | The manifest is missing or invalid JSON (usually after hand-editing). | The DATASETS box (Chapter 6.7) names the parse error. Fix the JSON, or restore the factory store (Appendix B). |
 | **WATCH ▸** took me away from the Dashboard | It opens the Simulation in the same window. | Use the Simulation's **RESULTS** link, or open a fresh Dashboard from the launcher. |
 | **READ THE STUDY** does nothing | It opens your web browser and needs internet. | |
 
@@ -79,5 +80,5 @@ Symptoms are grouped by where you meet them. Include the launcher footer line (`
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| I want the factory datasets back | | Close FPV Sim, delete `%APPDATA%\fpv-sim-app\results`, start FPV Sim (Appendix B). |
-| The results folder is large | Many sweeps. | Retire datasets you no longer need (Appendix B). |
+| I want the factory datasets back | | A deleted bundled dataset: **STUDIES ▸ DATASETS ▸ RESTORE** (Chapter 6.7). The whole store: close FPV Sim, delete `%APPDATA%\fpv-sim-app\results`, start FPV Sim (Appendix B). |
+| The results folder is large | Many sweeps. | **STUDIES ▸ DATASETS ▸ DELETE** the ones you no longer need (Chapter 6.7). |

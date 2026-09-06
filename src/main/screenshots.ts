@@ -378,7 +378,11 @@ function buildGroups(hidden: boolean): Group[] {
       width: 1100,
       height: 780,
       open: panel("studies"),
-      ready: (c) => c.waitFor(`document.getElementById("status").textContent === "idle"`),
+      ready: async (c) => {
+        await c.waitFor(`document.getElementById("status").textContent === "idle"`);
+        // The DATASETS box has listed the seeded store (3 bundled entries).
+        await c.waitFor(`document.querySelectorAll("#ds-list .ds-row").length >= 3`);
+      },
       shots: [
         { id: "studies-idle", caption: "The Studies panel before any run." },
         {
@@ -432,6 +436,18 @@ function buildGroups(hidden: boolean): Group[] {
             await poll(async () => studyStatus().running, (r) => r === false, 200000, 250);
             await c.waitFor(`/finished with exit code 0/.test(document.getElementById("log").textContent)`, 20000);
           },
+        },
+        {
+          id: "studies-datasets",
+          caption: "The DATASETS box opened after the sweep: every manifest entry with RENAME, EXPORT, REVEAL and DELETE.",
+          setup: async (c) => {
+            await c.js(`(() => { document.getElementById("ds-details").open = true; return true; })()`);
+            // The box refreshed on study-done: the walkthrough sweep tops the list.
+            await c.waitFor(
+              `document.querySelectorAll("#ds-list .ds-row").length >= 4 && document.getElementById("ds-list").textContent.includes(${JSON.stringify(WALKTHROUGH_LABEL)})`,
+            );
+          },
+          clip: (c) => c.rectOf("#datasets-box", 6),
         },
       ],
     },

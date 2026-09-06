@@ -25,10 +25,10 @@ About 25 minutes in orbit mode (22,800 engagements) and a little longer in tacti
 It is a smoke test. The quick study writes its file but does not register it in the manifest, so the Dashboard never lists it. Use an ad-hoc sweep or the full study for a dataset you can analyze.
 
 **How do I delete a dataset?**
-Delete its file from `%APPDATA%\fpv-sim-app\results` and its entry from `index.json` in the same folder (Appendix B).
+Open the **STUDIES** panel, expand **DATASETS**, click **DELETE** on the entry (Chapter 6.7). The file and its manifest entry go together, and any open Dashboard reloads. Hand-editing `index.json` still works (Appendix B) but is no longer needed.
 
 **Can I share a dataset with a colleague?**
-Yes: send the JSON file and its manifest entry. They drop the file into their results folder and add the entry to their `index.json`. The Dashboard then shows it with the original label, date and provenance.
+Yes: **DATASETS ▸ EXPORT** writes a copy wherever you point the save dialog. Your colleague drops the file into their own results folder and clicks **REGISTER** in the same box — the label, date and provenance travel inside the file, so their Dashboard shows it exactly as yours does.
 
 **Can I use the MCP endpoint from claude.ai in the browser?**
 No. The endpoint listens on `127.0.0.1` only, which cloud connectors cannot reach. Use Claude Code or another MCP client running on the same PC.

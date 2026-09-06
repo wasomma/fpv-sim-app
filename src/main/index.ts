@@ -8,14 +8,22 @@
  */
 
 import { BrowserWindow, app, dialog, ipcMain, shell } from "electron";
-import { existsSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { appInfo } from "./app-info.js";
 import { GATEWAY_PRESETS } from "./gateway/presets.js";
 import { installAppMenu, openHelp } from "./menu.js";
 import { isHelpTarget } from "./menu-spec.js";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
-import { resultsDir } from "./paths.js";
+import { resultsDir, uiRoot } from "./paths.js";
+import {
+  isDatasetFileName,
+  listResults,
+  registerDatasetFile,
+  relabelDataset,
+  removeDataset,
+  restoreBundled,
+} from "./results-manifest.js";
 import { mcpHostStatus, restartMcpHost, setServerExtender, startMcpHost } from "./mcp/host.js";
 import { registerLiveTools } from "./mcp/live-tools.js";
 import { seedResultsIfEmpty } from "./results.js";
@@ -43,7 +51,7 @@ import {
   validateOverridesText,
 } from "./studies/overrides-schema.js";
 import { cancelStudy, startStudy, studyStatus, type StudyStartOpts } from "./studies/study-runner.js";
-import { createShellWindow, openAppPanel, openUiWindow, showShellWindow } from "./windows.js";
+import { createShellWindow, openAppPanel, openUiWindow, reloadDashboardWindows, showShellWindow } from "./windows.js";
 
 // Screenshot mode redirects userData to a scratch dir; it must happen before
 // the single-instance lock (derived from userData) and before anything reads
@@ -189,6 +197,60 @@ if (!gotLock) {
     ipcMain.handle("results-open-folder", async () => {
       const err = await shell.openPath(resultsDir());
       return err === "" ? { ok: true } : { ok: false, error: err };
+    });
+
+    /*
+     * Dataset management (the Studies panel's DATASETS box). Mutations
+     * are refused while a run is active: the runner rewrites the
+     * manifest when it finishes, and two writers would lose one edit.
+     * Every successful mutation reloads any open dashboard, which reads
+     * the manifest once at load.
+     */
+    const vendoredResults = (): string => path.join(uiRoot(), "results");
+    const manifestBusy = (): { ok: false; error: string } | null =>
+      studyStatus().running
+        ? { ok: false, error: "a run is active and updates the manifest when it finishes — try again then" }
+        : null;
+    const fileArg = (args: unknown): unknown => (args as { file?: unknown } | null)?.file;
+    const reloadingDashboards = <T extends { ok: boolean }>(r: T): T | (T & { reloaded: number }) =>
+      r.ok ? { ...r, reloaded: reloadDashboardWindows() } : r;
+
+    ipcMain.handle("results-list", () => listResults(resultsDir(), vendoredResults()));
+    ipcMain.handle("results-delete", (_event, args: unknown) => {
+      return manifestBusy() ?? reloadingDashboards(removeDataset(resultsDir(), fileArg(args)));
+    });
+    ipcMain.handle("results-relabel", (_event, args: unknown) => {
+      const label = (args as { label?: unknown } | null)?.label;
+      return manifestBusy() ?? reloadingDashboards(relabelDataset(resultsDir(), fileArg(args), label));
+    });
+    ipcMain.handle("results-register", (_event, args: unknown) => {
+      return manifestBusy() ?? reloadingDashboards(registerDatasetFile(resultsDir(), fileArg(args)));
+    });
+    ipcMain.handle("results-restore", (_event, args: unknown) => {
+      return manifestBusy() ?? reloadingDashboards(restoreBundled(resultsDir(), vendoredResults(), fileArg(args)));
+    });
+    // Copy a dataset file wherever the save dialog points. Headless runs
+    // have nowhere to show the dialog, so they are refused outright.
+    ipcMain.handle("results-export", async (event, args: unknown) => {
+      const file = fileArg(args);
+      if (!isDatasetFileName(file)) return { ok: false, error: "not a dataset file name" };
+      const full = path.join(resultsDir(), file);
+      if (!existsSync(full)) return { ok: false, error: `${file} is not in the results folder` };
+      if (isHeadless()) return { ok: false, error: "EXPORT opens a save dialog, which a headless run cannot show" };
+      const opts: Electron.SaveDialogOptions = {
+        title: "Export dataset",
+        defaultPath: file,
+        filters: [{ name: "JSON dataset", extensions: ["json"] }],
+      };
+      const win = BrowserWindow.fromWebContents(event.sender);
+      const picked = win !== null ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
+      if (picked.canceled || picked.filePath === undefined || picked.filePath === "") return { ok: true, to: null };
+      try {
+        copyFileSync(full, picked.filePath);
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+      return { ok: true, to: picked.filePath };
     });
 
     ipcMain.handle("mcp-status", () => mcpHostStatus());

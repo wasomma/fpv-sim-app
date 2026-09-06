@@ -10,12 +10,13 @@
  */
 
 import { app } from "electron";
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { runEngagement } from "fpv-sim-mcp/engine";
 import { loaded, poll } from "./headless-util.js";
 import { mcpHostStatus } from "./mcp/host.js";
 import { resultsDir } from "./paths.js";
+import { removeDataset } from "./results-manifest.js";
 import { liveConfigureGateway, liveGatewayStatus, liveStart, liveStop, liveWaitForEnd } from "./sessions/session-manager.js";
 import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
@@ -98,13 +99,19 @@ export async function runSelfCheck(): Promise<number> {
       (f) => f.startsWith("adhoc-self-check-") && !before.has(f),
     );
     if (written === undefined) throw new Error("no dataset written by the ad-hoc child");
-    // Clean the probe artifact back out of the user's results store.
+    // Clean the probe artifact back out of the user's results store
+    // through the dataset manager — the same path the DATASETS box uses.
+    const removed = removeDataset(resultsDir(), written);
+    if (!removed.ok) throw new Error(`removeDataset refused: ${removed.error}`);
+    if (!removed.removedEntry || !removed.removedFile) {
+      throw new Error(`removeDataset left something behind: ${JSON.stringify(removed)}`);
+    }
     const manifestPath = path.join(resultsDir(), "index.json");
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { datasets: { file: string }[] };
-    manifest.datasets = manifest.datasets.filter((d) => d.file !== written);
-    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
-    rmSync(path.join(resultsDir(), written));
-    return `wrote and cleaned ${written}`;
+    if (manifest.datasets.some((d) => d.file === written) || existsSync(path.join(resultsDir(), written))) {
+      throw new Error(`${written} still in the results store after removeDataset`);
+    }
+    return `wrote ${written}, then deleted it through the dataset manager (file + manifest entry)`;
   });
 
   await step("mcp endpoint serves the batch tools", async () => {
