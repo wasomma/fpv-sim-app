@@ -45,7 +45,7 @@ Three ways, all equivalent: the **DASHBOARD** tile, **OPEN DASHBOARD** in the St
    The comparison sentence you should now be able to make: *with stock sensors 76% of engagements are decisive and the disciplined side wins them 63/37; with the bearing error doubled only 29% are decisive and they split 50/50.*
 
 5. Switch back to your sweep and click **WATCH ▸** on *A representative stalemate*.
-   → *The Simulation opens at that seed in this same window and plays. Watch the LOBs: with 8° of error the cross-fix never tightens below the commit gate.* Return with the Simulation's **RESULTS** header link.
+   → *The Simulation opens at that seed in its own window and plays — the Dashboard stays where it is. Watch the LOBs: with 8° of error the cross-fix never tightens below the commit gate.* Close the Simulation window (or click its **RESULTS** link, which brings this Dashboard forward) and continue.
 6. Set **SHOW** to **AD-HOC ONLY**.
    → *The list now contains your sweep and the bundled `DF bearing error doubled (8 deg)` dataset side by side — identical numbers, different dates.*
 
@@ -63,7 +63,7 @@ That completes the exercise. The rest of the chapter is a reference to every car
 |---|---|
 | **SHOW** | **ALL DATASETS**, **STUDIES ONLY** or **AD-HOC ONLY**. Changing it reloads the first matching dataset. |
 | **DATASET** | Every dataset in your manifest, newest first, named `STUDY[ · TACTICAL] · <label> · <date> · <n> runs` or `AD-HOC[ · TACTICAL] · <label> · <date> · <n> runs`. |
-| **OPEN SIMULATION** | Opens the Simulation page in this window. |
+| **OPEN SIMULATION** | Opens the Simulation in its own window; the Dashboard stays put. |
 | **READ THE STUDY** | Opens the published write-up (`MONTE_CARLO.md`) in your web browser. Needs internet. |
 
 ## 7.4 Summary tiles
@@ -120,7 +120,7 @@ Three histograms on identical axes: **BLUFOR TIME-TO-FIX**, **OPFOR TIME-TO-FIX*
 Every number on the page is an aggregate of individually replayable battles. This table picks a few — the fastest kill, the slowest kill, a representative stalemate and, for studies, the fastest kill with postures swapped — and its **WATCH ▸** links open the Simulation at that seed (and mode) and start it playing.
 
 > [!NOTE]
-> **WATCH ▸** and **OPEN SIMULATION** replace the Dashboard in the same window. Come back with the Simulation's **RESULTS** header link, or open a fresh Dashboard from the launcher.
+> **WATCH ▸** and **OPEN SIMULATION** open the Simulation in its own window; the Dashboard keeps its dataset and scroll position. Each **WATCH ▸** click is another Simulation window, so two seeds can play side by side. A Simulation window's **RESULTS** link brings the Dashboard window forward rather than opening a second one.
 
 ## 7.9 Provenance
 

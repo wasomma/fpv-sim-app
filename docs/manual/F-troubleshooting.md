@@ -39,7 +39,7 @@ Symptoms are grouped by where you meet them. Include the launcher footer line (`
 | My sweep is not in the **DATASET** list | It was a **RUN QUICK** study, which is never registered (the LAST DATASET box says *not registered in the manifest*); or the dataset file was copied in by hand, so no manifest entry exists. | For a quick study, run an ad-hoc sweep or the full study instead; for a hand-copied file, **STUDIES ▸ DATASETS ▸ REGISTER** (Chapter 6.7) — the Dashboard reloads by itself. |
 | No **Dose response** or **Paired comparisons** card | An ad-hoc dataset is selected. | Expected. Those cards exist only for the canonical study. |
 | "Could not load `results/index.json`" | The manifest is missing or invalid JSON (usually after hand-editing). | The DATASETS box (Chapter 6.7) names the parse error. Fix the JSON, or restore the factory store (Appendix B). |
-| **WATCH ▸** took me away from the Dashboard | It opens the Simulation in the same window. | Use the Simulation's **RESULTS** link, or open a fresh Dashboard from the launcher. |
+| **WATCH ▸** opened a new window and the Dashboard stayed behind it | By design: the battle plays in its own Simulation window so the Dashboard keeps its dataset and scroll position. | Arrange the two windows side by side, or close the Simulation window when done. |
 | **READ THE STUDY** does nothing | It opens your web browser and needs internet. | |
 
 ## MCP Endpoint

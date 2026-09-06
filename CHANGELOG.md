@@ -153,6 +153,16 @@ All simulation data is notional and unclassified.
 
 ### Changed
 
+- **Windows never change kind.** The Dashboard's **WATCH ▸** and **OPEN
+  SIMULATION** now open the Simulation in its own window — the Dashboard
+  keeps its dataset and scroll position, and two WATCH clicks give two
+  battles side by side — instead of replacing the Dashboard in place. In
+  the other direction, a Simulation or 3D Viewer window's **RESULTS**
+  link brings the one Dashboard window forward (opening it if none)
+  rather than turning the battle window into a second dashboard, and the
+  viewer's **2D SIM** opens a new Simulation window. Each window stays
+  the kind it was opened as, which is what the one-window-per-tile rule
+  and the per-kind remembered bounds always assumed.
 - **The panels look like the sim.** The launcher, Studies, MCP Endpoint
   and Live Ops adopt the Simulation window's palette — slate ground,
   orange accent, outlined uppercase buttons — and its BLUFOR/OPFOR blue

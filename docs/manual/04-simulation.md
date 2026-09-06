@@ -10,7 +10,7 @@ The Simulation window is the interactive 2D engagement. This chapter explains ev
 From top to bottom and left to right:
 
 - **Banner** — `UNCLASSIFIED // NOTIONAL DEMONSTRATION`, top and bottom.
-- **Header** — the title with the mode tag (`// TACTICAL` appears in tactical mode), the **clock** (`T+03:00`), the current **phase** (`PHASE III // FIX`), the **RESULTS** link (opens the Dashboard in this same window) and the brand mark.
+- **Header** — the title with the mode tag (`// TACTICAL` appears in tactical mode), the **clock** (`T+03:00`), the current **phase** (`PHASE III // FIX`), the **RESULTS** link (brings the Dashboard window forward, opening it if need be — this window stays on the battle) and the brand mark.
 - **Map** — the 4 km × 4 km area of operations with a 500 m grid, scale bar and north arrow. Two **Status HUD** cards sit in the upper corners.
 - **CONTROLS** — playback, mode, scenario, map layers, seed.
 - **UNIT DETAIL** — live data for the unit you last clicked.

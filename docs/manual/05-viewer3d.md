@@ -13,7 +13,7 @@ Click the **3D VIEWER** tile.
 ![The 3D Viewer](images/viewer3d-default.jpg)
 *Figure 5-1. The 3D Viewer at T+03:00 of seed 20260719: terrain in relief, LOBs and the BLUFOR error ellipse draped on the ground, Team Status cards on the right.*
 
-The header shows the clock and phase exactly as the 2D window does, plus two links: **2D SIM** (the Simulation page) and **RESULTS** (the Dashboard). Both open in this same window.
+The header shows the clock and phase exactly as the 2D window does, plus two links: **2D SIM** (a new Simulation window) and **RESULTS** (the Dashboard window, brought forward). This window stays on the 3D view.
 
 ## 5.2 Camera
 

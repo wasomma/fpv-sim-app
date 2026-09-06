@@ -4,8 +4,13 @@
  * The three vendored upstream pages need zero Node access, so their
  * windows are fully sandboxed with no preload at all. Only the app's own
  * panels (app://app/...) get the contextBridge preload. Navigation and
- * window.open stay inside app://ui/ (the dashboard's WATCH links open the
- * sim in a new window); external http(s) links go to the default browser.
+ * window.open stay inside app://ui/; external http(s) links go to the
+ * default browser. A window never changes kind: an upstream link that
+ * targets another page (the dashboard's WATCH, the sim's RESULTS) is
+ * routed to the right window — a new one for the multi-window kinds, the
+ * existing one for singletons — so the dashboard keeps its place when a
+ * battle is watched, and the singleton map and per-kind remembered
+ * bounds stay honest.
  *
  * Every window has a kind. The kind decides default and minimum size,
  * the paint-before-load color, whether a second open focuses the existing
@@ -67,10 +72,10 @@ export interface OpenOpts {
 /* ------------------------------------------------------------------ */
 /* navigation                                                          */
 
-function applyNavPolicy(win: BrowserWindow): void {
+function applyNavPolicy(win: BrowserWindow, kind: WindowKind): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("app://ui/")) {
-      openAppUrl(url);
+      routeUiUrl(url);
       return { action: "deny" }; // we opened it ourselves with the right prefs
     }
     if (url.startsWith("https://") || url.startsWith("http://")) {
@@ -84,8 +89,30 @@ function applyNavPolicy(win: BrowserWindow): void {
       if (url.startsWith("https://") || url.startsWith("http://")) {
         void shell.openExternal(url);
       }
+      return;
+    }
+    // A link that would turn this window into another kind goes to the
+    // right window instead; this window stays what it is.
+    const target = uiKindForUrl(url);
+    if (target !== null && target !== kind) {
+      event.preventDefault();
+      routeUiUrl(url);
     }
   });
+}
+
+/**
+ * Route an app://ui/ URL to the right window for its kind: singletons
+ * (the dashboard) come forward, multi-window kinds (sim, viewer3d) get
+ * another window. Headless runs never route — they call openAppUrl.
+ */
+export function routeUiUrl(url: string): BrowserWindow {
+  const kind = uiKindForUrl(url) ?? "sim";
+  if (SPEC[kind].single) {
+    const existing = focusExisting(kind);
+    if (existing !== null) return existing;
+  }
+  return openAppUrl(url);
 }
 
 /* ------------------------------------------------------------------ */
@@ -182,7 +209,7 @@ function makeWindow(kind: WindowKind, opts: OpenOpts, preload: string | null): B
     },
   });
   if (placement.maximized && !headless) win.maximize();
-  applyNavPolicy(win);
+  applyNavPolicy(win, kind);
   if (!headless) rememberBounds(win, kind);
   if (spec.single && !headless && opts.fresh !== true) track(kind, win);
   return win;
@@ -218,13 +245,10 @@ export function openUiWindow(
   const file = UI_PAGES[page];
   if (file === undefined) return null;
   if (page === "dashboard" && opts.fresh !== true) {
-    // WATCH navigates a dashboard window to the sim in place; only a
-    // window still showing the dashboard counts as "the dashboard".
-    const existing = single.get("dashboard");
-    if (existing !== undefined && !existing.isDestroyed()) {
-      if (existing.webContents.getURL().startsWith("app://ui/dashboard.html")) return focusExisting("dashboard");
-      single.delete("dashboard");
-    }
+    // Windows never change kind (applyNavPolicy routes cross-kind links
+    // away), so the tracked window is always still the dashboard.
+    const existing = focusExisting("dashboard");
+    if (existing !== null) return existing;
   }
   const params = new URLSearchParams();
   if (opts.seed !== undefined && Number.isInteger(opts.seed) && opts.seed >= 0 && opts.seed <= 4294967295) {
