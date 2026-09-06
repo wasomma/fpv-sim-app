@@ -81,4 +81,4 @@ FPV Sim writes no log files. Diagnostics live in three places:
 - the **Live Ops event feed** (the last 500 events of the current or last session);
 - the **Developer Tools console** of any window: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>, or <kbd>Alt</kbd> and then **View ▸ Toggle Developer Tools** (Chapter 3.6).
 
-When reporting a problem include the launcher footer line (`app 0.2.1 · engine fpv-sim-mcp 0.3.0 · …`); the footer's **COPY** button and **Help ▸ About FPV Sim** both put it on the clipboard. **File ▸ Open Settings Folder** and **File ▸ Open Results Folder** open the two folders above in Explorer.
+When reporting a problem include the launcher footer line (`app 0.3.0 · engine fpv-sim-mcp 0.3.0 · …`); the footer's **COPY** button and **Help ▸ About FPV Sim** both put it on the clipboard. **File ▸ Open Settings Folder** and **File ▸ Open Results Folder** open the two folders above in Explorer.

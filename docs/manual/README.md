@@ -1,6 +1,6 @@
 # FPV Sim — User Manual
 
-*Describes FPV Sim **0.2.1** with engine fpv-sim-mcp **0.3.0** and UI pin `7050617` (Electron 44). Your own versions are printed in the footer of the launcher window (see [Figure 3-1](03-launcher.md)). Figures were regenerated from this build on 2026-09-05.*
+*Describes FPV Sim **0.3.0** with engine fpv-sim-mcp **0.3.0** and UI pin `7050617` (Electron 44). Your own versions are printed in the footer of the launcher window (see [Figure 3-1](03-launcher.md)). Figures were regenerated from this build on 2026-09-06.*
 
 FPV Sim is a Windows desktop application for a **force-on-force engagement between two teams, each fielding an armed FPV small-UAS and two counter-UAS direction-finding nodes**. Both teams hunt each other's ground control station by its radio emissions. The application bundles the interactive simulation, a Monte Carlo study runner, a results dashboard, a WebGPU 3D viewer, a local MCP endpoint for AI-assistant control, and a native DIS gateway that streams the live engagement to other simulators such as VBS4.
 

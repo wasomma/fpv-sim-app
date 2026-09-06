@@ -4,7 +4,7 @@ This appendix is one worked example, followed from start to finish: a freshly se
 
 > **Before you start**
 > - **Two PCs on one subnet.** This appendix calls them the *FPV Sim PC* (any 64-bit Windows 10/11 PC, a standard user account, nothing installed yet) and the *VBS4 PC* (VBS4 26.1 with its VBS Gateway, and an account that can start VBS4 as an administrator client). The example addresses are `192.168.1.10` and `192.168.1.20`; substitute your own from `ipconfig`.
-> - **The installer**, `fpv-sim-app-setup-0.2.1.exe`, downloaded from the Releases page (Chapter 2.2) or carried on a USB stick. The FPV Sim PC needs no internet connection at any point.
+> - **The installer**, `fpv-sim-app-setup-0.3.0.exe`, downloaded from the Releases page (Chapter 2.2) or carried on a USB stick. The FPV Sim PC needs no internet connection at any point.
 > - **A place on the Earth** for the 4 km × 4 km AO: the latitude and longitude of its south-west corner in decimal degrees. Flat coastal ground correlates best with the notional terrain; the example uses `21.35, -157.95`.
 > - **An exercise ID** agreed with whoever runs the VBS4 side. The example uses `1`.
 > - **Optional:** Wireshark on the FPV Sim PC, for the dry run in H.3. Nothing from the developer checkout is needed anywhere in this appendix.
@@ -50,11 +50,11 @@ The gateway configuration for this example, ready to paste in H.5:
 
 Chapter 2 covers every dialog; this is the short form.
 
-1. Put `fpv-sim-app-setup-0.2.1.exe` on the FPV Sim PC and double-click it.
+1. Put `fpv-sim-app-setup-0.3.0.exe` on the FPV Sim PC and double-click it.
    → *SmartScreen shows **Windows protected your PC**. This is expected for an unsigned installer.*
 2. Click **More info**, then **Run anyway**.
 3. In the wizard: **Only for me** ▸ **Next >** ▸ accept the location ▸ **Install** ▸ leave **Run FPV Sim** ticked ▸ **Finish**.
-   → *The launcher window opens. Its footer reads `app 0.2.1 · engine fpv-sim-mcp 0.3.0 · …`.*
+   → *The launcher window opens. Its footer reads `app 0.3.0 · engine fpv-sim-mcp 0.3.0 · …`.*
 4. Click **LAUNCH** in the launch bar, watch the Simulation window play for a few seconds, and close it.
 
 The PC is now complete. No Node.js, no Python, no further downloads, no administrator rights.

@@ -61,7 +61,7 @@ Each cell is a button: click it to open the panel it describes. The strip refres
 The footer is the application's version stamp:
 
 ```text
-app 0.2.1 · engine fpv-sim-mcp 0.3.0 · ui pin 7050617 · electron 44.0.0 · node 24.18.1 · chrome 152.0.7977.54
+app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin 7050617 · electron 44.0.0 · node 24.18.1 · chrome 152.0.7977.54
 ```
 
 | Field | Meaning |
