@@ -31,7 +31,7 @@ Both sides must agree on eight values. Everything else can stay at its default.
 | Application ID | `dis.applicationId` = `3001` (default) | General ▸ **Application ID** = anything but 3001 (**auto** is fine). The Gateway ignores traffic carrying its own application ID. |
 | UDP port | `network.port` = `3000` (default) | Connection ▸ **Send Port** = 3000 and **Receive Port** = 3000 |
 | Where to send | `network.mode` = `unicast`, `unicastDestinations` = the VBS4 PC | Connection ▸ **Send Address** = the FPV Sim PC |
-| Emitter function | `emissions.uplink.function` and `emissions.video.function` = `5` | Fixed: the Gateway lists an incoming emitter system only when its function is *Acquisition / Detection* (5). The app's default is 0. |
+| Emitter function | `emissions.uplink.function` and `emissions.video.function` = `5` (the default; the preset spells it out anyway) | Fixed: the Gateway lists an incoming emitter system only when its function is *Acquisition / Detection* (5). Nothing to set on either side unless a staged configuration overrides it. |
 | The anchor | `anchor.lat0Deg`, `anchor.lon0Deg` = your AO | A terrain that covers the same place (H.4) |
 
 The gateway configuration for this example, ready to paste in H.5:
@@ -179,7 +179,7 @@ Overlay tracks are display only. Nothing VBS4 sends can influence the engagement
 | Entities appear off the coast of Africa | The anchor was left at 0°, 0° (**STAGE** shows a yellow warning when that is the case). Stage it again with your latitude and longitude. |
 | Entities are mapped but never appear | **Settings ▸ General ▸ Filtering**: the region does not enclose the AO. |
 | Entities flicker or vanish between updates | **Settings ▸ DIS ▸ Units ▸ Delete Timeout** is shorter than the app's 5 s heartbeat. |
-| No emitter systems are ever listed | `emissions.uplink.function` and `emissions.video.function` must be `5`; the Gateway drops other functions. |
+| No emitter systems are ever listed | The Gateway drops every emitter system whose function is not 5 (*Acquisition / Detection*). That is the shipped default and what the preset stages, so look for an `emissions` block in the staged JSON that sets another function; then check that the `emission` counter in the GATEWAY box is climbing at all. |
 | Drones rubber-band | Tighten `deadReckoning.drone.posThresholdM` / `oriThresholdDeg`, try `algorithm` 4, and keep the session at 1×. |
 | Every entity appears twice | Two VBS4 instances were started with the Gateway, or **Enable Connectivity on VBS Multiplayer Client** is ticked on a client as well as the host. |
 | The VBS4 mission ended when you pressed STOP | `simMgmt.endVbsMissionOnStop` was `true`. |
@@ -189,4 +189,4 @@ Appendix F has the full FPV Sim-side table.
 
 ## H.9 Adapting the example to another simulator
 
-Any tool that speaks DIS over UDP takes the place of VBS Gateway, and the checklist is the same eight values: match the DIS version, exercise ID, port and delivery mode; make sure your site and application IDs are neither ignored nor mistaken for the receiver's own; map the four enumerations, or accept the receiver's fuzzy or unknown-entity fallback; put a terrain at the anchor; and check whether the receiver filters emitter systems by function the way VBS Gateway does. Expect the PDU sequence in Chapter 10.1 and run at 1×. For an HLA federation, the same DIS stream goes through a bridge such as the Pitch DIS Adapter; Chapter 11.2 has the RPR-FOM correspondence table for planning the FOM side.
+Any tool that speaks DIS over UDP takes the place of VBS Gateway, and the checklist is the same eight values: match the DIS version, exercise ID, port and delivery mode; make sure your site and application IDs are neither ignored nor mistaken for the receiver's own; map the four enumerations, or accept the receiver's fuzzy or unknown-entity fallback; put a terrain at the anchor; and check whether the receiver filters emitter systems by function the way VBS Gateway does (the shipped default, 5, is the one VBS Gateway keeps; `emissions.uplink.function` and `emissions.video.function` change it). Expect the PDU sequence in Chapter 10.1 and run at 1×. For an HLA federation, the same DIS stream goes through a bridge such as the Pitch DIS Adapter; Chapter 11.2 has the RPR-FOM correspondence table for planning the FOM side.

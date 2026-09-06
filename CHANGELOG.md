@@ -175,11 +175,22 @@ All simulation data is notional and unclassified.
   so **Help ▸ User Manual** works offline.
 - An empty **start** or **count** in the Studies panel is refused by name
   instead of silently becoming 1 or 1000.
-- The VBS4 checklist, Appendix C and Appendix F now record that VBS
-  Gateway keeps only incoming emitter systems whose function is
-  Acquisition / Detection (5). A VBS4 session should stage
-  `emissions.uplink.function` and `emissions.video.function` as `5`; the
-  shipped default is still `0`.
+- The shipped default for `emissions.uplink.function` and
+  `emissions.video.function` is now `5` (SISO emitter function
+  Acquisition / Detection) instead of `0`. VBS Gateway (VBS4 26.1.1
+  manual, §10.6.1) lists an incoming emitter system only with that
+  function, so with the old default the app's radios never appeared in
+  the Gateway UI unless a session staged the function by hand. The VBS4
+  checklist and Appendices C, F and H describe the default; the **VBS4
+  through VBS Gateway** preset and the Appendix H configuration still
+  spell the function out, so they say what they need whatever the
+  default is. Callers of the MCP tool `live_configure_gateway` that omit
+  `emissions` now get `5`.
+- `docs/captures/seed-20260719-orbit.pcap` was regenerated with the new
+  default. It differs from the 0.2.1 capture in exactly one byte of each
+  of its 23 Electromagnetic Emission PDUs (emitter function `0` → `5`);
+  the PDU count, sizes and timestamps are unchanged, and regeneration
+  via `--write-pcap` remains byte-identical.
 
 ### Fixed
 

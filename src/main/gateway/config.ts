@@ -138,8 +138,8 @@ export const DEFAULT_GATEWAY_CONFIG: GatewayConfig = {
   },
   emissions: {
     heartbeatS: 10,
-    uplink: { freqHz: 915e6, bandwidthHz: 5e6, erpDbm: 30, emitterName: 0, function: 0 },
-    video: { freqHz: 5.8e9, bandwidthHz: 20e6, erpDbm: 27, emitterName: 0, function: 0 },
+    uplink: { freqHz: 915e6, bandwidthHz: 5e6, erpDbm: 30, emitterName: 0, function: 5 },
+    video: { freqHz: 5.8e9, bandwidthHz: 20e6, erpDbm: 27, emitterName: 0, function: 5 },
   },
   anchor: { lat0Deg: 0, lon0Deg: 0, h0M: 0, rotationDeg: 0, geoidOffsetM: 0 },
   receive: { enabled: true, exerciseFilter: true, timeoutS: 12, extrapolate: true },

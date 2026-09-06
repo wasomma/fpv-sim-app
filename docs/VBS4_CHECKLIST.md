@@ -39,11 +39,11 @@ dissector) — no malformed-packet warnings across a full engagement.
 - Geofilter: off, or a region enclosing the anchor's 4×4 km box.
 - Site ID 1 (`dis.siteId`; VBS Gateway ignores traffic from other site
   IDs) and a Gateway Application ID other than 3001 (it ignores its own).
-- Emitter function 5: stage `emissions.uplink.function` and
-  `emissions.video.function` as `5`. VBS Gateway keeps only incoming
-  emitter systems whose function is Acquisition / Detection (5) (VBS
-  Gateway manual 26.1.1, §10.6.1); the shipped default is 0, and with it
-  the EE acceptance line in step 4 cannot pass.
+- Emitter function 5: leave `emissions.uplink.function` and
+  `emissions.video.function` at their shipped default of `5`
+  (Acquisition / Detection). VBS Gateway keeps only incoming emitter
+  systems with that function (VBS Gateway manual 26.1.1, §10.6.1); with
+  any other value the EE acceptance line in step 4 cannot pass.
 
 ## 2. Terrain correlation (optional but the better demo)
 

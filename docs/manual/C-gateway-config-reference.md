@@ -37,6 +37,8 @@ The gateway configuration is a JSON object staged from the Live Ops GATEWAY box 
  "anchor":{"lat0Deg":21.35,"lon0Deg":-157.95}}
 ```
 
+The `emissions` block spells out the emitter function VBS Gateway insists on, *Acquisition / Detection* (5). That is also the shipped default, so the block changes nothing; it stays so that the configuration says what it needs.
+
 Replace the anchor with your own latitude and longitude in every case. The same four blocks are the **preset…** menu in the Live Ops GATEWAY box; picking one fills the text box, and **STAGE** is still yours to press. The **FORM** button in the same box shows this whole reference as an editable field table — every key in C.2 with its default, range and meaning — with edits rewriting the JSON underneath (Chapter 10.2).
 
 ## C.2 All keys
@@ -124,7 +126,8 @@ These are generic, mappable surrogates. Verify them against the SISO-REF-010 rev
 | `heartbeatS` | `10` (1–60) | Emission PDU heartbeat while a radio is keyed. |
 | `uplink.freqHz` / `bandwidthHz` / `erpDbm` | `915e6` / `5e6` / `30` | The GCS C2 uplink beam. |
 | `video.freqHz` / `bandwidthHz` / `erpDbm` | `5.8e9` / `20e6` / `27` | The drone video downlink beam. |
-| `uplink.emitterName`, `uplink.function`, `video.emitterName`, `video.function` | `0` | SISO emitter name and function enumerations. VBS Gateway lists an incoming emitter system only when its function is *Acquisition / Detection* (5), so set both `function` keys to `5` for VBS4 (Appendix H). |
+| `uplink.emitterName`, `video.emitterName` | `0` | SISO emitter name enumeration; `0` leaves the emitter type unspecified. |
+| `uplink.function`, `video.function` | `5` | SISO emitter function enumeration. The default, *Acquisition / Detection* (5), is the only function VBS Gateway lists for an incoming emitter system (VBS Gateway manual 26.1.1, §10.6.1); change it only for a receiver that expects another function (Appendix H). |
 
 ### `anchor` — placing the box on the Earth
 
