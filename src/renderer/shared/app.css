@@ -93,6 +93,16 @@ pre, .well {
 .caution { color: var(--caution); }
 .field-err { color: var(--err); font-size: 11.5px; }
 .field-err:empty { display: none; }
+/* An input whose value was refused (a Studies field, an overrides box). */
+.invalid { border-color: var(--err); }
+
+/* The engine's parameter table under an overrides box (Studies, Live Ops): click a row to add its key. */
+.param-table table { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+.param-table th, .param-table td { text-align: left; padding: 2px 8px 2px 0; vertical-align: top; }
+.param-table th { color: var(--dim); font-weight: normal; }
+.param-table tbody tr { cursor: pointer; }
+.param-table tbody tr:hover td { background: var(--panel); }
+.param-table code { color: var(--accent); }
 
 .kv { display: grid; grid-template-columns: max-content 1fr; column-gap: 12px; row-gap: 2px; font-size: 12px; }
 .kv dt { color: var(--dim); }

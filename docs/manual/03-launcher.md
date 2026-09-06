@@ -96,7 +96,7 @@ Every FPV Sim window has the same menu bar. It stays hidden until you press <kbd
 | **Edit** | **Undo** … **Select All** | the usual keys | Text editing in any field, for example the gateway JSON. |
 | **View** | **Reload** | <kbd>Ctrl</kbd>+<kbd>R</kbd> | Reloads this window. In the Dashboard this re-reads the dataset list; a panel comes back as it was. |
 | | **Toggle Developer Tools** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> | The browser developer pane; its **Console** tab shows any error messages from that window. |
-| | **Zoom In** / **Zoom Out** / **Actual Size** | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>0</kbd> | Text size for a lab-bench display; the panels share one zoom level, the three fpv-sim pages another. |
+| | **Zoom In** / **Zoom Out** / **Actual Size** | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> / <kbd>Ctrl</kbd>+<kbd>Numpad 0</kbd> | Text size for a lab-bench display; the panels share one zoom level, the three fpv-sim pages another. (Not <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>0</kbd>: Windows keeps that as its keyboard-layout hotkey. Without a numeric keypad, use the menu.) |
 | | **Toggle Full Screen** | <kbd>F11</kbd> | |
 | **Help** | **User Manual** | <kbd>F1</kbd> | This manual (the bundled PDF, or the online copy). |
 | | **Changelog** | | What changed in each version, online. |

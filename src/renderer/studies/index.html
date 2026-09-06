@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="../shared/app.css">
 <style>
   textarea { height: 52px; }
-  .invalid { border-color: var(--err); }
   #sw-err:not(:empty) { margin-bottom: 8px; }
   #status { color: var(--dim); }
   #status.running { color: var(--ok); }
@@ -18,12 +17,6 @@
   #log .stderr { color: var(--dim); }
   #log .sys { color: var(--ok); }
   #log .err { color: var(--err); }
-  #param-table table { border-collapse: collapse; width: 100%; font-size: 11.5px; }
-  #param-table th, #param-table td { text-align: left; padding: 2px 8px 2px 0; vertical-align: top; }
-  #param-table th { color: var(--dim); font-weight: normal; }
-  #param-table tbody tr { cursor: pointer; }
-  #param-table tbody tr:hover td { background: var(--panel); }
-  #param-table code { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -61,7 +54,7 @@
     </div>
     <details id="param-ref" style="margin-bottom:8px">
       <summary class="note" style="cursor:pointer">parameter reference — every key the engine accepts, with default, unit and range; click a row to add it</summary>
-      <div id="param-table" class="well" style="max-height:200px; overflow:auto; margin-top:6px"></div>
+      <div id="param-table" class="well param-table" style="max-height:200px; overflow:auto; margin-top:6px"></div>
     </details>
     <div class="field-err" id="sw-err"></div>
     <div class="row">
@@ -269,84 +262,10 @@
   });
 
   // Overrides are checked against the engine's parameter table as they are
-  // typed; a run with a problem is refused with the same message.
-  const ovStatus = $("overrides-status");
-  async function validateOverridesNow() {
-    const text = fields.overrides.value;
-    if (text.trim() === "") {
-      fields.overrides.classList.remove("invalid");
-      app.setLine(ovStatus, "", "note");
-      return;
-    }
-    const r = await window.fpvApp.studies.validateOverrides(text);
-    if (r.ok) {
-      fields.overrides.classList.remove("invalid");
-      app.setLine(ovStatus, `${r.keys} override${r.keys === 1 ? "" : "s"} OK` + (r.warning ? ` · ${r.warning}` : ""), "note ok");
-    } else {
-      fields.overrides.classList.add("invalid");
-      const first = r.issues[0];
-      const more = r.issues.length > 1 ? ` · +${r.issues.length - 1} more` : "";
-      app.setLine(ovStatus, `${first.path}: ${first.message}${more}`, "note bad");
-    }
-  }
-  fields.overrides.addEventListener("input", app.debounce(validateOverridesNow, 300));
-
-  // The parameter reference: the engine's own table, built on first open.
-  let paramTableBuilt = false;
-  $("param-ref").addEventListener("toggle", async () => {
-    if (!$("param-ref").open || paramTableBuilt) return;
-    paramTableBuilt = true;
-    const box = $("param-table");
-    const s = await window.fpvApp.studies.schema();
-    if (!s.payload) {
-      box.textContent = `parameter table unavailable — ${s.error || "engine schema not loaded"}`;
-      return;
-    }
-    const table = document.createElement("table");
-    const head = document.createElement("thead");
-    head.innerHTML = "<tr><th>path</th><th>default</th><th>unit</th><th>range</th><th>meaning</th></tr>";
-    table.appendChild(head);
-    const body = document.createElement("tbody");
-    for (const p of s.payload.parameters) {
-      const tr = document.createElement("tr");
-      tr.title = `add ${p.path} at its default`;
-      const range = p.boolean ? "true / false" : p.range ? `${p.range[0]}–${p.range[1]}${p.integer ? " (integer)" : ""}` : "";
-      for (const [i, text] of [p.path, String(p.default), p.unit || "", range, p.description].entries()) {
-        const td = document.createElement("td");
-        if (i === 0) { const c = document.createElement("code"); c.textContent = text; td.appendChild(c); }
-        else td.textContent = text;
-        tr.appendChild(td);
-      }
-      tr.addEventListener("click", () => insertOverride(p));
-      body.appendChild(tr);
-    }
-    table.appendChild(body);
-    box.appendChild(table);
-    const foot = document.createElement("div");
-    foot.className = "note";
-    foot.style.marginTop = "6px";
-    foot.textContent = "not overridable: " + s.payload.not_overridable.map((n) => `${n.path} — ${n.reason}`).join(" · ");
-    box.appendChild(foot);
-  });
-  function insertOverride(p) {
-    let obj = {};
-    const text = fields.overrides.value.trim();
-    if (text !== "") {
-      try { obj = JSON.parse(text); } catch { app.setLine(ovStatus, "fix the JSON syntax before adding keys", "note bad"); return; }
-      if (typeof obj !== "object" || obj === null || Array.isArray(obj)) obj = {};
-    }
-    const parts = p.path.split(".");
-    let cur = obj;
-    for (const k of parts.slice(0, -1)) {
-      if (typeof cur[k] !== "object" || cur[k] === null || Array.isArray(cur[k])) cur[k] = {};
-      cur = cur[k];
-    }
-    const leaf = parts[parts.length - 1];
-    if (!(leaf in cur)) cur[leaf] = p.default;
-    fields.overrides.value = JSON.stringify(obj);
-    fields.overrides.dispatchEvent(new Event("input", { bubbles: true })); // persists and validates
-    fields.overrides.focus();
-  }
+  // typed; a run with a problem is refused with the same message. The box,
+  // its status line and the parameter reference are the shared editor in
+  // app.js, the same one Live Ops uses.
+  const ov = app.overridesEditor({ textarea: "sw-overrides", status: "overrides-status", ref: "param-ref", table: "param-table" });
 
   // Inputs come back as they were left, so a sweep can be re-run or tweaked
   // without retyping the label and overrides.
@@ -357,7 +276,7 @@
     count: { el: "sw-count", type: "int" },
     mode: { el: "sw-mode" },
     overrides: { el: "sw-overrides" },
-  }).then(() => validateOverridesNow());
+  }).then(() => ov.validate());
 
   // A panel opened mid-run (or after one) replays what main kept: the log,
   // the progress so far and the dataset the run produced.

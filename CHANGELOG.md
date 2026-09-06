@@ -22,6 +22,10 @@ All simulation data is notional and unclassified.
   (<kbd>F1</kbd> — the PDF bundled with the installer, or the online copy),
   the changelog, the issue tracker, and an **About** box that copies the
   version line. The bar stays hidden until <kbd>Alt</kbd>, as before.
+  **Actual Size** is <kbd>Ctrl</kbd>+<kbd>Numpad 0</kbd>: <kbd>Ctrl</kbd>+<kbd>0</kbd>
+  now opens the launcher, and Windows reserves
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>0</kbd> for switching keyboard
+  layouts, so an app never receives it.
 - **A status strip on the launcher.** Three cells say what the study
   runner, the live session and the MCP endpoint are doing (`running ·
   parallel sweep "…" · 1:23`, `orbit · seed 20260719 · T+02:13 · … · DIS`,
@@ -104,6 +108,16 @@ All simulation data is notional and unclassified.
   header, and a session whose process failed reads `ABORTED — …` in red
   rather than a green ENDEX. A panel opened mid-session replays the whole
   event feed so far, without duplicates.
+- **Live Ops takes overrides and a sim-time limit.** A folded **SETUP**
+  row under the header holds an overrides box with the Studies panel's
+  as-you-type check and parameter reference, and a sim-time limit (15 min
+  to 4 h; 1 h, as before). Both apply at **START**, are locked while a
+  session runs, and are remembered. The row's one visible line reports
+  what the running session actually carries — `this session · 1 override ·
+  sim-time limit 1 h` — whoever started it, and `live_session_status`
+  returns the same facts as `overrideKeys` and `maxSimS`. The MCP tool
+  could already do this; the panel could not. The self-check gained a
+  step proving a misspelled key is refused before a session starts.
 - Manual **Appendix H** — a worked quick start for putting the engagement
   inside an external live virtual simulation, with VBS4 through VBS
   Gateway as the example: a fresh PC, the eight values both sides must

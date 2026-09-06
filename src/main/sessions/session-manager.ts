@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import type { GatewayStatus, OverlayTrack, TickView } from "../../shared/gateway-slot.js";
 import { validateGatewayConfig } from "../gateway/config.js";
 import { gatewayWarnings } from "../gateway/presets.js";
-import { validateOverridesValue } from "../studies/overrides-schema.js";
+import { countOverrideKeys, validateOverridesValue } from "../studies/overrides-schema.js";
 
 export interface LiveStartOpts {
   seed: number;
@@ -87,6 +87,10 @@ export function liveStatus(): {
   lagMs?: number;
   winner?: string;
   endedReason?: string;
+  /** How many override values the session carries (0 = stock configuration). */
+  overrideKeys?: number;
+  /** The sim-time ceiling the session was started with, seconds. */
+  maxSimS?: number;
   gateway: { enabled: boolean; state: string };
 } {
   if (session === null) return { state: "idle", gateway: { enabled: false, state: "idle" } };
@@ -102,6 +106,8 @@ export function liveStatus(): {
     lagMs: session.lagMs,
     winner: session.lastView?.winner,
     endedReason: session.endedReason ?? undefined,
+    overrideKeys: session.overrides === undefined ? 0 : countOverrideKeys(session.overrides),
+    maxSimS: session.maxSimS,
     gateway: session.gatewayStatus ?? { enabled: false, state: "idle" },
   };
 }

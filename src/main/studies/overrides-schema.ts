@@ -120,12 +120,17 @@ export function formatIssues(issues: IssueLike[], params: Map<string, SchemaPara
   return out;
 }
 
-function countLeaves(v: unknown): number {
+/**
+ * Leaf values in an overrides object — the `keys` count the validator
+ * reports and the Live Ops SETUP line shows for the running session.
+ */
+export function countOverrideKeys(v: unknown): number {
   if (typeof v !== "object" || v === null) return 1;
   let n = 0;
-  for (const x of Object.values(v as Record<string, unknown>)) n += countLeaves(x);
+  for (const x of Object.values(v as Record<string, unknown>)) n += countOverrideKeys(x);
   return n;
 }
+const countLeaves = countOverrideKeys;
 
 export function validateOverridesValue(value: unknown): OverridesResult {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {

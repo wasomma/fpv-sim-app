@@ -7,6 +7,7 @@
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import {
+  countOverrideKeys,
   formatIssues,
   loadOverridesSchema,
   overridesSchemaPayload,
@@ -37,6 +38,13 @@ test("valid overrides pass and count their leaves", () => {
   assert.equal(r.ok, true);
   const t = validateOverridesValue({ TACTICAL: { RESERVE_HUNTER: false, SORTIES: { BLUFOR: 7, OPFOR: 7 } } });
   assert.equal(t.ok, true);
+});
+
+test("countOverrideKeys counts leaf values, the number the Live Ops SETUP line shows", () => {
+  assert.equal(countOverrideKeys({}), 0);
+  assert.equal(countOverrideKeys({ CUAS: { BRG_SIGMA_DEG: 8 } }), 1);
+  assert.equal(countOverrideKeys({ TEAMS: { OPFOR: { uplinkOn: 4, uplinkOff: 13 } }, FIX: { COMMIT_CEP_M: 200 } }), 3);
+  assert.equal(countOverrideKeys({ TACTICAL: { RESERVE_HUNTER: false } }), 1);
 });
 
 test("a misspelled key is refused by path (the manual's own example)", () => {

@@ -52,6 +52,15 @@
   #gateway-warn:empty { display: none; }
   .hint { color: var(--dim); font-size: 11px; letter-spacing: 0; }
   textarea { margin-top: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.4; }
+  /* SETUP: the overrides and the sim-time limit for the next START, folded
+     away so the map keeps its room; the summary line always says what is
+     (or will be) running. */
+  #setup summary { cursor: pointer; color: var(--dim); font-size: 11px; letter-spacing: .06em; }
+  #setup summary .lbl { font-weight: 600; letter-spacing: .2em; margin-right: 8px; }
+  #setup .setup-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  #setup textarea { margin-top: 0; }
+  #setup .param-table { max-height: 160px; overflow: auto; margin-top: 6px; }
+  #overrides-status:empty { display: none; }
 </style>
 </head>
 <body>
@@ -80,6 +89,31 @@
     </div>
   </header>
   <div class="note" id="live-msg"></div>
+
+  <details id="setup">
+    <summary title="Engine overrides and the sim-time limit for the next session"><span class="lbl">SETUP</span><span class="note" id="setup-summary">next session · stock configuration · sim-time limit 1 h</span></summary>
+    <div class="setup-body">
+      <div class="row" style="align-items:flex-start">
+        <label for="overrides">overrides&nbsp;JSON</label>
+        <div style="flex:1; min-width:280px">
+          <textarea id="overrides" rows="2" spellcheck="false" placeholder='{"CUAS":{"BRG_SIGMA_DEG":8}}' title="Engine overrides for the next session — the same keys and the same check as the Studies panel; empty runs the stock configuration"></textarea>
+          <div class="note" id="overrides-status"></div>
+        </div>
+        <label for="max-sim">sim-time&nbsp;limit</label>
+        <select id="max-sim" title="The session ends at this simulated time if the engagement is still undecided">
+          <option value="900">15 min</option>
+          <option value="1800">30 min</option>
+          <option value="3600" selected>1 h</option>
+          <option value="7200">2 h</option>
+          <option value="14400">4 h</option>
+        </select>
+      </div>
+      <details id="param-ref">
+        <summary class="note" style="cursor:pointer">parameter reference — every key the engine accepts, with default, unit and range; click a row to add it</summary>
+        <div id="param-table" class="well param-table"></div>
+      </details>
+    </div>
+  </details>
 
   <main>
     <div class="col">
@@ -237,9 +271,48 @@
     $("pause").disabled = !running;
     $("stop").disabled = !running;
     $("stage").disabled = running;
+    $("overrides").disabled = running;
+    $("max-sim").disabled = running;
     $("pause").textContent = paused ? "RESUME" : "PAUSE";
+    updateSetupSummary();
   }
   const say = (text, cls) => app.setLine($("live-msg"), text, cls ? `note ${cls}` : "note");
+
+  /* ---------------- SETUP: overrides and the sim-time limit ----------------
+   * Both apply at the next START and are locked while a session runs. The
+   * summary line reports what the running session actually carries (from
+   * main's status, whoever started it) or what the next one will. */
+  const fmtLimit = (s) => (s >= 3600 ? `${+(s / 3600).toFixed(1)} h` : `${Math.round(s / 60)} min`);
+  const fmtKeys = (n) => (n === 0 ? "stock configuration" : `${n} override${n === 1 ? "" : "s"}`);
+  let nextOverrides = { ok: true, keys: 0 }; // the last check of the box
+  let sessionFacts = null; // { overrideKeys, maxSimS } of the current session, from main
+  function updateSetupSummary() {
+    const el = $("setup-summary");
+    if (running && sessionFacts !== null) {
+      app.setLine(el, `this session · ${fmtKeys(sessionFacts.overrideKeys ?? 0)} · sim-time limit ${fmtLimit(sessionFacts.maxSimS ?? 3600)}`, "note");
+      return;
+    }
+    const limit = `sim-time limit ${fmtLimit(Number($("max-sim").value))}`;
+    if (nextOverrides.ok) app.setLine(el, `next session · ${fmtKeys(nextOverrides.keys)} · ${limit}`, "note");
+    else app.setLine(el, `next session · overrides need fixing · ${limit}`, "note bad");
+  }
+  const ov = app.overridesEditor({
+    textarea: "overrides",
+    status: "overrides-status",
+    ref: "param-ref",
+    table: "param-table",
+    onResult: (r) => {
+      nextOverrides = r;
+      updateSetupSummary();
+    },
+  });
+  $("max-sim").addEventListener("change", updateSetupSummary);
+  // A refusal that names the box is shown at the box as well as in the message line.
+  function showOverridesRefusal(message) {
+    $("setup").open = true;
+    $("overrides").classList.add("invalid");
+    ov.setStatus(message, "bad");
+  }
 
   /* ---------------- GATEWAY box ----------------
    * While a gateway-armed session runs, the snapshot's status is shown as
@@ -327,8 +400,14 @@
     seed: { el: "seed", type: "int" },
     mode: { el: "mode" },
     speed: { el: "speed" },
+    overrides: { el: "overrides" },
+    maxSimS: { el: "max-sim" },
     gatewayText: { el: "gateway-cfg", manual: true },
-  }).then((m) => { mem = m; });
+  }).then((m) => {
+    mem = m;
+    ov.validate(); // the restored overrides text is checked (and summarized) right away
+    updateSetupSummary();
+  });
 
   // Presets fill the box; they never stage.
   let presets = [];
@@ -378,6 +457,7 @@
     if (status.sessionId !== shownSession) resetFeed(status.sessionId); // a session started elsewhere, or a new one
     running = status.state === "running" || status.state === "paused";
     paused = status.state === "paused";
+    sessionFacts = { overrideKeys: status.overrideKeys, maxSimS: status.maxSimS };
     lastView = view;
     overlayTracks = overlay || [];
     const g = status.gateway;
@@ -421,15 +501,25 @@
 
   $("start").addEventListener("click", async () => {
     say("");
+    const setup = ov.parse();
+    if (!setup.ok) {
+      showOverridesRefusal(setup.error);
+      say(`refused: ${setup.error}`, "bad");
+      return;
+    }
     resetFeed(null); lastView = null; draw(); renderEntities();
     const r = await window.fpvApp.live.start({
       seed: Number($("seed").value),
       mode: $("mode").value,
       speed: Number($("speed").value),
+      overrides: setup.value,
+      maxSimS: Number($("max-sim").value),
     });
     if (!r.ok) {
       say(`refused: ${r.error}`, "bad");
       appendEvents([{ t: 0, side: "SYS", text: `refused: ${r.error}` }]);
+      // Main's key check names the path ("overrides: CUAS.BRG_SIGMA: unknown key").
+      if (r.error.startsWith("overrides: ")) showOverridesRefusal(r.error.slice("overrides: ".length));
     }
   });
   $("pause").addEventListener("click", async () => {
@@ -457,6 +547,7 @@
   window.fpvApp.live.status().then(async (s) => {
     running = s.state === "running" || s.state === "paused";
     paused = s.state === "paused";
+    sessionFacts = { overrideKeys: s.overrideKeys, maxSimS: s.maxSimS };
     if (s.state !== "idle") {
       try {
         const snap = await window.fpvApp.live.snapshot(0);

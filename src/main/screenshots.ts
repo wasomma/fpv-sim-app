@@ -394,10 +394,13 @@ function buildGroups(hidden: boolean): Group[] {
           caption: "The guided exercise filled in: label, 1000 seeds, orbit, and the bearing-error override.",
           setup: async (c) => {
             await c.js(`document.getElementById("log").innerHTML = ""`);
-            await c.setVal("#sw-label", WALKTHROUGH_LABEL, false);
-            await c.setVal("#sw-start", "1", false);
-            await c.setVal("#sw-count", "1000", false);
-            await c.setVal("#sw-overrides", WALKTHROUGH_OVERRIDES, false);
+            // Typed, not poked: the input events clear the previous shot's
+            // field error and run the override check, as they do for a user.
+            await c.setVal("#sw-label", WALKTHROUGH_LABEL);
+            await c.setVal("#sw-start", "1");
+            await c.setVal("#sw-count", "1000");
+            await c.setVal("#sw-overrides", WALKTHROUGH_OVERRIDES);
+            await c.waitFor(`/1 override OK/.test(document.getElementById("overrides-status").textContent)`);
           },
         },
         {
@@ -674,9 +677,22 @@ function buildGroups(hidden: boolean): Group[] {
       shots: [
         { id: "live-ops-idle", caption: "Live Ops before a session: no gateway staged, sessions run app-local." },
         {
+          id: "live-ops-setup",
+          caption: "SETUP opened: the bearing-error override checked against the parameter table, and the sim-time limit.",
+          setup: async (c) => {
+            await c.js(`(() => { document.getElementById("setup").open = true; return true; })()`);
+            await c.setVal("#overrides", WALKTHROUGH_OVERRIDES);
+            await c.waitFor(`/1 override OK/.test(document.getElementById("overrides-status").textContent)`);
+          },
+          clip: (c) => c.rectOf("#setup", 8),
+        },
+        {
           id: "live-ops-stage-refused",
           caption: "A typo in the gateway JSON is refused with the exact path.",
           setup: async (c) => {
+            // Fold SETUP away again so the later full-window shots show the panel as it opens.
+            await c.setVal("#overrides", "");
+            await c.js(`(() => { document.getElementById("setup").open = false; return true; })()`);
             await c.setVal("#gateway-cfg", `{"netwok":{"mode":"broadcast","port":3000}}`, false);
             await c.click("#stage");
             await c.waitFor(`/refused:/.test(document.getElementById("gateway").textContent)`);

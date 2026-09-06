@@ -41,7 +41,10 @@ export const OTHER_ACCELERATORS: Readonly<Record<OtherAccelerator, string>> = {
   devtools: "CmdOrCtrl+Shift+I",
   zoomIn: "CmdOrCtrl+=",
   zoomOut: "CmdOrCtrl+-",
-  resetZoom: "CmdOrCtrl+Shift+0",
+  // Ctrl+0 opens the launcher, and Ctrl+Shift+0 is claimed by Windows itself
+  // as a keyboard-layout hotkey (Input Method Hot Keys entry 00000104), so an
+  // app never sees it. Numpad 0 is what VS Code uses for the same reason.
+  resetZoom: "CmdOrCtrl+num0",
   fullscreen: "F11",
   manual: "F1",
   close: "CmdOrCtrl+W",

@@ -16,7 +16,7 @@ import { runEngagement } from "fpv-sim-mcp/engine";
 import { loaded, poll } from "./headless-util.js";
 import { mcpHostStatus } from "./mcp/host.js";
 import { resultsDir } from "./paths.js";
-import { liveConfigureGateway, liveGatewayStatus, liveStart, liveWaitForEnd } from "./sessions/session-manager.js";
+import { liveConfigureGateway, liveGatewayStatus, liveStart, liveStop, liveWaitForEnd } from "./sessions/session-manager.js";
 import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
@@ -163,6 +163,18 @@ export async function runSelfCheck(): Promise<number> {
       throw new Error(`run_engagement(20260719) did not report the golden outcome: ${callText.slice(0, 800)}`);
     }
     return `healthz ok, 401 without token, initialize ok, run_engagement(20260719) golden on port ${status.port}`;
+  });
+
+  await step("live-start refuses a misspelled override key by path", async () => {
+    // The Live Ops SETUP box and live_start_session both land here; the
+    // engine itself would merge the typo silently.
+    const r = liveStart({ seed: 66, mode: "orbit", speed: 60, maxSimS: 3600, overrides: { CUAS: { BRG_SIGMA: 8 } } });
+    if (r.ok) {
+      await liveStop();
+      throw new Error("a session started with an unknown override key");
+    }
+    if (r.error !== "overrides: CUAS.BRG_SIGMA: unknown key") throw new Error(`unexpected refusal: ${r.error}`);
+    return `"${r.error}"`;
   });
 
   await step("live session at 60x replays the batch result exactly", async () => {

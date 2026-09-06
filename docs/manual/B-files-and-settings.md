@@ -62,7 +62,7 @@ The Dashboard shows exactly what this list contains: a dataset file that is not 
 
 ## B.3 Settings
 
-`settings.json` holds two things. The MCP endpoint's port and token are managed from the MCP Endpoint panel (Chapter 8). Under `ui` the panels remember what you last used — the launcher's seed, mode and autoplay; the Studies label, seed range, mode and overrides; the Live Ops seed, mode and speed — the last gateway configuration that passed **STAGE**, and the size and position of each kind of window. Editing `settings.json` by hand while FPV Sim is running has no effect until the next launch; a token shorter than 16 characters or a port outside 1024–65535 is replaced with a fresh default, and a `ui` entry that is not valid JSON is dropped. A file written by 0.2.x (no `version` key) is upgraded in place on the first launch.
+`settings.json` holds two things. The MCP endpoint's port and token are managed from the MCP Endpoint panel (Chapter 8). Under `ui` the panels remember what you last used — the launcher's seed, mode and autoplay; the Studies label, seed range, mode and overrides; the Live Ops seed, mode, speed, overrides and sim-time limit — the last gateway configuration that passed **STAGE**, and the size and position of each kind of window. Editing `settings.json` by hand while FPV Sim is running has no effect until the next launch; a token shorter than 16 characters or a port outside 1024–65535 is replaced with a fresh default, and a `ui` entry that is not valid JSON is dropped. A file written by 0.2.x (no `version` key) is upgraded in place on the first launch.
 
 The **DIS gateway is still armed in memory only**: the GATEWAY box reopens with the text you last staged, but nothing transmits until you press **STAGE** again (Chapter 10).
 

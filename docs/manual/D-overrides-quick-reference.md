@@ -1,11 +1,11 @@
 # D. Engine override quick reference
 
-Overrides are a JSON object whose sections mirror the engine's configuration. They apply to ad-hoc sweeps (Chapter 6) and to the MCP tools that accept `config_overrides` (Appendix E). The interactive Simulation window always runs the stock configuration.
+Overrides are a JSON object whose sections mirror the engine's configuration. They apply to ad-hoc sweeps (Chapter 6), to Live Ops sessions (Chapter 9) and to the MCP tools that accept `config_overrides` (Appendix E). The interactive Simulation window always runs the stock configuration.
 
-The keys below are the ones most worth changing. The complete table — every tunable with its unit, default, range and rationale — is `PARAMETERS.md` in the fpv-sim project; the Studies panel's **parameter reference** (under the overrides box) and the MCP tool `get_config_schema` return the same table.
+The keys below are the ones most worth changing. The complete table — every tunable with its unit, default, range and rationale — is `PARAMETERS.md` in the fpv-sim project; the **parameter reference** under the overrides box in Studies and in Live Ops SETUP, and the MCP tool `get_config_schema`, return the same table.
 
 > [!NOTE]
-> Overrides are checked against that table wherever they are accepted — the Studies panel as you type, and every batch and live MCP tool. An unknown key or an out-of-range value is refused with its path (`CUAS.BRG_SIGMA: unknown key`, `CUAS.BRG_SIGMA_DEG: must be in 0.5..15`); nothing is ignored silently.
+> Overrides are checked against that table wherever they are accepted — the Studies and Live Ops boxes as you type, and every batch and live MCP tool. An unknown key or an out-of-range value is refused with its path (`CUAS.BRG_SIGMA: unknown key`, `CUAS.BRG_SIGMA_DEG: must be in 0.5..15`); nothing is ignored silently.
 
 ## D.1 Validated examples
 

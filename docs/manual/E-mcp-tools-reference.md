@@ -151,7 +151,7 @@ No arguments. Stops the running session and returns `{ "ok": true, "reason": …
 
 ### `live_session_status`
 
-No arguments. Returns the state of the session host: `state` (`idle`, `running`, `paused` or `ended`), `sessionId`, `seed`, `mode`, the sim clock `t` and `tick`, `phase`, `speed`, the pacing lag `lagMs`, `winner` once decided, `endedReason`, and a `gateway` object with its `enabled` flag and `state`.
+No arguments. Returns the state of the session host: `state` (`idle`, `running`, `paused` or `ended`), `sessionId`, `seed`, `mode`, the sim clock `t` and `tick`, `phase`, `speed`, the pacing lag `lagMs`, `winner` once decided, `endedReason`, `overrideKeys` (how many override values the session was started with; `0` is the stock configuration), `maxSimS` (its sim-time ceiling), and a `gateway` object with its `enabled` flag and `state`.
 
 `lagMs` is the honest measure of whether your PC is keeping up: it reports how far behind the wall clock the engine has fallen. A few tens of milliseconds is normal; a lag that climbs steadily means the speed factor is too high for the machine.
 

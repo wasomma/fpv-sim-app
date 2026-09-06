@@ -55,6 +55,7 @@ Symptoms are grouped by where you meet them. Include the launcher footer line (`
 | Symptom | Cause | Fix |
 |---|---|---|
 | `refused: session live-… is running; stop it first` | One session at a time. | **STOP** the current one. |
+| **START** says `refused: overrides: CUAS.BRG_SIGMA: unknown key` (or `…: must be in 0.5..15`) | A key the engine does not have, or a value outside its range, in the SETUP box. | Open the **parameter reference** under the box and click the key you meant; the line under the box names the problem before you start. |
 | `lag` turns red | The PC cannot keep pace at that speed. | Choose a lower speed. |
 | **STAGE** says `invalid JSON: …` | Syntax error in the gateway box. | Fix braces, quotes and commas. |
 | **STAGE** says `refused: <path>: unknown key` | A misspelled key. Unknown keys are errors, for gateway configs and engine overrides alike. | Correct it against Appendix C. |
