@@ -13,7 +13,7 @@ docs/DIS_HLA_PRIMER.md, and the user manual index docs/manual/README.md.
 **The vendored UI and the bundled engine are a parity-verified pair, and
 this repo edits neither.** The three pages (`index.html`,
 `dashboard.html`, `viewer3d.html`) come from the `upstream/fpv-sim` git
-submodule (pin `a442897`) and are served byte-identical from the
+submodule (pin `f73ccb7`) and are served byte-identical from the
 `app://ui/` origin; the engine is the commit-pinned `fpv-sim-mcp` git
 dependency in package.json (`github:wasomma/fpv-sim-mcp#f848528…`, the
 same pin under `allowScripts`). Consequences:

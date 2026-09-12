@@ -15,7 +15,7 @@ All simulation data is notional and unclassified.
 ### Added
 
 - **The Dashboard leads with the finding.** The bundled results page
-  (fpv-sim pin `a442897`) now opens on a FINDING card — plain-English
+  (fpv-sim pin `f73ccb7`) now opens on a FINDING card — plain-English
   verdict lines generated from the dataset itself, nothing stored — with
   the summary tiles under it, one KEY EVIDENCE card (the paired
   comparisons for a study; a new VS STOCK BASELINE dumbbell for an ad-hoc
@@ -43,7 +43,7 @@ All simulation data is notional and unclassified.
 
 ### Changed
 
-- fpv-sim UI pin `7050617` → `a442897` (`dashboard.html` only;
+- fpv-sim UI pin `7050617` → `f73ccb7` (`dashboard.html` only;
   `index.html` and the engine pin `f848528` are unchanged, so the parity
   pair holds). Three new manual figures (`dashboard-finding`,
   `dashboard-finding-full`, `dashboard-vs-baseline`); the dashboard and
