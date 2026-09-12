@@ -53,7 +53,7 @@ This chapter takes you from nothing to the launcher window open on your screen. 
 ## 2.4 First launch
 
 8. The launcher window opens (Figure 2-3). If you unticked **Run FPV Sim**, start it from the Start menu or the desktop shortcut, both named **FPV Sim** (Figure 2-4).
-   → *You should see the window titled FPV SIM with six tiles, a launch bar, a status strip whose right-hand cell reads `RUNNING · 127.0.0.1:8765`, and a footer reading `app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin a442897 · electron 44.0.0 · …`. Those are your version numbers; quote them when you ask for help (the footer's **COPY** button copies the line).*
+   → *You should see the window titled FPV SIM with six tiles, a launch bar, a status strip whose right-hand cell reads `RUNNING · 127.0.0.1:8765`, and a footer reading `app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin f73ccb7 · electron 44.0.0 · …`. Those are your version numbers; quote them when you ask for help (the footer's **COPY** button copies the line).*
 
 ![The launcher window on first launch](images/shell-launcher.png)
 *Figure 2-3. First launch: the launcher window. The footer is your version stamp.*

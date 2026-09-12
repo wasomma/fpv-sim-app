@@ -1,6 +1,6 @@
 # Dashboard refactor: findings first
 
-Status: APPROVED 2026-09-12; PR 1 open as wasomma/fpv-sim#32 (a442897); PR 2 built on branch claude/dashboard-findings-app (submodule at a442897 until PR 1 merges, then re-point at the merge sha and regenerate figures).
+Status: APPROVED 2026-09-12; PR 1 open as wasomma/fpv-sim#32 (f73ccb7); PR 2 built on branch claude/dashboard-findings-app (submodule at f73ccb7 until PR 1 merges, then re-point at the merge sha and regenerate figures).
 
 
 ## Context
