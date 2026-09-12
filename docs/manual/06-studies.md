@@ -27,8 +27,8 @@ Click the **STUDIES** tile.
 | **CANONICAL MONTE CARLO STUDY** | **mode** (orbit/tactical), **RUN QUICK (~4 min)**, **RUN FULL (~25 min)** |
 | **AD-HOC SWEEP** | **label**, **start**, **count**, **mode**, **overrides JSON**, **RUN PARALLEL**, **RUN SINGLE-THREADED** |
 | Status row | the status text (`idle` or `running: …`), the elapsed time (with the expected duration for a study), a progress bar, **CANCEL**, **OPEN DASHBOARD** |
-| **LAST DATASET** | appears after a run: the full path of the file it wrote, **COPY PATH**, **REVEAL IN EXPLORER**, **OPEN RESULTS FOLDER**, and whether the Dashboard will list it |
-| **DATASETS** | the manifest, editable (click to expand): **RENAME** / **EXPORT** / **REVEAL** / **DELETE** per dataset, **REGISTER** for files the manifest does not list, **RESTORE** for a deleted bundled dataset (6.7) |
+| **LAST DATASET** | appears after a run: the headline numbers (`B … / O … / S …` and, for a sweep, the delta against the stock study of the same mode), **OPEN IN DASHBOARD**, the full path of the file it wrote, **COPY PATH**, **REVEAL IN EXPLORER**, **OPEN RESULTS FOLDER**, and whether the Dashboard will list it |
+| **DATASETS** | the manifest, editable (click to expand): each entry with its headline numbers and **OPEN** / **RENAME** / **EXPORT** / **REVEAL** / **DELETE**, **REGISTER** for files the manifest does not list, **RESTORE** for a deleted bundled dataset (6.7) |
 | Log | everything the run prints, newest at the bottom (the last 800 lines are shown; a panel reopened during or after a run gets the last 500 back) |
 
 Only one run — study or sweep — can be active at a time.
@@ -65,15 +65,15 @@ The question: *what happens when the DF sensors are twice as noisy?* The stock 1
    parallel sweep "DF bearing error doubled" 1..1000 (orbit) finished with exit code 0
    ```
 
-   *Above the log, the **LAST DATASET** box names the file the run wrote. **REVEAL IN EXPLORER** selects it in File Explorer; **COPY PATH** copies the full path. Any Dashboard window that was already open reloads by itself and lists the new dataset.*
+   *Above the log, the **LAST DATASET** box leads with the headline —* `B 14.6% / O 14.4% / S 71.0% · Δ vs Full study −33.4 / −13.7 / +47.1 pts` *— the sweep's rates and how far each moved from the bundled stock study. It names the file the run wrote; **REVEAL IN EXPLORER** selects it in File Explorer, **COPY PATH** copies the full path. Any Dashboard window that was already open has switched to the new dataset by itself.*
 
 ![The finished sweep](images/studies-finished.png)
-*Figure 6-4. The finished sweep: the green dataset line is your answer key, then the exit code; the LAST DATASET box points at the file.*
+*Figure 6-4. The finished sweep: the headline with its delta against the stock study and OPEN IN DASHBOARD, then the answer-key line and the exit code in the log.*
 
 > [!NOTE]
 > Your counts should read exactly **B 146 / O 144 / S 710** — BLUFOR wins, OPFOR wins, stalemates over seeds 1–1000. The engine is deterministic, so every PC gets the same numbers. If yours differ, your build has a different engine version (check the launcher footer).
 
-6. Click **OPEN DASHBOARD** and continue with [Chapter 7, section 7.2](07-dashboard.md#72-guided-exercise-part-b-analyze-the-sweep).
+6. Click **OPEN IN DASHBOARD** and continue with [Chapter 7, section 7.2](07-dashboard.md#72-guided-exercise-part-b-read-the-finding).
 
 ## 6.4 The canonical study
 
@@ -113,7 +113,7 @@ Procedure:
    full study (orbit) finished with exit code 0
    ```
    In tactical mode an extra E2 experiment, *no reserve hunter*, is added.
-3. Any Dashboard window that is open reloads by itself with the refreshed dataset; otherwise click **OPEN DASHBOARD** (Chapter 7).
+3. Any Dashboard window that is open switches to the refreshed dataset by itself; otherwise click **OPEN IN DASHBOARD** (Chapter 7).
 
 A quick run prints the same blocks at one tenth the size (every experiment at least 50 seeds) and ends with `Wrote …\monte-carlo-quick.json (… engagements)` and **no** `Updated …\index.json` line — that missing line is why it never shows up in the Dashboard, and why the **LAST DATASET** box says *not registered*.
 
@@ -137,7 +137,7 @@ The two run buttons produce byte-identical datasets; they differ in how they get
 Other controls:
 
 - **CANCEL** kills the run. Datasets are written only at the very end, so a cancelled run leaves nothing behind — no partial file, no manifest entry. The log's final line then shows a nonzero exit code in red.
-- **OPEN DASHBOARD** opens the Dashboard window, or brings the open one forward.
+- **OPEN DASHBOARD** opens the Dashboard window on the newest dataset, or brings the open one forward as it is. **OPEN IN DASHBOARD** in the LAST DATASET box (and **OPEN** on a DATASETS row) opens it on that dataset, switching an open Dashboard to it.
 - Closing the Studies window does **not** cancel a run. Reopen it and the status row, the progress bar and the log come back as they were.
 
 Refusals are printed in red in the log and, for the sweep fields, repeated under the fields with the offending input outlined:
@@ -176,12 +176,13 @@ The box is checked against the engine's own parameter table as you type. The lin
 The **DATASETS** box under the status row is the manifest, editable. Collapsed, its header line still summarizes the store (`4 in the manifest · 1 not listed`); click it to expand. Opening the box re-reads the folder, and **REFRESH** does the same on demand — after copying a file in by hand, for example.
 
 ![The DATASETS box](images/studies-datasets.png)
-*Figure 6-6. The DATASETS box opened after the guided exercise: the new sweep on top, the bundled datasets under it.*
+*Figure 6-6. The DATASETS box opened after the guided exercise: the new sweep on top with its headline and delta, the bundled datasets under it.*
 
-Each manifest entry shows its label, kind, mode, run count, date and file name, with four buttons:
+Each manifest entry shows its label, kind, mode, run count, date and file name, then its headline — the baseline B / O / S rates the manifest records and, for a sweep, the delta against the stock study of the same mode (the Dashboard's own reference and rounding, so the two never disagree) — with five buttons:
 
 | Button | Effect |
 |---|---|
+| **OPEN** | Opens the Dashboard on this dataset; an open Dashboard switches to it. |
 | **RENAME** | Edits the label the Dashboard shows, in place (<kbd>Enter</kbd> or **SAVE** commits, <kbd>Esc</kbd> cancels). The file name never changes. |
 | **EXPORT** | Copies the dataset file wherever you point the save dialog — a share, a stick, an e-mail draft. |
 | **REVEAL** | Selects the file in File Explorer. |
@@ -192,7 +193,7 @@ Below the entries, the box lists `.json` files in the results folder that the ma
 The box enforces the rules so you cannot break the store:
 
 - While a run is active, every mutating button is greyed out and the operations are refused — the run rewrites the manifest when it finishes.
-- Every change reloads any open Dashboard window; the line under the box says what happened.
+- Every change reloads any open Dashboard window on the dataset it was showing (a deleted one falls back to the newest); the line under the box says what happened.
 - An entry whose file is gone is flagged *file missing*: **DELETE** retires the dangling entry, and a bundled dataset offers **RESTORE** instead of EXPORT/REVEAL.
 - A bundled dataset you deleted entirely appears at the bottom under *bundled datasets not present* with a **RESTORE** button that copies the factory file and its entry back.
 

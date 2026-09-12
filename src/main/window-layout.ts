@@ -2,8 +2,11 @@
  * Electron-free window layout rules: where a remembered window may come
  * back, how big a window may be on the current displays, and what an
  * upstream page's window should be called. Unit-tested; windows.ts feeds
- * it the live display list.
+ * it the live display list. Also the one place a deep-link URL to an
+ * upstream page is built.
  */
+
+import { isDatasetFileName } from "./results-manifest.js";
 
 export interface Rect {
   x: number;
@@ -104,6 +107,41 @@ export function fitBounds(saved: SavedBounds | undefined, displays: Rect[], prim
     placement.y = clamp(Math.round(saved.y), target.y, target.y + target.height - height);
   }
   return placement;
+}
+
+/** The vendored upstream pages, by window kind. */
+export type UiPage = "index.html" | "dashboard.html" | "viewer3d.html";
+export const UI_PAGES: Record<string, UiPage> = {
+  sim: "index.html",
+  dashboard: "dashboard.html",
+  viewer3d: "viewer3d.html",
+};
+
+export interface UiLinkOpts {
+  seed?: number;
+  mode?: string;
+  play?: boolean;
+  /** A manifest file name; the dashboard opens on that entry (unknown falls back to newest). */
+  dataset?: string;
+}
+
+/**
+ * app://ui/<page>?… with every deep-link param validated; junk is dropped,
+ * never an error. `dataset` is honoured by the dashboard only, and only
+ * when it is a plain dataset file name. The query is built by hand so a
+ * space encodes as %20, which the page's URLSearchParams reads back
+ * unchanged.
+ */
+export function uiPageUrl(page: UiPage, opts: UiLinkOpts = {}): string {
+  const params: [string, string][] = [];
+  if (opts.seed !== undefined && Number.isInteger(opts.seed) && opts.seed >= 0 && opts.seed <= 4294967295) {
+    params.push(["seed", String(opts.seed)]);
+  }
+  if (opts.mode === "tactical") params.push(["mode", "tactical"]);
+  if (opts.play === true) params.push(["play", "1"]);
+  if (page === "dashboard.html" && isDatasetFileName(opts.dataset)) params.push(["dataset", opts.dataset]);
+  const query = params.length > 0 ? "?" + params.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&") : "";
+  return `app://ui/${page}${query}`;
 }
 
 /** Which upstream page an app://ui/ URL shows, or null for anything else. */

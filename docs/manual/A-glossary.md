@@ -40,11 +40,15 @@ Terms are grouped by topic. Inside the application every term below appears with
 | **Dataset** | One results file in `%APPDATA%\fpv-sim-app\results`. |
 | **Manifest** | `index.json` in the same folder — the list of datasets the Dashboard shows. |
 | **Overrides** | JSON that changes engine parameters for a sweep or an MCP call, for example `{"CUAS":{"BRG_SIGMA_DEG":8}}`. |
-| **Baseline** | The stock configuration, or the aggregate of a sweep over it. |
+| **Baseline** | The stock configuration, or the aggregate of a sweep over it. In the Dashboard, the canonical study of the same mode that a sweep's deltas are measured against. |
+| **Finding** | The verdict the Dashboard generates from a dataset: a lead line and one line per point, every delta tagged *clear*, *slight* or *no measurable difference*. Nothing is stored; the same file always yields the same words. |
+| **Key evidence / All evidence** | The one card the Dashboard keeps open under the finding (Paired comparisons for a study, VS STOCK BASELINE for a sweep), and the fold that holds every other card. |
+| **Δ (points)** | A difference between two rates in percentage points, computed from the rates as displayed. |
 | **Paired comparison** | The same seeds run twice with one change, so per-seed luck cancels. |
 | **Dose response** | Win rate plotted against one parameter swept in steps (OPFOR's uplink duty cycle). |
 | **Decisive fight** | An engagement someone won (not a stalemate). |
 | **95% CI** (Wilson) | The interval within which the true rate lies with 95% confidence, given the sample size. |
+| **95% CI of a difference** (Newcombe) | The interval within which the true difference between two rates lies with 95% confidence. The Dashboard's words come from it: *clear* when it excludes zero, *slight* when it includes zero but the delta is at least 2 points, otherwise *no measurable difference*. |
 | **Time to fix / time to kill** | Simulated seconds from T+00:00 to a side's first trusted fix, and to the winning strike. |
 
 ## Interoperability

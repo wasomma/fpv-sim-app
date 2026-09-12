@@ -10,7 +10,9 @@ installed, offline tool needs:
 
 - **Interactive seed runs** — the single-file sim, dashboard and 3D
   viewer in app windows, sharing one `app://ui/` origin so every
-  relative fetch and `?seed=` deep link works unchanged.
+  relative fetch and `?seed=` / `?dataset=` deep link works unchanged.
+  The dashboard opens on a finding generated from the selected dataset;
+  the Studies panel deep-links every dataset it lists.
 - **Monte Carlo locally** — the canonical study and ad-hoc sweep runners
   executed against the bundled engine (plus a parallel worker-pool
   runner proven byte-equivalent), writing datasets the dashboard reads
@@ -65,7 +67,7 @@ cd fpv-sim-app
 npm install        # builds the fpv-sim-mcp git dependency via its prepare script
 npm run vendor     # vendor the pinned fpv-sim UI + engine copy into build/resources
 npm run build      # tsc
-npm test           # engine parity smoke, codec/geo/publisher/receive, settings/window/studies/menu/results suites (125 tests)
+npm test           # engine parity smoke, codec/geo/publisher/receive, settings/window/studies/menu/results suites (132 tests)
 npm run self-check # headless end-to-end: protocol, engine, studies, MCP, live, DIS loopback
 npm run screenshots # regenerate docs/manual/images from the app itself (scratch profile)
 npm run manual:pdf # build docs/manual/fpv-sim-manual.pdf with the bundled Electron

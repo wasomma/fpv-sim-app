@@ -37,7 +37,10 @@ Symptoms are grouped by where you meet them. Include the launcher footer line (`
 | Symptom | Cause | Fix |
 |---|---|---|
 | My sweep is not in the **DATASET** list | It was a **RUN QUICK** study, which is never registered (the LAST DATASET box says *not registered in the manifest*); or the dataset file was copied in by hand, so no manifest entry exists. | For a quick study, run an ad-hoc sweep or the full study instead; for a hand-copied file, **STUDIES ▸ DATASETS ▸ REGISTER** (Chapter 6.7) — the Dashboard reloads by itself. |
-| No **Dose response** or **Paired comparisons** card | An ad-hoc dataset is selected. | Expected. Those cards exist only for the canonical study. |
+| No **Dose response**, **Baseline timelines** or **Notable engagements** card | They live under **ALL EVIDENCE**, collapsed by default. | Click **ALL EVIDENCE** below the key-evidence card; the fold stays open while you switch datasets (Chapter 7.8). |
+| No **Paired comparisons** card | An ad-hoc dataset is selected. | Expected. The paired experiments exist only in the canonical study; a sweep's key evidence is **VS STOCK BASELINE** instead. |
+| No **VS STOCK BASELINE** card and no Δ lines on the tiles for my sweep | The manifest has no canonical study of the same mode to measure it against — it was deleted, or the sweep is tactical and only the orbit study is registered. | **STUDIES ▸ DATASETS ▸ RESTORE** the bundled study, or **RUN FULL** in that mode (Chapter 6.4). |
+| The Dashboard did not switch to my new sweep | A finished run switches every open Dashboard; a rename, delete or register reloads it on the dataset it was showing. | Click **OPEN IN DASHBOARD** in the LAST DATASET box, **OPEN** on the DATASETS row, or pick it in the **DATASET** list. |
 | "Could not load `results/index.json`" | The manifest is missing or invalid JSON (usually after hand-editing). | The DATASETS box (Chapter 6.7) names the parse error. Fix the JSON, or restore the factory store (Appendix B). |
 | **WATCH ▸** opened a new window and the Dashboard stayed behind it | By design: the battle plays in its own Simulation window so the Dashboard keeps its dataset and scroll position. | Arrange the two windows side by side, or close the Simulation window when done. |
 | **READ THE STUDY** does nothing | It opens your web browser and needs internet. | |

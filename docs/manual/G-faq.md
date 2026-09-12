@@ -27,6 +27,12 @@ It is a smoke test. The quick study writes its file but does not register it in 
 **How do I delete a dataset?**
 Open the **STUDIES** panel, expand **DATASETS**, click **DELETE** on the entry (Chapter 6.7). The file and its manifest entry go together, and any open Dashboard reloads. Hand-editing `index.json` still works (Appendix B) but is no longer needed.
 
+**Where did the charts go?**
+Under **ALL EVIDENCE**, one click below the finding. The Dashboard keeps the finding, the tiles and one key-evidence card in view and folds the dose response, the timelines, the notable engagements and the provenance; the fold stays open while you switch datasets (Chapter 7.8).
+
+**How do I share a finding?**
+Click **COPY FINDINGS** in the finding card and paste: the verdict, the outcome table with intervals and deltas, and the provenance arrive as Markdown (Chapter 7.5). To share the data itself, **EXPORT** the dataset (below).
+
 **Can I share a dataset with a colleague?**
 Yes: **DATASETS ▸ EXPORT** writes a copy wherever you point the save dialog. Your colleague drops the file into their own results folder and clicks **REGISTER** in the same box — the label, date and provenance travel inside the file, so their Dashboard shows it exactly as yours does.
 
@@ -43,7 +49,7 @@ It forgets the *arming*, not the text. A staged configuration is deliberately di
 No. A live session run to its end produces exactly the batch result for the same seed, mode and overrides; pacing, pausing and publishing cannot change the outcome. Received DIS entities are display-only.
 
 **Which version am I running?**
-Read the launcher footer: `app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin 7050617 · …` (Chapter 3.4), or open **Help ▸ About FPV Sim**.
+Read the launcher footer: `app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin a442897 · …` (Chapter 3.4), or open **Help ▸ About FPV Sim**.
 
 **Where is the source code and what is the licence?**
 [github.com/wasomma/fpv-sim-app](https://github.com/wasomma/fpv-sim-app), under the PolyForm Strict License 1.0.0. The simulation and engine it wraps are [fpv-sim](https://github.com/wasomma/fpv-sim) and [fpv-sim-mcp](https://github.com/wasomma/fpv-sim-mcp).

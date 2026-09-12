@@ -6,7 +6,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fitBounds, isSavedBounds, titleForUiUrl, uiKindForUrl } from "../src/main/window-layout.js";
+import { fitBounds, isSavedBounds, titleForUiUrl, uiKindForUrl, uiPageUrl } from "../src/main/window-layout.js";
 
 const primary = { x: 0, y: 0, width: 1920, height: 1040 };
 const second = { x: 1920, y: 0, width: 2560, height: 1400 };
@@ -82,4 +82,26 @@ test("upstream URLs map to kinds and titles", () => {
   assert.equal(titleForUiUrl("app://ui/dashboard.html"), "Dashboard — FPV Sim");
   assert.equal(titleForUiUrl("app://ui/viewer3d.html?seed=12"), "3D Viewer · seed 12 — FPV Sim");
   assert.equal(titleForUiUrl("app://ui/viewer3d.html"), "3D Viewer — FPV Sim");
+  // A query never changes the kind or the title.
+  assert.equal(uiKindForUrl("app://ui/dashboard.html?dataset=a.json"), "dashboard");
+  assert.equal(titleForUiUrl("app://ui/dashboard.html?dataset=a.json"), "Dashboard — FPV Sim");
+});
+
+test("uiPageUrl validates and encodes deep-link params", () => {
+  assert.equal(uiPageUrl("index.html"), "app://ui/index.html");
+  assert.equal(uiPageUrl("index.html", { seed: 20260719, play: true }), "app://ui/index.html?seed=20260719&play=1");
+  assert.equal(uiPageUrl("index.html", { seed: 12, mode: "tactical" }), "app://ui/index.html?seed=12&mode=tactical");
+  assert.equal(uiPageUrl("index.html", { seed: -1, mode: "orbit", play: false }), "app://ui/index.html");
+  assert.equal(uiPageUrl("index.html", { seed: 1.5 }), "app://ui/index.html");
+  // A dataset deep link: plain file names only, spaces as %20, round-trips through URLSearchParams.
+  const u = uiPageUrl("dashboard.html", { dataset: "My Export (1).json" });
+  assert.equal(u, "app://ui/dashboard.html?dataset=My%20Export%20(1).json");
+  assert.equal(new URL(u).searchParams.get("dataset"), "My Export (1).json");
+  assert.equal(uiPageUrl("dashboard.html", { mode: "tactical", dataset: "monte-carlo-tactical.json" }), "app://ui/dashboard.html?mode=tactical&dataset=monte-carlo-tactical.json");
+  for (const junk of ["../x.json", "index.json", "", "a/b.json", "x.txt", 42 as unknown as string]) {
+    assert.equal(uiPageUrl("dashboard.html", { dataset: junk }), "app://ui/dashboard.html", `dropped: ${String(junk)}`);
+  }
+  // Only the dashboard reads it.
+  assert.equal(uiPageUrl("index.html", { dataset: "monte-carlo.json" }), "app://ui/index.html");
+  assert.equal(uiPageUrl("viewer3d.html", { seed: 3, dataset: "monte-carlo.json" }), "app://ui/viewer3d.html?seed=3");
 });
