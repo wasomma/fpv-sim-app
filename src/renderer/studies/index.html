@@ -20,7 +20,12 @@
     text-transform: uppercase; color: var(--dim);
   }
   #ds-count { margin-left: 10px; letter-spacing: normal; text-transform: none; font-weight: normal; }
-  #ds-list { max-height: 200px; overflow-y: auto; margin-top: 8px; }
+  #ds-list { max-height: 260px; overflow-y: auto; margin-top: 8px; }
+  /* Headline numbers from the manifest: B / O / S, and for a sweep the
+     delta against the same-mode study (the dashboard's own rule). */
+  .ds-headline { color: var(--bright); font-size: 12px; overflow-wrap: anywhere; }
+  .ds-headline .dim { color: var(--dim); }
+  #dataset-headline { flex: 1; min-width: 200px; }
   #datasets-box button { padding: 2px 8px; font-size: 11px; letter-spacing: .08em; }
   .ds-row { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-top: 1px solid var(--edge); }
   .ds-row:first-child { border-top: none; padding-top: 0; }
@@ -90,6 +95,10 @@
 
   <div class="box" id="dataset-box" hidden>
     <h2>LAST DATASET</h2>
+    <div class="row" style="margin-bottom:6px">
+      <span id="dataset-headline" class="ds-headline"></span>
+      <button id="dataset-open" title="Open the Dashboard on this dataset (an open Dashboard switches to it)">OPEN IN DASHBOARD</button>
+    </div>
     <div class="row">
       <code id="dataset-path"></code>
       <button id="dataset-copy" class="quiet">COPY PATH</button>
@@ -228,6 +237,30 @@
     }
     $("dataset-note").textContent = note;
     box.hidden = false;
+    updateLastHeadline();
+  }
+
+  /* The headline for a manifest entry, from the last results.list():
+   * "B 14.6% / O 14.4% / S 71.0%" and, for a sweep, the delta against
+   * the same-mode study. Painted as text — the label is free user input. */
+  const headlineOf = (file) => (dsData && dsData.datasets.find((e) => e.file === file)?.headline) || null;
+  function paintHeadline(el, h) {
+    el.textContent = "";
+    if (!h) return;
+    el.appendChild(document.createTextNode(h.text));
+    if (h.deltaText) {
+      const d = document.createElement("span");
+      d.className = "dim";
+      d.textContent = ` · ${h.deltaText}`;
+      el.appendChild(d);
+    }
+  }
+  // Called from showDataset (study-done arrives before the list refreshes)
+  // and again from renderDatasets, so whichever lands last paints it.
+  function updateLastHeadline() {
+    const registered = dataset !== null && dataset.registered === true;
+    paintHeadline($("dataset-headline"), registered ? headlineOf(dataset.datasetFile) : null);
+    $("dataset-open").hidden = !registered;
   }
 
   window.fpvApp.studies.onOutput(handleOutput);
@@ -277,6 +310,9 @@
   $("sw-run-canonical").addEventListener("click", () => start(sweepOpts("sweep")));
   $("cancel").addEventListener("click", () => window.fpvApp.studies.cancel());
   $("open-dashboard").addEventListener("click", () => window.fpvApp.openWindow("dashboard"));
+  $("dataset-open").addEventListener("click", () => {
+    if (dataset !== null && dataset.datasetFile) window.fpvApp.openWindow("dashboard", { dataset: dataset.datasetFile });
+  });
   $("to-launcher").addEventListener("click", () => window.fpvApp.openPanel("shell"));
 
   app.copyButton($("dataset-copy"), () => $("dataset-path").textContent);
@@ -364,6 +400,14 @@
         dsButton("CANCEL", { onClick: cancelRename }),
       );
     } else {
+      if (!entry.missing) {
+        buttons.push(
+          dsButton("OPEN", {
+            title: "Open the Dashboard on this dataset (an open Dashboard switches to it)",
+            onClick: () => window.fpvApp.openWindow("dashboard", { dataset: entry.file }),
+          }),
+        );
+      }
       buttons.push(
         dsButton("RENAME", {
           mut: true,
@@ -417,6 +461,12 @@
       meta.appendChild(bad);
     }
     info.appendChild(meta);
+    if (entry.headline) {
+      const h = document.createElement("span");
+      h.className = "note ds-headline";
+      paintHeadline(h, entry.headline);
+      info.appendChild(h);
+    }
     return row;
   }
 
@@ -482,6 +532,7 @@
     if (gone.length > 0) parts.push(`${gone.length} bundled gone`);
     $("ds-count").textContent = dsData.error ? "manifest unreadable" : parts.join(" · ");
     updateDsDisabled();
+    updateLastHeadline();
   }
 
   function cancelRename() {

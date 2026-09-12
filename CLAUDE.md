@@ -13,14 +13,14 @@ docs/DIS_HLA_PRIMER.md, and the user manual index docs/manual/README.md.
 **The vendored UI and the bundled engine are a parity-verified pair, and
 this repo edits neither.** The three pages (`index.html`,
 `dashboard.html`, `viewer3d.html`) come from the `upstream/fpv-sim` git
-submodule (pin `7050617`) and are served byte-identical from the
+submodule (pin `a442897`) and are served byte-identical from the
 `app://ui/` origin; the engine is the commit-pinned `fpv-sim-mcp` git
 dependency in package.json (`github:wasomma/fpv-sim-mcp#f848528…`, the
 same pin under `allowScripts`). Consequences:
 
 - Never edit anything under `upstream/` or `build/resources/`. A change
   to the sim, dashboard or viewer belongs in the fpv-sim repo (e.g. the
-  `?dataset=` deep-link proposal); this repo's own UI is `src/renderer/`.
+  wording of the dashboard's finding); this repo's own UI is `src/renderer/`.
 - Bump the two pins together, never separately. `npm run check-pins`
   (`scripts/check-pins.mjs`) asserts `git diff <fixtures'
   _meta.source_commit>..<submodule HEAD> -- index.html` is empty and
@@ -45,7 +45,7 @@ same pin under `allowScripts`). Consequences:
   `app://` scheme: `ui/*` vendored pages + writable results, `app/*`
   panels), `paths.ts` (dev vs packaged; runtime-read files ship as
   extraResources, never inside the asar), windows/menu/settings
-  (`DEFAULT_MCP_PORT` 8765), `self-check.ts` (10 steps), `screenshots.ts`.
+  (`DEFAULT_MCP_PORT` 8765), `self-check.ts` (11 steps), `screenshots.ts`.
   - `studies/` — `study-runner.ts` spawns the vendored canonical scripts
     and the worker-pool `adhoc-runner.mjs` as `ELECTRON_RUN_AS_NODE`
     children of the app binary (no fork of experiment or manifest
@@ -70,7 +70,7 @@ same pin under `allowScripts`). Consequences:
   `build/resources/upstream-pins.json` beside it.
 - `scripts/` — `vendor-ui`, `check-pins`, `check-screenshots`,
   `interop-check`, `build-manual` (+ `manual-pdf-main.cjs`), `make-icon`.
-- `test/` — node:test suites (125 tests) run by `npm test`; `util.ts`.
+- `test/` — node:test suites (132 tests) run by `npm test`; `util.ts`.
 - `tools/dis-crosscheck.py` — open-dis-python, an independent IEEE
   1278.1 implementation pinned by commit, behind `npm run interop-check`.
 - `docs/` — INTEROP.md, VBS4_CHECKLIST.md, DIS_HLA_PRIMER.md, `captures/`
@@ -134,6 +134,11 @@ tracked there, not in this file. Standing items:
   VBS Gateway showed into docs/VBS4_CHECKLIST.md step 6; if emitter
   systems still do not list, suspect emitter name 0 or Gateway filtering.
 - The 2026-09-05/06 UI/UX programme (P0–P2) is on main. Left: Wes's
-  interactive DATASETS checklist pass; the upstream `?dataset=` proposal
-  (drafted in the plan file, to be filed against fpv-sim).
+  interactive DATASETS checklist pass.
+- The dashboard's finding (2026-09-12, fpv-sim PR #32 + this repo's
+  follow-up) is upstream's golden-tested contract:
+  `scripts/check-dashboard-stats.mjs` in fpv-sim holds the exact text for
+  the three bundled datasets. `src/main/results-headline.ts` mirrors its
+  reference rule (newest same-mode study) and displayed-rate delta rule;
+  change them together. Plan: docs/plan-dashboard-findings.md.
 - Known limitation: manual Figure 2-1 still shows the 0.2.0 installer.

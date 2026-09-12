@@ -61,7 +61,7 @@ Each cell is a button: click it to open the panel it describes. The strip refres
 The footer is the application's version stamp:
 
 ```text
-app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin 7050617 · electron 44.0.0 · node 24.18.1 · chrome 152.0.7977.54
+app 0.3.0 · engine fpv-sim-mcp 0.3.0 · ui pin a442897 · electron 44.0.0 · node 24.18.1 · chrome 152.0.7977.54
 ```
 
 | Field | Meaning |
@@ -94,7 +94,7 @@ Every FPV Sim window has the same menu bar. It stays hidden until you press <kbd
 | | **Close** | <kbd>Ctrl</kbd>+<kbd>W</kbd> | Closes this window (the last one quits, see 3.5). |
 | | **Quit** | <kbd>Ctrl</kbd>+<kbd>Q</kbd> | Quits — asking first if a run is active. |
 | **Edit** | **Undo** … **Select All** | the usual keys | Text editing in any field, for example the gateway JSON. |
-| **View** | **Reload** | <kbd>Ctrl</kbd>+<kbd>R</kbd> | Reloads this window. In the Dashboard this re-reads the dataset list; a panel comes back as it was. |
+| **View** | **Reload** | <kbd>Ctrl</kbd>+<kbd>R</kbd> | Reloads this window. In the Dashboard this re-reads the dataset list and comes back to the dataset it was showing; a panel comes back as it was. |
 | | **Toggle Developer Tools** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> | The browser developer pane; its **Console** tab shows any error messages from that window. |
 | | **Zoom In** / **Zoom Out** / **Actual Size** | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> / <kbd>Ctrl</kbd>+<kbd>Numpad 0</kbd> | Text size for a lab-bench display; the panels share one zoom level, the three fpv-sim pages another. (Not <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>0</kbd>: Windows keeps that as its keyboard-layout hotkey. Without a numeric keypad, use the menu.) |
 | | **Toggle Full Screen** | <kbd>F11</kbd> | |

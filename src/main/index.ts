@@ -26,6 +26,7 @@ import {
   removeDataset,
   restoreBundled,
 } from "./results-manifest.js";
+import { withHeadlines } from "./results-headline.js";
 import { mcpHostStatus, restartMcpHost, setServerExtender, startMcpHost } from "./mcp/host.js";
 import { registerLiveTools } from "./mcp/live-tools.js";
 import { seedResultsIfEmpty } from "./results.js";
@@ -103,12 +104,13 @@ if (!gotLock) {
     await loadOverridesSchema();
 
     ipcMain.handle("open-ui-window", (_event, args: unknown) => {
-      const a = (args ?? {}) as { page?: unknown; seed?: unknown; mode?: unknown; play?: unknown };
+      const a = (args ?? {}) as { page?: unknown; seed?: unknown; mode?: unknown; play?: unknown; dataset?: unknown };
       const page = typeof a.page === "string" ? a.page : "";
       const win = openUiWindow(page, {
         seed: typeof a.seed === "number" ? a.seed : undefined,
         mode: typeof a.mode === "string" ? a.mode : undefined,
         play: a.play === true,
+        dataset: typeof a.dataset === "string" ? a.dataset : undefined,
       });
       return win !== null;
     });
@@ -217,7 +219,9 @@ if (!gotLock) {
     const reloadingDashboards = <T extends { ok: boolean }>(r: T): T | (T & { reloaded: number }) =>
       r.ok ? { ...r, reloaded: reloadDashboardWindows() } : r;
 
-    ipcMain.handle("results-list", () => listResults(resultsDir(), vendoredResults()));
+    // Each entry carries a headline (B / O / S and, for a sweep, the delta
+    // against the same-mode study) computed from the manifest alone.
+    ipcMain.handle("results-list", () => withHeadlines(listResults(resultsDir(), vendoredResults())));
     ipcMain.handle("results-delete", (_event, args: unknown) => {
       return manifestBusy() ?? reloadingDashboards(removeDataset(resultsDir(), fileArg(args)));
     });

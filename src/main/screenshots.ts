@@ -302,9 +302,28 @@ const SIM_TO_ENDEX =
   ` document.getElementById("phase").textContent = state.phase; draw(); return state.endShown; })()`;
 
 const DASH_CARD = (re: string) =>
-  `(() => { const c = [...document.querySelectorAll("#charts .card")].find((c) => ${re}.test((c.querySelector("h2") || {}).textContent || ""));` +
+  `(() => { const c = [...document.querySelectorAll("main .card")].find((c) => ${re}.test((c.querySelector("h2") || {}).textContent || ""));` +
   ` if (!c) return null; c.scrollIntoView({ block: "start" }); const b = c.getBoundingClientRect();` +
   ` return { x: b.left, y: b.top, w: b.width, h: b.height, vw: innerWidth, vh: innerHeight }; })()`;
+
+// The ALL EVIDENCE fold (<details id="evidence">) hides dose response,
+// histograms, notable engagements and provenance until opened. Full-window
+// shots keep it closed, as a user sees the page; clips of the cards inside
+// it open it first. Its state is static skeleton, so it survives dataset
+// switches.
+const DASH_EVIDENCE = (open: boolean) =>
+  `(() => { const d = document.getElementById("evidence"); if (!d) return false; d.open = ${open}; return true; })()`;
+const DASH_FINDING_HAS = (needle: string) => `document.getElementById("finding").textContent.includes(${JSON.stringify(needle)})`;
+const openEvidence = async (c: Ctx): Promise<void> => {
+  await c.js(DASH_EVIDENCE(true));
+  await c.waitFor(`document.querySelector("#evidence svg") !== null`, 20000);
+  await sleep(100);
+};
+const closeEvidence = async (c: Ctx): Promise<void> => {
+  await c.js(DASH_EVIDENCE(false));
+  await c.js(`scrollTo(0, 0)`);
+  await sleep(100);
+};
 
 const DASH_SELECT = (needle: string) =>
   `(() => { const s = document.getElementById("dataset"); const o = [...s.options].find((o) => o.textContent.includes(${JSON.stringify(needle)}));` +
@@ -328,9 +347,12 @@ const WALKTHROUGH_OVERRIDES = `{"CUAS":{"BRG_SIGMA_DEG":8}}`;
 const dashReady = async (c: Ctx): Promise<void> => {
   await c.waitFor(`document.getElementById("status").hidden`, 20000);
   await c.waitFor(`!document.getElementById("content").hidden`, 20000);
+  await c.waitFor(`document.querySelectorAll("#tiles .tile").length >= 3`, 20000);
   await c.waitFor(`document.querySelector("#charts .card svg") !== null`, 20000);
-  // Newest manifest entry loads by default — the walkthrough sweep just written.
+  // Newest manifest entry loads by default — the walkthrough sweep just
+  // written — and the finding names it.
   await c.waitFor(DASH_PROV_HAS(WALKTHROUGH_LABEL), 20000);
+  await c.waitFor(DASH_FINDING_HAS(WALKTHROUGH_LABEL), 20000);
 };
 
 function buildGroups(hidden: boolean): Group[] {
@@ -448,21 +470,24 @@ function buildGroups(hidden: boolean): Group[] {
         },
         {
           id: "studies-finished",
-          caption: "The finished sweep: the green dataset line is the answer key, then the exit code.",
+          caption: "The finished sweep: the headline with its delta against the stock study and OPEN IN DASHBOARD, then the answer-key line and the exit code in the log.",
           timeoutMs: 240000,
           setup: async (c) => {
             await poll(async () => studyStatus().running, (r) => r === false, 200000, 250);
             await c.waitFor(`/finished with exit code 0/.test(document.getElementById("log").textContent)`, 20000);
+            // The headline paints once the DATASETS refresh after study-done lands.
+            await c.waitFor(`document.getElementById("dataset-headline").textContent.includes("Δ")`, 20000);
           },
         },
         {
           id: "studies-datasets",
-          caption: "The DATASETS box opened after the sweep: every manifest entry with RENAME, EXPORT, REVEAL and DELETE.",
+          caption: "The DATASETS box opened after the sweep: every manifest entry with its headline numbers and OPEN, RENAME, EXPORT, REVEAL and DELETE.",
           setup: async (c) => {
             await c.js(`(() => { document.getElementById("ds-details").open = true; return true; })()`);
             // The box refreshed on study-done: the walkthrough sweep tops the list.
             await c.waitFor(
-              `document.querySelectorAll("#ds-list .ds-row").length >= 4 && document.getElementById("ds-list").textContent.includes(${JSON.stringify(WALKTHROUGH_LABEL)})`,
+              `document.querySelectorAll("#ds-list .ds-row").length >= 4 && document.getElementById("ds-list").textContent.includes(${JSON.stringify(WALKTHROUGH_LABEL)})` +
+                ` && document.querySelectorAll("#ds-list .ds-headline").length >= 3`,
             );
           },
           clip: (c) => c.rectOf("#datasets-box", 6),
@@ -478,11 +503,29 @@ function buildGroups(hidden: boolean): Group[] {
       shots: [
         {
           id: "dashboard-overview",
-          caption: "The Dashboard right after the exercise: your ad-hoc dataset is selected.",
-          setup: dashReady,
+          caption: "The Dashboard right after the exercise: the finding for your ad-hoc dataset, its tiles, and the vs-stock card.",
+          setup: async (c) => {
+            await dashReady(c);
+            await closeEvidence(c);
+          },
         },
-        { id: "dashboard-tiles-adhoc", caption: "Summary tiles for the doubled-bearing-error sweep.", clip: (c) => c.rectOf("#tiles", 8) },
-        { id: "dashboard-seeds", caption: "Notable engagements — WATCH opens the exact battle behind a statistic.", clip: (c) => c.rectOf("#seedsCard", 8) },
+        {
+          id: "dashboard-finding",
+          caption: "The finding for the doubled-bearing-error sweep: verdict, deltas against the stock study, the override that was changed.",
+          clip: (c) => c.rectOf("#finding", 8),
+        },
+        { id: "dashboard-tiles-adhoc", caption: "Summary tiles for the doubled-bearing-error sweep, each with its delta against the stock study.", clip: (c) => c.rectOf("#tiles", 8) },
+        {
+          id: "dashboard-vs-baseline",
+          caption: "VS STOCK BASELINE: hollow = the stock study, filled = this sweep, one dumbbell per outcome.",
+          clip: (c) => c.rectJs(DASH_CARD("/vs stock/i"), 8),
+        },
+        {
+          id: "dashboard-seeds",
+          caption: "Notable engagements (under ALL EVIDENCE) — WATCH opens the exact battle behind a statistic.",
+          setup: openEvidence,
+          clip: (c) => c.rectOf("#seedsCard", 8),
+        },
         {
           id: "dashboard-provenance",
           caption: "Provenance footer for an ad-hoc dataset: overrides echoed and the reproduction command.",
@@ -497,14 +540,24 @@ function buildGroups(hidden: boolean): Group[] {
           },
           clip: (c) => c.rectOf("#tiles", 8),
         },
-        { id: "dashboard-full-overview", caption: "The Dashboard with the full study selected." , setup: (c) => c.js(`scrollTo(0, 0)`).then(() => undefined) },
-        { id: "dashboard-dose", caption: "Dose response: win rate versus OPFOR uplink duty cycle, with 95% CI whiskers.", clip: (c) => c.rectJs(DASH_CARD("/dose/i"), 8) },
+        {
+          id: "dashboard-finding-full",
+          caption: "The finding for the full study: the baseline, one clause per paired experiment, the dose sweep and the time-to-fix gap.",
+          clip: (c) => c.rectOf("#finding", 8),
+        },
+        { id: "dashboard-full-overview", caption: "The Dashboard with the full study selected: finding, tiles, paired comparisons, ALL EVIDENCE closed.", setup: closeEvidence },
+        {
+          id: "dashboard-dose",
+          caption: "Dose response (under ALL EVIDENCE): win rate versus OPFOR uplink duty cycle, with 95% CI whiskers.",
+          setup: openEvidence,
+          clip: (c) => c.rectJs(DASH_CARD("/dose/i"), 8),
+        },
         {
           id: "dashboard-tooltip",
           caption: "Hovering a point shows the cell's duty cycle, win rate, CI, and n.",
           setup: async (c) => {
             await c.js(
-              `(() => { const card = [...document.querySelectorAll("#charts .card")].find((c) => /dose/i.test((c.querySelector("h2") || {}).textContent || ""));` +
+              `(() => { const card = [...document.querySelectorAll("main .card")].find((c) => /dose/i.test((c.querySelector("h2") || {}).textContent || ""));` +
                 ` card.scrollIntoView({ block: "start" }); const dots = [...card.querySelectorAll("svg circle")]; const dot = dots[Math.min(5, dots.length - 1)];` +
                 ` const b = dot.getBoundingClientRect(); const x = b.left + b.width / 2, y = b.top + b.height / 2;` +
                 ` const target = document.elementFromPoint(x, y) || dot;` +
@@ -528,18 +581,18 @@ function buildGroups(hidden: boolean): Group[] {
           setup: async (c) => {
             await c.setVal("#kindFilter", "adhoc", true);
             await c.waitFor(DASH_PROV_HAS(WALKTHROUGH_LABEL));
-            await c.js(`scrollTo(0, 0)`);
+            await closeEvidence(c);
           },
         },
         {
           id: "dashboard-tactical",
-          caption: "A tactical dataset adds the strikes tile and the reserve-hunter row.",
+          caption: "A tactical dataset: the strikes clause and tile, and the reserve-hunter row in the paired card.",
           setup: async (c) => {
             await c.setVal("#kindFilter", "all", true);
             await c.waitFor(`document.getElementById("dataset").options.length >= 3`);
             if (!(await c.js<boolean>(DASH_SELECT("Tactical study")))) throw new Error("Tactical study option not found");
             await c.waitFor(DASH_PROV_HAS("monte-carlo-tactical.json"));
-            await c.js(`scrollTo(0, 0)`);
+            await closeEvidence(c);
           },
         },
         { id: "dashboard-tactical-paired", caption: "Tactical paired comparisons including 'No reserve hunter'.", clip: (c) => c.rectJs(DASH_CARD("/paired/i"), 8) },

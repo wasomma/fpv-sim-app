@@ -24,7 +24,17 @@ import { BrowserWindow, screen, shell } from "electron";
 import { isHeadless } from "./mode.js";
 import { devWindowIcon, preloadPath } from "./paths.js";
 import { getUi, setUi } from "./settings.js";
-import { type SavedBounds, fitBounds, isSavedBounds, titleForUiUrl, uiKindForUrl } from "./window-layout.js";
+import { isDatasetFileName } from "./results-manifest.js";
+import {
+  type SavedBounds,
+  type UiLinkOpts,
+  UI_PAGES,
+  fitBounds,
+  isSavedBounds,
+  titleForUiUrl,
+  uiKindForUrl,
+  uiPageUrl,
+} from "./window-layout.js";
 
 export type WindowKind = "shell" | "studies" | "mcp" | "live-ops" | "sim" | "dashboard" | "viewer3d";
 
@@ -52,12 +62,6 @@ const SPEC: Record<WindowKind, KindSpec> = {
   sim: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: PAGE_BG, single: false, title: "Simulation — FPV Sim" },
   dashboard: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: PAGE_BG, single: true, title: "Dashboard — FPV Sim" },
   viewer3d: { width: 1440, height: 920, minWidth: 960, minHeight: 640, background: PAGE_BG, single: false, title: "3D Viewer — FPV Sim" },
-};
-
-const UI_PAGES: Record<string, string> = {
-  sim: "index.html",
-  dashboard: "dashboard.html",
-  viewer3d: "viewer3d.html",
 };
 
 const APP_PANELS = new Set<WindowKind>(["studies", "mcp", "live-ops"]);
@@ -237,27 +241,26 @@ export function openAppUrl(url: string, opts: OpenOpts = {}): BrowserWindow {
   return win;
 }
 
-/** Open one of the vendored upstream pages with validated deep-link params. */
-export function openUiWindow(
-  page: string,
-  opts: { seed?: number; mode?: string; play?: boolean } & OpenOpts = {},
-): BrowserWindow | null {
+/**
+ * Open one of the vendored upstream pages with validated deep-link params.
+ * The dashboard is a singleton: a bare open brings the existing window
+ * forward, while an open that names a dataset retargets it, so OPEN in
+ * the Studies panel lands on that dataset instead of only focusing.
+ */
+export function openUiWindow(page: string, opts: UiLinkOpts & OpenOpts = {}): BrowserWindow | null {
   const file = UI_PAGES[page];
   if (file === undefined) return null;
+  const url = uiPageUrl(file, opts);
   if (page === "dashboard" && opts.fresh !== true) {
     // Windows never change kind (applyNavPolicy routes cross-kind links
     // away), so the tracked window is always still the dashboard.
     const existing = focusExisting("dashboard");
-    if (existing !== null) return existing;
+    if (existing !== null) {
+      if (new URL(url).searchParams.has("dataset")) void existing.loadURL(url);
+      return existing;
+    }
   }
-  const params = new URLSearchParams();
-  if (opts.seed !== undefined && Number.isInteger(opts.seed) && opts.seed >= 0 && opts.seed <= 4294967295) {
-    params.set("seed", String(opts.seed));
-  }
-  if (opts.mode === "tactical") params.set("mode", "tactical");
-  if (opts.play === true) params.set("play", "1");
-  const query = params.size > 0 ? `?${params.toString()}` : "";
-  return openAppUrl(`app://ui/${file}${query}`, opts);
+  return openAppUrl(url, opts);
 }
 
 /** Open (or focus) one of the app's own panel pages (preload + contextBridge). */
@@ -285,13 +288,21 @@ export function showShellWindow(): BrowserWindow {
   return focusExisting("shell") ?? createShellWindow();
 }
 
-/** Reload every window currently showing the dashboard so a new dataset appears. */
-export function reloadDashboardWindows(): number {
+/**
+ * Reload every window currently showing the dashboard so a manifest change
+ * appears. With a dataset file name, each window is pointed at that
+ * dataset (a finished run jumps into view); without one, a plain reload —
+ * which keeps the ?dataset= query the page maintains, so the window stays
+ * on the dataset it was showing.
+ */
+export function reloadDashboardWindows(dataset?: string): number {
+  const target = isDatasetFileName(dataset) ? uiPageUrl("dashboard.html", { dataset }) : null;
   let n = 0;
   for (const win of BrowserWindow.getAllWindows()) {
     if (win.isDestroyed()) continue;
     if (win.webContents.getURL().startsWith("app://ui/dashboard.html")) {
-      win.webContents.reload();
+      if (target !== null) void win.webContents.loadURL(target);
+      else win.webContents.reload();
       n++;
     }
   }

@@ -221,7 +221,9 @@ export function startStudy(opts: StudyStartOpts): StartResult {
     emit(run, "sys", `${descr} finished with exit code ${code}`);
     active = null;
     last = { ...facts(run), code, endedAtMs: Date.now() };
-    const reloaded = code === 0 && run.registered ? reloadDashboardWindows() : 0;
+    // An open dashboard jumps to the finished run explicitly (the page keeps
+    // its ?dataset= across a plain reload, so "newest first" no longer applies).
+    const reloaded = code === 0 && run.registered ? reloadDashboardWindows(run.datasetFile ?? undefined) : 0;
     broadcast("study-done", {
       code,
       descr,

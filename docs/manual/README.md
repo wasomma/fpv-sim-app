@@ -1,6 +1,6 @@
 # FPV Sim — User Manual
 
-*Describes FPV Sim **0.3.0** with engine fpv-sim-mcp **0.3.0** and UI pin `7050617` (Electron 44). Your own versions are printed in the footer of the launcher window (see [Figure 3-1](03-launcher.md)). Figures were regenerated from this build on 2026-09-06.*
+*Describes FPV Sim **0.3.0** with engine fpv-sim-mcp **0.3.0** and UI pin `a442897` (Electron 44). Your own versions are printed in the footer of the launcher window (see [Figure 3-1](03-launcher.md)). Figures were regenerated from this build on 2026-09-12.*
 
 FPV Sim is a Windows desktop application for a **force-on-force engagement between two teams, each fielding an armed FPV small-UAS and two counter-UAS direction-finding nodes**. Both teams hunt each other's ground control station by its radio emissions. The application bundles the interactive simulation, a Monte Carlo study runner, a results dashboard, a WebGPU 3D viewer, a local MCP endpoint for AI-assistant control, and a native DIS gateway that streams the live engagement to other simulators such as VBS4.
 
@@ -31,7 +31,7 @@ Each of the five outcomes below is covered by one self-contained chapter or appe
 4. [The Simulation window](04-simulation.md) — every control, reading the map, Unit Detail, the Event Log, ENDEX, tactical mode
 5. [The 3D Viewer](05-viewer3d.md) — camera, scene layers, the detectability field, the WebGPU requirement
 6. [Running Monte Carlo studies](06-studies.md) — the guided sweep, the canonical study, ad-hoc sweeps, overrides, managing datasets
-7. [Analyzing results in the Dashboard](07-dashboard.md) — datasets, tiles, dose response, paired comparisons, histograms, notable engagements
+7. [Analyzing results in the Dashboard](07-dashboard.md) — the finding, COPY FINDINGS, tiles, the vs-stock and paired cards, and under ALL EVIDENCE the dose response, histograms, notable engagements and provenance
 8. [The MCP Endpoint and Claude Code](08-mcp.md) — connecting an AI assistant to the batch and live tools
 9. [Live Ops: real-time sessions](09-live-ops.md) — wall-clock-paced engagements, the map, entities, events
 10. [Sending your entities over DIS](10-dis.md) — stage the gateway, start a session, verify the PDUs, receive overlay tracks

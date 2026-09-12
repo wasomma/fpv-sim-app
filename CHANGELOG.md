@@ -12,6 +12,43 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+### Added
+
+- **The Dashboard leads with the finding.** The bundled results page
+  (fpv-sim pin `a442897`) now opens on a FINDING card — plain-English
+  verdict lines generated from the dataset itself, nothing stored — with
+  the summary tiles under it, one KEY EVIDENCE card (the paired
+  comparisons for a study; a new VS STOCK BASELINE dumbbell for an ad-hoc
+  sweep, measured against the canonical study of the same mode in the
+  manifest) and everything else — dose response, timelines, notable
+  engagements, provenance — folded into one ALL EVIDENCE section. Ad-hoc
+  tiles carry a Δ-vs-stock line; every delta is read against a 95%
+  Newcombe interval on the difference and tagged *clear*, *slight* or *no
+  measurable difference*. **COPY FINDINGS** puts the verdict, the tiles,
+  the deltas and the provenance on the clipboard as Markdown. Chapter 7 of
+  the manual was rewritten around the three layers.
+- **Deep links to a dataset.** `dashboard.html` accepts `?dataset=<file>`
+  (unknown files fall back to the newest) and keeps the parameter in step
+  with the DATASET selector, so a reload lands on the dataset you were
+  looking at. The Studies panel uses it: the LAST DATASET box shows the
+  finished run's headline — `B … / O … / S …` and, for a sweep, the delta
+  against the same-mode study — with **OPEN IN DASHBOARD**, and every
+  DATASETS row shows the same headline and gains **OPEN**. Opening a
+  dataset while the Dashboard is open switches that window to it instead
+  of only bringing it forward; a finished run switches it to the new
+  dataset; a rename, delete or register reloads it where it was. **OPEN
+  DASHBOARD** and the DASHBOARD tile still open the newest. The
+  self-check gained an 11th step proving the deep link is honoured through
+  the `app://` origin.
+
+### Changed
+
+- fpv-sim UI pin `7050617` → `a442897` (`dashboard.html` only;
+  `index.html` and the engine pin `f848528` are unchanged, so the parity
+  pair holds). Three new manual figures (`dashboard-finding`,
+  `dashboard-finding-full`, `dashboard-vs-baseline`); the dashboard and
+  Studies figures were regenerated for the new layout.
+
 ## [0.3.0] — 2026-09-06
 
 ### Known limitations

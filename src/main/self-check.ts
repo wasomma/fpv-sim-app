@@ -90,6 +90,47 @@ export async function runSelfCheck(): Promise<number> {
     }
   });
 
+  await step("?dataset= deep link selects a dataset through app://ui", async () => {
+    // The tactical study is bundled but never the newest entry, so landing
+    // on it proves the param was honoured; an unknown file must fall back.
+    const opts = { show: false, backgroundThrottling: false };
+    const statusHidden = async (w: ReturnType<typeof openAppUrl>): Promise<void> => {
+      await poll(
+        async () => (await w.webContents.executeJavaScript(`document.getElementById("status").hidden`)) as boolean,
+        (r) => r === true,
+        30000,
+        200,
+      );
+    };
+    const pick = openAppUrl("app://ui/dashboard.html?dataset=monte-carlo-tactical.json", opts);
+    try {
+      await loaded(pick);
+      await statusHidden(pick);
+      const sel = (await pick.webContents.executeJavaScript(
+        `document.getElementById("dataset").selectedOptions[0].textContent`,
+      )) as string;
+      if (!sel.includes("Tactical study")) throw new Error(`selected "${sel}", not the tactical study`);
+      const search = (await pick.webContents.executeJavaScript(`location.search`)) as string;
+      if (!search.includes("monte-carlo-tactical.json")) throw new Error(`URL lost the param: "${search}"`);
+      const finding = (await pick.webContents.executeJavaScript(
+        `document.getElementById("finding").textContent.length`,
+      )) as number;
+      if (!(finding > 40)) throw new Error("finding card is empty");
+    } finally {
+      pick.destroy();
+    }
+    const bad = openAppUrl("app://ui/dashboard.html?dataset=nope.json", opts);
+    try {
+      await loaded(bad);
+      await statusHidden(bad);
+      const shown = !((await bad.webContents.executeJavaScript(`document.getElementById("content").hidden`)) as boolean);
+      if (!shown) throw new Error("unknown ?dataset= did not fall back to the newest dataset");
+    } finally {
+      bad.destroy();
+    }
+    return "monte-carlo-tactical.json selected (not the newest), finding rendered; unknown file fell back";
+  });
+
   await step("studies runner spawns app-as-node children", async () => {
     const before = new Set(readdirSync(resultsDir()));
     const started = startStudy({ kind: "adhoc", label: "self check", start: 1, count: 8, mode: "orbit" });
