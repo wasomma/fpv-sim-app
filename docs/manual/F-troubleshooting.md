@@ -1,6 +1,6 @@
 # F. Troubleshooting
 
-Symptoms are grouped by where you meet them. Include the launcher footer line (`app 0.3.0 · engine fpv-sim-mcp 0.3.0 · …`) in any report.
+Symptoms are grouped by where you meet them. Include the launcher footer line (`app 0.4.0 · engine fpv-sim-mcp 0.3.0 · …`) in any report.
 
 ## Installing and starting
 

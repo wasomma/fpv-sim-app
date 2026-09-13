@@ -12,6 +12,14 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-13
+
+### Known limitations
+
+- Figure 2-1 (Choose Install Location) still shows **FPV Sim 0.2.0** in
+  the wizard corner; it is shot from a built installer rather than
+  regenerated, and the page it documents is otherwise unchanged.
+
 ### Added
 
 - **The Dashboard leads with the finding.** The bundled results page
@@ -351,7 +359,8 @@ First installable build.
 - The MCP panel wrongly states that live-session tools arrive in a later
   phase. All fourteen tools work. Corrected in 0.2.0.
 
-[Unreleased]: https://github.com/wasomma/fpv-sim-app/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/wasomma/fpv-sim-app/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/wasomma/fpv-sim-app/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/wasomma/fpv-sim-app/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/wasomma/fpv-sim-app/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wasomma/fpv-sim-app/compare/v0.1.0...v0.2.0
