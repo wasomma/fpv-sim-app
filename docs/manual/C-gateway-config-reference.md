@@ -135,11 +135,11 @@ These are generic, mappable surrogates. Verify them against the SISO-REF-010 rev
 |---|---|---|---|
 | `lat0Deg` | `0` | −89.9 to 89.9 | Latitude of the AO's south-west corner. **Set this.** |
 | `lon0Deg` | `0` | −180 to 180 | Longitude of the south-west corner. **Set this.** |
-| `h0M` | `0` | −500 to 9000 | Ellipsoidal height of the sim's sea level, metres. |
+| `h0M` | `0` | −500 to 9000 | Height of the sim's sea level above mean sea level, metres. Normally 0. |
 | `rotationDeg` | `0` | −360 to 360 | Azimuth of the sim's +y (north) axis, degrees clockwise from true north. |
-| `geoidOffsetM` | `0` | | Added to every height. |
+| `geoidOffsetM` | `0` | | EGM96 geoid undulation at the anchor, metres (ellipsoidal height minus mean-sea-level height; positive where the geoid lies above the ellipsoid, as at the example anchor). Added to every height on the wire, so entities carry true ellipsoidal positions as DIS requires. **Set this when importing the exported terrain** (Chapter 11.3); GeographicLib's GeoidEval page gives the value. |
 
-The mapping is a flat-geodetic frame at the anchor's curvature radii: within the 4 km box it differs from a rigorous projection by under 2 cm, and the terrain export (Chapter 11.3) uses the identical mapping, so entities and terrain always agree.
+The mapping is a flat-geodetic frame at the anchor's curvature radii: within the 4 km box it differs from a rigorous projection by under 2 cm, and the terrain export (Chapter 11.3) writes its grid on the identical mapping, so entities and terrain always agree. The export's `egm96` variant leaves `geoidOffsetM` out (mean-sea-level heights) and its `ellipsoid` variant includes it.
 
 ### `receive` — the overlay
 

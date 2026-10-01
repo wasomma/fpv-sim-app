@@ -48,14 +48,38 @@ dissector) — no malformed-packet warnings across a full engagement.
 ## 2. Terrain correlation (optional but the better demo)
 
 ```bash
-npm run terrain-export -- --seed=<featured seed> --lat=<lat> --lon=<lon>
+npm run terrain-export -- --seed=<featured seed> --lat=<lat> --lon=<lon> --geoid=<N>
+npm run terrain-export -- --seed=<featured seed> --lat=<lat> --lon=<lon> --geoid=<N> --vdatum=ellipsoid
 ```
 
-Import `seed-<n>-elevation.asc` (+ `.prj`) via VBS Geo's DEM import at
-the same coordinates; set water level to elevation 0 (negative posts are
-real seabed — do not clamp). Verify correlation at three grid
-references: the sim map's SW corner, the ridge spine, the coastline.
-The canopy `.asc` is a reference layer for manual vegetation painting.
+N is the EGM96 geoid undulation at the anchor in metres (GeographicLib's
+GeoidEval page set to EGM96, or `gdaltransform -s_srs EPSG:4979 -t_srs
+EPSG:4326+5773` in an OSGeo4W shell, whose third output is minus N).
+Compute it; do not guess. The same N goes into the gateway's
+`anchor.geoidOffsetM`, whichever file VBS Geo turns out to want: DIS
+positions are ellipsoidal, and without it every entity sits N metres
+below the imported surface.
+
+VBS Geo's DEM import takes GeoTIFF in EPSG:4326 only (no Esri ASCII
+Grid, no projected CRS), honours the nodata value and negative posts,
+ignores the vertical-datum tag, and assumes either EGM96 or ellipsoidal
+heights without the manual saying which. Both files above are that
+GeoTIFF; they differ only by N. VBS4's ocean sits at mean sea level and
+cannot be moved, so the water line is the test:
+
+- Import `seed-<n>-elevation-egm96.tif` first. If the sim map's
+  coastline falls on the water line, VBS Geo assumes EGM96. Keep it.
+- Land drowned by a constant N (shoreline moved inland) means VBS Geo
+  assumes ellipsoidal heights: import `seed-<n>-elevation-ellipsoid.tif`
+  instead.
+- Seabed exposed by a constant N (shoreline moved seaward) means the
+  ellipsoid file went into an EGM96 importer.
+
+Record which datum VBS Geo assumed here: ____________ (undetermined as
+of 2026-10-01). Then verify correlation at three grid references: the
+sim map's SW corner, the ridge spine, the coastline. Negative posts are
+real seabed; do not clamp them. The canopy `.tif` (density 0 to 1 on the
+same grid) is a reference layer for manual vegetation painting.
 
 ## 3. Entity mapping
 

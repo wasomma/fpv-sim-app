@@ -35,9 +35,11 @@ installed, offline tool needs:
   Adapter). See [docs/INTEROP.md](docs/INTEROP.md) and
   [docs/VBS4_CHECKLIST.md](docs/VBS4_CHECKLIST.md); new to the
   standards, start with [docs/DIS_HLA_PRIMER.md](docs/DIS_HLA_PRIMER.md).
-- **Terrain export** — any seed's heightfield as a georeferenced DEM
-  (Esri ASCII Grid + UTM .prj + canopy raster) for VBS Geo import, so
-  the remote terrain correlates with the engagement.
+- **Terrain export**: any seed's heightfield as a Float32 GeoTIFF in
+  geographic WGS 84 (EPSG:4326), the form VBS Geo's DEM import takes,
+  with the vertical datum chosen explicitly (EGM96 or ellipsoidal) and a
+  canopy raster alongside, so the remote terrain correlates with the
+  engagement post for post.
 - **Shareable lab brief** —
   [docs/fpv-sim-vbs4-interop-brief.pdf](docs/fpv-sim-vbs4-interop-brief.pdf),
   a 3-page summary (architecture, wire contract, lab procedure) for
@@ -123,8 +125,12 @@ Useful CLIs (plain node, no Electron):
 
 ```
 npm run dis-listen -- --port=3000 --mode=broadcast --anchor=21.35,-157.95
-npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95
+npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N>
+npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N> --vdatum=ellipsoid
 ```
+
+N is the EGM96 geoid undulation at the anchor; Chapter 11.3 of the manual
+and docs/VBS4_CHECKLIST.md say which of the two files VBS Geo wants.
 
 ## Upstream pins
 

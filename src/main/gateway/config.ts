@@ -59,10 +59,16 @@ export interface GatewayConfig {
   anchor: {
     lat0Deg: number;
     lon0Deg: number;
-    /** Ellipsoidal height of sim z = 0 (sim sea level), meters. */
+    /** Height of sim z = 0 (sim sea level) above mean sea level, meters. Normally 0. */
     h0M: number;
     /** Azimuth of the sim +y axis, degrees clockwise from true north. */
     rotationDeg: number;
+    /**
+     * EGM96 geoid undulation at the anchor, meters (ellipsoidal minus
+     * mean-sea-level height). Added to every wire height so ESPDUs carry
+     * true ellipsoidal positions; the terrain export's egm96 variant
+     * leaves it out.
+     */
     geoidOffsetM: number;
   };
   receive: {

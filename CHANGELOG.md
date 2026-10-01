@@ -12,6 +12,39 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+### Changed
+
+- **Terrain export writes GeoTIFF for VBS Geo.** `npm run terrain-export`
+  now writes `seed-<n>-elevation-<vdatum>.tif` (with a `.json` of the
+  grid's metadata) and `seed-<n>-canopy.tif`: single-band Float32
+  GeoTIFFs in geographic WGS 84 (EPSG:4326), the only format and CRS
+  VBS Geo's DEM import accepts, with an explicit vertical CRS and the
+  GDAL nodata and metadata tags. The grid is written straight from the
+  engine on the gateway's own flat-geodetic mapping, so each pixel is one
+  20.1 m post and its centre is exactly where the DIS stream puts that
+  sim point. The former UTM Esri ASCII Grid followed UTM grid north and
+  was skewed against the entities by grid convergence: 27 to 39 m at the
+  far edges of the box at the example anchor. The `.asc`/`.prj` pair is
+  gone; `gdal_translate -of AAIGrid` recovers one from the GeoTIFF. A
+  rotated anchor now exports a north-aligned grid covering the whole
+  rotated box rather than its overlap with the unrotated one.
+- **The vertical datum is explicit.** `--vdatum=egm96` (default) writes
+  mean-sea-level heights (EPSG:5773); `--vdatum=ellipsoid` adds the
+  anchor's `geoidOffsetM` and declares WGS 84 ellipsoidal heights
+  (EPSG:4979). VBS Geo ignores the tag and assumes one of the two without
+  documenting which, so the lab imports both and keeps the one whose
+  coastline lands on VBS4's water line. The anchor keys are restated to
+  match: `h0M` is the height of the sim's sea level above mean sea level
+  (normally 0) and `geoidOffsetM` the EGM96 geoid undulation at the
+  anchor, applied to the DIS stream so ESPDUs carry true ellipsoidal
+  heights. The wire math, the defaults and the golden capture are
+  unchanged.
+- Chapter 11.3, Appendices C and H, INTEROP.md, the VBS4 checklist and
+  the lab brief describe the GeoTIFF, the datum rule and the geoid
+  offset. The "set the water level at 0" instruction is gone: VBS4's
+  ocean is at mean sea level and cannot be moved, which is what makes
+  the datum rule work.
+
 ## [0.4.0] — 2026-09-13
 
 ### Known limitations

@@ -1,17 +1,18 @@
 /*
  * terrain-export CLI:
  *   npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 \
- *     [--h0=0] [--rotation=0] [--geoid=0] [--out=./export]
+ *     [--geoid=<N>] [--vdatum=egm96|ellipsoid] [--h0=0] [--rotation=0] [--out=./export]
  * (use --key=value: node's parseArgs reads a bare negative number as a flag)
  *
- * Writes seed-<n>-elevation.asc/.prj, seed-<n>-canopy.asc/.prj and a
- * meta JSON. Plain node — no Electron required.
+ * Writes seed-<n>-elevation-<vdatum>.tif (+ .json meta) and
+ * seed-<n>-canopy.tif: Float32 GeoTIFFs in geographic WGS 84 (EPSG:4326)
+ * for VBS Geo's DEM import. Plain node, no Electron required.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { exportTerrain } from "./export.js";
+import { exportTerrain, type VerticalDatum } from "./export.js";
 
 const { values: args } = parseArgs({
   options: {
@@ -21,6 +22,7 @@ const { values: args } = parseArgs({
     h0: { type: "string", default: "0" },
     rotation: { type: "string", default: "0" },
     geoid: { type: "string", default: "0" },
+    vdatum: { type: "string", default: "egm96" },
     out: { type: "string", default: "./export" },
   },
 });
@@ -28,30 +30,49 @@ const { values: args } = parseArgs({
 const seed = Number(args.seed);
 const lat = Number(args.lat);
 const lon = Number(args.lon);
+const vdatum = args.vdatum as VerticalDatum;
 if (!Number.isInteger(seed) || seed < 0 || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-  console.error("Required: --seed <int> --lat <deg> --lon <deg>  (optional --h0 --rotation --geoid --out)");
+  console.error(
+    "Required: --seed <int> --lat <deg> --lon <deg>  (optional --geoid --vdatum=egm96|ellipsoid --h0 --rotation --out)",
+  );
   process.exit(1);
 }
+if (vdatum !== "egm96" && vdatum !== "ellipsoid") {
+  console.error(`--vdatum must be egm96 or ellipsoid (got ${args.vdatum})`);
+  process.exit(1);
+}
+if (vdatum === "ellipsoid" && Number(args.geoid) === 0) {
+  console.warn(
+    "warning: --vdatum=ellipsoid with --geoid=0 writes the same heights as egm96; pass the EGM96 undulation at the anchor",
+  );
+}
 
-const result = exportTerrain(seed, {
-  lat0Deg: lat,
-  lon0Deg: lon,
-  h0M: Number(args.h0),
-  rotationDeg: Number(args.rotation),
-  geoidOffsetM: Number(args.geoid),
-});
+const result = exportTerrain(
+  seed,
+  {
+    lat0Deg: lat,
+    lon0Deg: lon,
+    h0M: Number(args.h0),
+    rotationDeg: Number(args.rotation),
+    geoidOffsetM: Number(args.geoid),
+  },
+  { vdatum },
+);
 
 mkdirSync(args.out!, { recursive: true });
 const base = path.join(args.out!, `seed-${seed}`);
-writeFileSync(`${base}-elevation.asc`, result.asc);
-writeFileSync(`${base}-elevation.prj`, result.prj);
-writeFileSync(`${base}-canopy.asc`, result.canopyAsc);
-writeFileSync(`${base}-canopy.prj`, result.prj);
-writeFileSync(`${base}-meta.json`, JSON.stringify(result.meta, null, 2) + "\n");
+const elevationPath = `${base}-elevation-${vdatum}.tif`;
+writeFileSync(elevationPath, result.elevationTif);
+writeFileSync(`${base}-elevation-${vdatum}.json`, JSON.stringify(result.meta, null, 2) + "\n");
+writeFileSync(`${base}-canopy.tif`, result.canopyTif);
 
+const m = result.meta;
 console.log(
-  `wrote ${base}-elevation.asc (+canopy, .prj, meta): ${result.meta.cols}x${result.meta.rows} @ ` +
-    `${result.meta.cellsizeM.toFixed(4)} m, UTM ${result.meta.utmZone}${result.meta.hemisphere}, ` +
-    `llcenter ${result.meta.xllcenter.toFixed(1)}, ${result.meta.yllcenter.toFixed(1)}`,
+  `wrote ${elevationPath} (+canopy.tif, .json): ${m.cols}x${m.rows} @ ${m.cellsizeM.toFixed(4)} m, ` +
+    `EPSG:4326 pixels ${m.pixelSizeDeg.lon.toFixed(7)}° x ${m.pixelSizeDeg.lat.toFixed(7)}°, ` +
+    `heights ${m.verticalDatum} (${m.verticalCrs}), offset ${m.verticalOffsetM >= 0 ? "+" : ""}${m.verticalOffsetM.toFixed(2)} m`,
 );
-console.log("Import note: set the consuming tool's water level at elevation 0 — negatives are real seabed.");
+console.log(
+  "VBS Geo: import as-is. VBS4's ocean is mean sea level and the sim's zero is sea level: keep the vdatum variant " +
+    "whose coastline lands on the water line. Run the gateway with anchor.geoidOffsetM = the EGM96 undulation at the anchor.",
+);

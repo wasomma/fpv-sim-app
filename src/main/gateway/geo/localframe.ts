@@ -7,9 +7,13 @@
  * entity positions stay exactly consistent by construction. The
  * constant-radii approximation costs < 2 cm across +/-4 km at
  * mid-latitudes. rotationDeg is the azimuth of local +y, degrees
- * clockwise from true north; h0M is the ellipsoidal height of local
- * z = 0; geoidOffsetM is added to h. The anchor must not sit at a pole
- * (config clamps |lat0Deg| <= 89.9).
+ * clockwise from true north. Heights: h0M is the height of local z = 0
+ * (sim sea level) above mean sea level, normally 0; geoidOffsetM is the
+ * EGM96 geoid undulation at the anchor; their sum is the ellipsoidal
+ * height of local z = 0, which is what the wire carries (DIS positions
+ * are ECEF). The terrain export writes mean-sea-level heights without
+ * geoidOffsetM, or ellipsoidal heights with it. The anchor must not sit
+ * at a pole (config clamps |lat0Deg| <= 89.9).
  */
 
 import type { Vec3 } from "../types.js";
@@ -46,6 +50,16 @@ export class LocalFrame {
   private readonly n0CosLat0: number;
   /** Azimuth of local +y, radians clockwise from true north. */
   readonly rotationRad: number;
+
+  /** Metres per radian of latitude at the anchor (the meridian radius M0). */
+  get metersPerRadLat(): number {
+    return this.m0;
+  }
+
+  /** Metres per radian of longitude at the anchor (N0 cos lat0). */
+  get metersPerRadLon(): number {
+    return this.n0CosLat0;
+  }
 
   constructor(anchor: LocalFrameAnchor) {
     this.lat0 = anchor.lat0Deg * DEG;

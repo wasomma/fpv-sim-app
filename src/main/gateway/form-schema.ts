@@ -340,7 +340,7 @@ export const GATEWAY_FORM_SECTIONS: readonly GatewayFormSection[] = [
         min: -500,
         max: 9000,
         unit: "m",
-        help: "Ellipsoidal height of the sim's sea level.",
+        help: "Height of the sim's sea level above mean sea level; normally 0.",
       },
       {
         path: "anchor.rotationDeg",
@@ -350,7 +350,12 @@ export const GATEWAY_FORM_SECTIONS: readonly GatewayFormSection[] = [
         unit: "°",
         help: "Azimuth of the sim's +y (north) axis, degrees clockwise from true north.",
       },
-      { path: "anchor.geoidOffsetM", type: "num", unit: "m", help: "Added to every height." },
+      {
+        path: "anchor.geoidOffsetM",
+        type: "num",
+        unit: "m",
+        help: "EGM96 geoid undulation at the anchor; added to wire heights so entities carry ellipsoidal positions.",
+      },
     ],
   },
   {

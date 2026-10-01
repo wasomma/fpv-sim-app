@@ -42,15 +42,22 @@ influence the engagement** — determinism is preserved by construction.
 ## Georeferencing
 
 The sim's 4×4 km local frame maps to Earth through a configured anchor:
-`anchor: { lat0Deg, lon0Deg, h0M, rotationDeg, geoidOffsetM }` — the
-geodetic position of the sim origin (SW corner), the ellipsoidal height
-of sim sea level, and the azimuth of sim +y. A small-offset
-"flat-geodetic" mapping (< 2 cm across the box) keeps entity positions
-and the DEM export mutually consistent. `npm run terrain-export --
---seed=<n> --lat=.. --lon=..` writes the seed's heightfield as a
-georeferenced Esri ASCII Grid (+ canopy raster + UTM .prj) for import
-into the remote tool's terrain pipeline — set the water level there to
-elevation 0; negative posts are real seabed.
+`anchor: { lat0Deg, lon0Deg, h0M, rotationDeg, geoidOffsetM }`: the
+geodetic position of the sim origin (SW corner), the height of sim sea
+level above mean sea level (normally 0), the azimuth of sim +y, and the
+EGM96 geoid undulation at the anchor. Wire heights are ellipsoidal, as
+DIS requires: sim z + h0M + geoidOffsetM. A small-offset "flat-geodetic"
+mapping (< 2 cm across the box) keeps entity positions and the DEM
+export mutually consistent: latitude and longitude vary linearly with
+sim y and x, so the 200 × 200 posts form a regular geographic grid.
+`npm run terrain-export -- --seed=<n> --lat=.. --lon=.. --geoid=<N>`
+writes that grid as a Float32 GeoTIFF in WGS 84 (EPSG:4326), one post
+per pixel, with a canopy raster beside it. `--vdatum=egm96` (default)
+writes mean-sea-level heights and `--vdatum=ellipsoid` adds the geoid
+undulation; VBS Geo reads neither Esri ASCII Grid nor the vertical tag
+and assumes one of the two datums, so the lab imports both and keeps
+the one whose coastline lands on VBS4's water line. Negative posts are
+real seabed.
 
 ## Reaching VBS4 (topology B — direct DIS)
 

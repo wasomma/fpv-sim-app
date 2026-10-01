@@ -70,7 +70,7 @@ same pin under `allowScripts`). Consequences:
   `build/resources/upstream-pins.json` beside it.
 - `scripts/` — `vendor-ui`, `check-pins`, `check-screenshots`,
   `interop-check`, `build-manual` (+ `manual-pdf-main.cjs`), `make-icon`.
-- `test/` — node:test suites (132 tests) run by `npm test`; `util.ts`.
+- `test/` — node:test suites (133 tests) run by `npm test`; `util.ts`.
 - `tools/dis-crosscheck.py` — open-dis-python, an independent IEEE
   1278.1 implementation pinned by commit, behind `npm run interop-check`.
 - `docs/` — INTEROP.md, VBS4_CHECKLIST.md, DIS_HLA_PRIMER.md, `captures/`
@@ -133,6 +133,10 @@ tracked there, not in this file. Standing items:
   `claude/nostalgic-borg-f1dda3` and its worktree are gone). Feed what
   VBS Gateway showed into docs/VBS4_CHECKLIST.md step 6; if emitter
   systems still do not list, suspect emitter name 0 or Gateway filtering.
+  Terrain: the export is now a GeoTIFF (EPSG:4326, Float32) in two
+  vertical-datum variants because VBS Geo ignores the vertical tag and
+  its manual does not say whether it assumes EGM96 or the ellipsoid;
+  the lab decides by the water line and records it in checklist step 2.
 - The 2026-09-05/06 UI/UX programme (P0–P2) is on main. Left: Wes's
   interactive DATASETS checklist pass.
 - The dashboard's finding (2026-09-12, fpv-sim PR #32 + this repo's

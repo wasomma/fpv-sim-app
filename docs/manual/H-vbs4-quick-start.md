@@ -32,7 +32,7 @@ Both sides must agree on eight values. Everything else can stay at its default.
 | UDP port | `network.port` = `3000` (default) | Connection ▸ **Send Port** = 3000 and **Receive Port** = 3000 |
 | Where to send | `network.mode` = `unicast`, `unicastDestinations` = the VBS4 PC | Connection ▸ **Send Address** = the FPV Sim PC |
 | Emitter function | `emissions.uplink.function` and `emissions.video.function` = `5` (the default; the preset spells it out anyway) | Fixed: the Gateway lists an incoming emitter system only when its function is *Acquisition / Detection* (5). Nothing to set on either side unless a staged configuration overrides it. |
-| The anchor | `anchor.lat0Deg`, `anchor.lon0Deg` = your AO | A terrain that covers the same place (H.4) |
+| The anchor | `anchor.lat0Deg`, `anchor.lon0Deg` = your AO; `anchor.geoidOffsetM` = the EGM96 geoid undulation there when you import the exported terrain | A terrain that covers the same place (H.4) |
 
 The gateway configuration for this example, ready to paste in H.5:
 
@@ -110,7 +110,7 @@ Without Wireshark, the climbing `espdu` and `emission` counters in the GATEWAY b
 
 6. **Settings ▸ General ▸ Filtering.** If a filter type is active, make sure its region encloses the whole 4 km box around your anchor (a **Geo** filter centred on the AO needs a radius of about 3,000 m). Otherwise leave filtering off.
 7. **Settings ▸ General ▸ Fuzzy Mapping and VBS.** For a first session, tick **Air**, **Ground** and **Munition** under Fuzzy Mapping and tick **Show Unknown Entities** under VBS. Anything the Gateway cannot map then still appears, as the closest model or as the unknown-entity marker, so you see the engagement on the first try and refine the models afterwards.
-8. **Terrain.** Open a Battlespace or scenario whose terrain covers the anchor coordinates, and enter Execute mode so a mission is running. For terrain that matches the engagement's ridges and coastline, import the exported DEM (Chapter 11.3) at the same coordinates; that is the better demo but not required.
+8. **Terrain.** Open a Battlespace or scenario whose terrain covers the anchor coordinates, and enter Execute mode so a mission is running. For terrain that matches the engagement's ridges and coastline, import the exported GeoTIFF (Chapter 11.3) through VBS Geo: it is already in the EPSG:4326 form VBS Geo wants. Import the `egm96` file first; if the sim's coastline lands on the water line, keep it, and if the land is drowned by a constant offset, import the `ellipsoid` file instead. Set `anchor.geoidOffsetM` in the gateway configuration to the same geoid undulation either way. That is the better demo but not required.
 9. **Mappings** (optional now, needed eventually). On the Gateway's **Mappings** page: **Add Mapping** ▸ **Change VBS Model** ▸ pick a model ▸ under Incoming, **Add Remote Mapping** ▸ type the enumeration ▸ **Add**. Do it for the four surrogates:
 
 | FPV Sim entity | Enumeration (kind.domain.country.category.subcategory.specific.extra) | Suggested model |

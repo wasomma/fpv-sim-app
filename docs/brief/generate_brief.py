@@ -190,7 +190,7 @@ def steps_table():
     steps = [
         ("0", "Dry run without VBS", "npm run dis-listen -- --port=3000 --mode=broadcast on any second machine. Expect one Start/Resume, six ESPDUs immediately then drones on launch, EE lines flipping with the EMCON schedule, exactly one Detonation at the kill, no malformed lines. Wireshark's DIS dissector should show a clean capture."),
         ("1", "VBS Gateway configuration", "DIS adapter only (never DIS and HLA adapters together, a documented VBS limitation). Match DIS version (6), exercise ID (1), UDP port (3000), and the broadcast or multicast scheme. Geofilter off or enclosing the anchor box."),
-        ("2", "Terrain correlation (the better demo)", "npm run terrain-export -- --seed=N --lat=.. --lon=.. and import the elevation .asc (with .prj) via VBS Geo at the same coordinates. Set water level to elevation 0 (negative posts are real seabed). Verify three grid references before flying."),
+        ("2", "Terrain correlation (the better demo)", "npm run terrain-export -- --seed=N --lat=.. --lon=.. --geoid=N writes a Float32 GeoTIFF in EPSG:4326, the form VBS Geo's DEM import takes; run it once per vertical datum (--vdatum=egm96 and --vdatum=ellipsoid). VBS Geo ignores the vertical tag, so import the egm96 file first and keep the one whose coastline lands on the water line. Set anchor.geoidOffsetM to the same geoid undulation. Verify three grid references before flying."),
         ("3", "Entity mapping", "confirm VBS Gateway resolves the four enumerations to visible models (defaults are generic surrogates chosen for fuzzy mapping), remap per site on either side, record the mapping."),
         ("4", "Live engagement at 1x", "six entities at correct grid refs, then eight after launches. Drones smooth (tune thresholds or switch DRM 2 to 4 if rubber-banding). EE systems listed in the Gateway UI while keyed. Detonation effect at the kill, wreck persists. Pause and resume from the app freezes and resumes VBS-side entities. Then a 4x pass: entities 4x faster, still smooth."),
         ("5", "Reverse path", "place a VBS4 entity inside the box: it appears in the app's Live Ops overlay within about 5 s, extrapolates smoothly, expires about 12 s after deletion. The engagement itself is untouched (the overlay is display-only by construction)."),
@@ -307,12 +307,13 @@ story = [
     ),
     para("Terrain and georeferencing", h2),
     para(
-        "A configured anchor (latitude, longitude, height of sim sea level, grid azimuth) places the sim's 4 x 4 km "
-        "procedural terrain on Earth; entity positions and the DEM export share one mapping, so they cannot "
-        "disagree. The terrain-export tool writes any seed's heightfield as a georeferenced Esri ASCII Grid with a "
-        "UTM projection file, plus a canopy-density raster, for import through VBS Geo. Set the VBS water level to "
-        "elevation 0: negative posts are real seabed, and the coastline then renders where the engagement thinks "
-        "it is.",
+        "A configured anchor (latitude, longitude, height of sim sea level above mean sea level, grid azimuth, "
+        "geoid undulation) places the sim's 4 x 4 km procedural terrain on Earth; entity positions and the DEM "
+        "export share one mapping, so they cannot disagree. The terrain-export tool writes any seed's heightfield "
+        "as a Float32 GeoTIFF in geographic WGS 84 (EPSG:4326), one pixel per post, plus a canopy-density raster, "
+        "for import through VBS Geo. Heights are mean sea level (EGM96) or ellipsoidal by choice, because VBS Geo "
+        "assumes one datum without reading the tag; VBS4's ocean is at mean sea level, so the import whose "
+        "coastline lands on the water line is the right one. Negative posts are real seabed.",
     ),
     para("Two guarantees worth knowing", h2),
     para(
