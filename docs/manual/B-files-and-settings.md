@@ -25,6 +25,7 @@ Paste `%APPDATA%\fpv-sim-app` into the File Explorer address bar to open it.
 | `results\adhoc-df-bearing-error-doubled-8-deg-2026-08-24.json` | The bundled example sweep. |
 | `results\adhoc-<slug>-<YYYY-MM-DD>.json` | Your ad-hoc sweeps. |
 | `results\monte-carlo-quick.json`, `results\monte-carlo-tactical-quick.json` | Written by **RUN QUICK**; **not** listed in the manifest. |
+| `terrain\seed-<n>-elevation-egm96.tif`, `…-ellipsoid.tif`, their `.json` metadata, `terrain\seed-<n>-canopy.tif` | The folder **EXPORT TERRAIN** offers first and `live_export_terrain` writes into unless told otherwise (Chapter 11.3). Created on first export; safe to delete. |
 | `settings.json` | `{ "version": 2, "mcp": { "port": 8765, "token": "…" }, "ui": { … } }` — the MCP endpoint's port and bearer token, plus what the panels remember (B.3). Created on first launch. |
 | Other folders (`Cache`, `GPUCache`, …) | The embedded browser's own working files. Safe to ignore. |
 

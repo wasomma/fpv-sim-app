@@ -797,6 +797,16 @@ function buildGroups(hidden: boolean): Group[] {
           clip: (c) => c.rectOf("#gateway-box", 6),
         },
         {
+          id: "live-ops-terrain-export",
+          caption: "EXPORT TERRAIN: the seed's terrain written as GeoTIFFs for VBS Geo, both vertical datums plus canopy, at the staged anchor.",
+          setup: async (c) => {
+            // Headless: no folder picker; main writes into the scratch profile's terrain folder.
+            await c.click("#export-terrain");
+            await c.waitFor(`/terrain exported:/.test(document.getElementById("gateway").textContent)`, 30000);
+          },
+          clip: (c) => c.rectOf("#gateway-box", 6),
+        },
+        {
           id: "live-ops-gateway-form",
           caption: "FORM: the same configuration as fields — every key with its default, range and meaning; edits keep the JSON in step.",
           setup: async (c) => {

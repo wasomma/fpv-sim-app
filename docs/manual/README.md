@@ -9,7 +9,7 @@ FPV Sim is a Windows desktop application for a **force-on-force engagement betwe
 
 ## Who this manual is for
 
-Analysts, trainers and interoperability engineers who run FPV Sim on a Windows PC. No programming, Node.js or Python is required for anything in the numbered chapters. A few optional tools (`dis-listen`, `terrain-export`, the open-dis cross-check) live only in the developer checkout of the source repository; every place that needs one says so explicitly.
+Analysts, trainers and interoperability engineers who run FPV Sim on a Windows PC. No programming, Node.js or Python is required for anything in the numbered chapters. Two optional tools (`dis-listen` and the open-dis cross-check) live only in the developer checkout of the source repository; every place that needs one says so explicitly.
 
 ## Five paths through this manual
 

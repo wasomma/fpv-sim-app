@@ -12,7 +12,12 @@ export function isScreenshots(): boolean {
   return process.argv.some((a) => a === "--screenshots" || a.startsWith("--screenshots="));
 }
 
+/** `FPV Sim.exe --terrain-export ...`: write the terrain set and exit, no window. */
+export function isTerrainExportCli(): boolean {
+  return process.argv.includes("--terrain-export");
+}
+
 /** Headless runs never persist window bounds and never show a dialog. */
 export function isHeadless(): boolean {
-  return isSelfCheck() || isScreenshots();
+  return isSelfCheck() || isScreenshots() || isTerrainExportCli();
 }

@@ -41,11 +41,11 @@ same pin under `allowScripts`). Consequences:
 ## Layout
 
 - `src/main/` — main process (tsc → `dist/`, ESM NodeNext): `index.ts`,
-  `mode.ts` (`--self-check` / `--screenshots`), `protocol.ts` (the
+  `mode.ts` (`--self-check` / `--screenshots` / `--terrain-export`), `protocol.ts` (the
   `app://` scheme: `ui/*` vendored pages + writable results, `app/*`
   panels), `paths.ts` (dev vs packaged; runtime-read files ship as
   extraResources, never inside the asar), windows/menu/settings
-  (`DEFAULT_MCP_PORT` 8765), `self-check.ts` (11 steps), `screenshots.ts`.
+  (`DEFAULT_MCP_PORT` 8765), `self-check.ts` (12 steps), `screenshots.ts`.
   - `studies/` — `study-runner.ts` spawns the vendored canonical scripts
     and the worker-pool `adhoc-runner.mjs` as `ELECTRON_RUN_AS_NODE`
     children of the app binary (no fork of experiment or manifest
@@ -60,7 +60,13 @@ same pin under `allowScripts`). Consequences:
   - `sessions/` — `session-manager.ts` (main-process handle; spawns the
     utilityProcess `session-host.ts`), `pacer.ts`, `tick-view.ts`.
   - `gateway/` — DIS: `index.ts` (`DisGateway`), codec/geo/net/publish/
-    receive/terrain, `config.ts` (defaults), `presets.ts`, `form-schema.ts`.
+    receive/terrain (`terrain/export-set.ts` writes the five-file set, both
+  datum variants; `terrain/cli.ts` is the command line behind
+  `export-cli.ts` and the exe's `--terrain-export`), `config.ts`
+  (defaults), `presets.ts`, `form-schema.ts`.
+  - `terrain-export.ts`: EXPORT TERRAIN, `live_export_terrain` and
+    `--terrain-export` resolve the staged anchor and the profile's
+    `terrain` folder, then call `gateway/terrain/export-set.ts`.
 - `src/renderer/` — the app's own panels: `shell/` (launcher),
   `studies/`, `mcp/`, `live-ops/`, `shared/app.css` + `app.js`.
   `src/preload/index.cjs` (plain CJS), `src/shared/gateway-slot.ts`.
@@ -70,7 +76,7 @@ same pin under `allowScripts`). Consequences:
   `build/resources/upstream-pins.json` beside it.
 - `scripts/` — `vendor-ui`, `check-pins`, `check-screenshots`,
   `interop-check`, `build-manual` (+ `manual-pdf-main.cjs`), `make-icon`.
-- `test/` — node:test suites (133 tests) run by `npm test`; `util.ts`.
+- `test/` — node:test suites (142 tests) run by `npm test`; `util.ts`.
 - `tools/dis-crosscheck.py` — open-dis-python, an independent IEEE
   1278.1 implementation pinned by commit, behind `npm run interop-check`.
 - `docs/` — INTEROP.md, VBS4_CHECKLIST.md, DIS_HLA_PRIMER.md, `captures/`
@@ -92,7 +98,7 @@ same pin under `allowScripts`). Consequences:
   `git -C <root> merge --ff-only origin/main` there.
 - **Verification ladder = the CI order:** `npm run check-pins` →
   `npm test` → `npm run interop-check` (Python 3.12+, pinned open-dis) →
-  `npm run self-check` (10 headless steps; exits 1 on failure, or when
+  `npm run self-check` (12 headless steps; exits 1 on failure, or when
   another instance holds the lock) → `npm run screenshots` →
   `node scripts/check-screenshots.mjs`.
 - **UI changes are verified by the screenshot harness.** `npm run

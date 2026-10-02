@@ -8,7 +8,7 @@
  */
 
 import { BrowserWindow, app, dialog, ipcMain, shell } from "electron";
-import { copyFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { appInfo } from "./app-info.js";
 import { DEFAULT_GATEWAY_CONFIG, validateGatewayConfig } from "./gateway/config.js";
@@ -17,7 +17,7 @@ import { GATEWAY_PRESETS } from "./gateway/presets.js";
 import { installAppMenu, openHelp } from "./menu.js";
 import { isHelpTarget } from "./menu-spec.js";
 import { installAppProtocol, registerAppScheme } from "./protocol.js";
-import { resultsDir, uiRoot } from "./paths.js";
+import { resultsDir, terrainDir, uiRoot } from "./paths.js";
 import {
   isDatasetFileName,
   listResults,
@@ -38,13 +38,17 @@ import {
   liveResume,
   liveSetSpeed,
   liveSnapshot,
+  liveStagedAnchor,
   liveStart,
   liveStatus,
   liveStop,
   type LiveStartOpts,
 } from "./sessions/session-manager.js";
 import { flushSettings, getSettings, getUi, regenerateMcpToken, setMcpPort, setUi } from "./settings.js";
-import { isHeadless, isScreenshots, isSelfCheck } from "./mode.js";
+import { isHeadless, isScreenshots, isSelfCheck, isTerrainExportCli } from "./mode.js";
+import { runTerrainExportCli } from "./gateway/terrain/cli.js";
+import { validateTerrainExportRequest } from "./gateway/terrain/export-set.js";
+import { NO_STAGED_ANCHOR, exportTerrainSet } from "./terrain-export.js";
 import { prepareScreenshotsBoot, screenshotsAndExit } from "./screenshots.js";
 import { selfCheckAndExit } from "./self-check.js";
 import {
@@ -63,8 +67,18 @@ if (isScreenshots()) prepareScreenshotsBoot();
 
 registerAppScheme();
 
-const gotLock = app.requestSingleInstanceLock();
-if (!gotLock) {
+/*
+ * `FPV Sim.exe --terrain-export --seed=... --lat=... --lon=... [--geoid=N] [--out=folder]`:
+ * the same export the Live Ops button and the MCP tool run, from the
+ * installed copy, for scripted use without a developer checkout. Plain
+ * node code (the engine and a file writer), so it runs before the app is
+ * ready and never touches the single-instance lock: it must not wake a
+ * running FPV Sim the way a second launch does.
+ */
+const gotLock = isTerrainExportCli() || app.requestSingleInstanceLock();
+if (isTerrainExportCli()) {
+  app.exit(runTerrainExportCli(process.argv.slice(1).filter((a) => a !== "--terrain-export"), console));
+} else if (!gotLock) {
   /*
    * A second normal launch just focuses the running window (see the
    * "second-instance" handler below), and quitting is the right answer.
@@ -315,6 +329,38 @@ if (!gotLock) {
     ipcMain.handle("live-gateway-check", (_event, cfg: unknown) => {
       const { issues } = validateGatewayConfig(cfg);
       return { ok: issues.length === 0, issues };
+    });
+    /*
+     * EXPORT TERRAIN: the seed from the panel, the anchor from the staged
+     * gateway config (so terrain and DIS stream share one place on
+     * Earth), the folder from a picker. Headless runs have nobody to pick
+     * and write into the profile's terrain folder instead, the way
+     * ui-confirm answers yes: the screenshot harness and the self-check
+     * exercise the real path.
+     */
+    ipcMain.handle("live-export-terrain", async (event, args: unknown) => {
+      const seed = (args as { seed?: unknown } | null)?.seed;
+      const anchor = liveStagedAnchor();
+      if (anchor === null) return { ok: false, error: NO_STAGED_ANCHOR };
+      const check = validateTerrainExportRequest(seed, anchor);
+      if (!check.ok) return check;
+      let dir = terrainDir();
+      if (!isHeadless()) {
+        mkdirSync(dir, { recursive: true });
+        const opts: Electron.OpenDialogOptions = {
+          title: `Export terrain of seed ${check.seed}: choose a folder`,
+          defaultPath: dir,
+          buttonLabel: "Export here",
+          properties: ["openDirectory", "createDirectory"],
+        };
+        const win = BrowserWindow.fromWebContents(event.sender);
+        const picked = win !== null ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+        if (picked.canceled || picked.filePaths.length === 0) return { ok: true, to: null };
+        dir = picked.filePaths[0]!;
+      }
+      const r = exportTerrainSet({ seed: check.seed, anchor: check.anchor, dir });
+      if (!r.ok) return r;
+      return { ok: true, to: r.dir, files: r.files.map((f) => path.basename(f.path)), warnings: r.warnings };
     });
 
     setServerExtender((server) => registerLiveTools(server));

@@ -10,14 +10,16 @@
  */
 
 import { app } from "electron";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { runEngagement } from "fpv-sim-mcp/engine";
 import { loaded, poll } from "./headless-util.js";
 import { mcpHostStatus } from "./mcp/host.js";
-import { resultsDir } from "./paths.js";
+import { readFloat32GeoTiff } from "./gateway/terrain/geotiff.js";
+import { resultsDir, terrainDir } from "./paths.js";
 import { removeDataset } from "./results-manifest.js";
-import { liveConfigureGateway, liveGatewayStatus, liveStart, liveStop, liveWaitForEnd } from "./sessions/session-manager.js";
+import { liveConfigureGateway, liveGatewayStatus, liveStagedAnchor, liveStart, liveStop, liveWaitForEnd } from "./sessions/session-manager.js";
+import { exportTerrainSet } from "./terrain-export.js";
 import { getSettings } from "./settings.js";
 import { startStudy, studyStatus } from "./studies/study-runner.js";
 import { openAppUrl } from "./windows.js";
@@ -258,6 +260,44 @@ export async function runSelfCheck(): Promise<number> {
       throw new Error(`staging not reflected in status: ${JSON.stringify(g)}`);
     }
     return `typo rejected ("${bad.error}"); unicast loopback config staged`;
+  });
+
+  await step("terrain export writes both datum variants from the staged anchor", async () => {
+    const staged = liveStagedAnchor();
+    if (staged === null) throw new Error("no staged anchor to export from");
+    // The staged config leaves geoidOffsetM at 0; give it a value so the
+    // two elevation files must differ by exactly that much.
+    const anchor = { ...staged, geoidOffsetM: 12.5 };
+    const dir = path.join(terrainDir(), "self-check");
+    try {
+      const r = exportTerrainSet({ seed: 20260719, anchor, dir });
+      if (!r.ok) throw new Error(r.error);
+      if (r.files.length !== 5) throw new Error(`expected 5 files, got ${r.files.map((f) => path.basename(f.path)).join(", ")}`);
+      const read = (vdatum: "egm96" | "ellipsoid") => {
+        const f = r.files.find((x) => x.layer === "elevation" && x.vdatum === vdatum);
+        if (f === undefined || !existsSync(f.path)) throw new Error(`${vdatum} elevation file missing`);
+        return readFloat32GeoTiff(readFileSync(f.path));
+      };
+      const egm = read("egm96");
+      const ell = read("ellipsoid");
+      if (egm.width !== 200 || egm.height !== 200) throw new Error(`grid is ${egm.width}x${egm.height}, expected 200x200`);
+      if (egm.geodeticEpsg !== 4326 || egm.verticalEpsg !== 5773 || ell.geodeticEpsg !== 4979 || ell.verticalEpsg !== null) {
+        throw new Error(
+          `CRS tags: egm96 geodetic ${egm.geodeticEpsg} vertical ${egm.verticalEpsg}; ellipsoid geodetic ${ell.geodeticEpsg} vertical ${ell.verticalEpsg}`,
+        );
+      }
+      if (egm.nodata !== -9999) throw new Error(`nodata tag ${egm.nodata}`);
+      let worst = 0;
+      for (let i = 0; i < egm.pixels.length; i++) worst = Math.max(worst, Math.abs(ell.pixels[i]! - egm.pixels[i]! - 12.5));
+      if (worst > 1e-3) throw new Error(`ellipsoid minus egm96 is off by up to ${worst} m from the 12.5 m geoid offset`);
+      const meta = r.meta.egm96!;
+      if (Math.abs(egm.westDeg - meta.bounds.westDeg) > 1e-12 || Math.abs(egm.westDeg + egm.pixelLonDeg / 2 - anchor.lon0Deg) > 1e-9) {
+        throw new Error(`west edge ${egm.westDeg} does not sit half a pixel west of the anchor ${anchor.lon0Deg}`);
+      }
+      return `5 files in ${dir}; 200x200, EPSG:4326+5773 and EPSG:4979, variants differ by 12.5 m everywhere`;
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   await step("DIS gateway publishes over loopback UDP inside a live session (staged config)", async () => {

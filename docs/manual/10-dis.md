@@ -32,7 +32,7 @@ Traffic is light. The committed 60-second reference capture of this seed holds 2
 
 ## 10.2 Step A — stage the gateway
 
-1. Open the **LIVE OPS** tile. The GATEWAY box shows the status line `no gateway config staged — sessions run app-local`, a **STAGE** button and a text box pre-filled with a minimal configuration (after the first successful **STAGE** it holds whatever you staged last; the **preset…** menu in the box's title fills it with any of the [Appendix C](C-gateway-config-reference.md) configurations):
+1. Open the **LIVE OPS** tile. The GATEWAY box shows the status line `no gateway config staged — sessions run app-local`, a **STAGE** button, an **EXPORT TERRAIN** button (Chapter 11.3) and a text box pre-filled with a minimal configuration (after the first successful **STAGE** it holds whatever you staged last; the **preset…** menu in the box's title fills it with any of the [Appendix C](C-gateway-config-reference.md) configurations):
    ```json
    {"network":{"mode":"broadcast","port":3000},
     "dis":{"exerciseId":1},

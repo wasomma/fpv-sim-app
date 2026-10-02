@@ -39,7 +39,10 @@ installed, offline tool needs:
   geographic WGS 84 (EPSG:4326), the form VBS Geo's DEM import takes,
   with the vertical datum chosen explicitly (EGM96 or ellipsoidal) and a
   canopy raster alongside, so the remote terrain correlates with the
-  engagement post for post.
+  engagement post for post. **EXPORT TERRAIN** in Live Ops (anchor from
+  the staged gateway config, folder of your choice), `live_export_terrain`
+  over MCP, or `"FPV Sim.exe" --terrain-export` from the installed copy;
+  both datum variants are written at once.
 - **Shareable lab brief** —
   [docs/fpv-sim-vbs4-interop-brief.pdf](docs/fpv-sim-vbs4-interop-brief.pdf),
   a 3-page summary (architecture, wire contract, lab procedure) for
@@ -125,10 +128,12 @@ Useful CLIs (plain node, no Electron):
 
 ```
 npm run dis-listen -- --port=3000 --mode=broadcast --anchor=21.35,-157.95
-npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N>
-npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N> --vdatum=ellipsoid
+npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N> --out=./export
 ```
 
+The terrain export writes both vertical-datum variants plus canopy (five
+files); `--vdatum=egm96|ellipsoid` narrows it to one. The installed app
+runs the same code as `"FPV Sim.exe" --terrain-export <the same flags>`.
 N is the EGM96 geoid undulation at the anchor; Chapter 11.3 of the manual
 and docs/VBS4_CHECKLIST.md say which of the two files VBS Geo wants.
 

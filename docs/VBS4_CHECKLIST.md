@@ -47,10 +47,18 @@ dissector) — no malformed-packet warnings across a full engagement.
 
 ## 2. Terrain correlation (optional but the better demo)
 
-```bash
-npm run terrain-export -- --seed=<featured seed> --lat=<lat> --lon=<lon> --geoid=<N>
-npm run terrain-export -- --seed=<featured seed> --lat=<lat> --lon=<lon> --geoid=<N> --vdatum=ellipsoid
+Export the terrain from the installed app: stage the gateway
+configuration with the real anchor (including `geoidOffsetM`) and press
+EXPORT TERRAIN in the Live Ops GATEWAY box (manual 11.3), or script it
+from the installed copy:
+
+```bat
+"%LocalAppData%\Programs\FPV Sim\FPV Sim.exe" --terrain-export --seed=<featured seed> --lat=<lat> --lon=<lon> --geoid=<N> --out=C:\terrain
 ```
+
+(`npm run terrain-export -- <the same flags>` in a developer checkout.)
+Either way five files land in the folder: the elevation in both
+vertical datums, each with a `.json` of the grid, and the canopy.
 
 N is the EGM96 geoid undulation at the anchor in metres (GeographicLib's
 GeoidEval page set to EGM96, or `gdaltransform -s_srs EPSG:4979 -t_srs
@@ -63,8 +71,8 @@ below the imported surface.
 VBS Geo's DEM import takes GeoTIFF in EPSG:4326 only (no Esri ASCII
 Grid, no projected CRS), honours the nodata value and negative posts,
 ignores the vertical-datum tag, and assumes either EGM96 or ellipsoidal
-heights without the manual saying which. Both files above are that
-GeoTIFF; they differ only by N. VBS4's ocean sits at mean sea level and
+heights without the manual saying which. The two elevation files are
+that GeoTIFF; they differ only by N. VBS4's ocean sits at mean sea level and
 cannot be moved, so the water line is the test:
 
 - Import `seed-<n>-elevation-egm96.tif` first. If the sim map's

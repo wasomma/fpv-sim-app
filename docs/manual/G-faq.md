@@ -4,7 +4,7 @@
 Only to download the installer. Everything else — the simulation, studies, the Dashboard, MCP, DIS — runs offline. The one exception is the Dashboard's **READ THE STUDY** link, which opens a web page.
 
 **Do I need Node.js, Python or a developer environment?**
-No. The installer contains everything. A few optional tools — `dis-listen`, `terrain-export`, the open-dis cross-check — exist only in the source checkout and are marked as such wherever they appear.
+No. The installer contains everything, the terrain export for VBS Geo included (Chapter 11.3). Two optional tools, `dis-listen` and the open-dis cross-check, exist only in the source checkout and are marked as such wherever they appear.
 
 **Does it run on macOS or Linux?**
 The installer is Windows x64 only. The underlying browser pages (Simulation, Dashboard, 3D Viewer) are also published on the web by the fpv-sim project and run in any modern browser, without the studies runner, MCP endpoint or DIS gateway.

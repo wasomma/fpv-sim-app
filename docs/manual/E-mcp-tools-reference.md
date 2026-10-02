@@ -4,7 +4,7 @@ The MCP endpoint (Chapter 8) serves **fourteen tools**. Five are *batch* tools: 
 
 You do not normally type tool names. You ask in plain language and the assistant picks the tool; the names and arguments below are for checking what it did, for scripting a client of your own, and for phrasing a request precisely when the assistant guesses wrong.
 
-## E.1 The fourteen tools at a glance
+## E.1 The fifteen tools at a glance
 
 | Tool | Kind | What it does | Changes state |
 |---|---|---|---|
@@ -22,8 +22,9 @@ You do not normally type tool names. You ask in plain language and the assistant
 | `live_resume` | live | Release wall-clock pacing | Yes |
 | `live_set_speed` | live | Change the speed factor mid-session | Yes |
 | `live_gateway_status` | live | Gateway state, PDU counters, peers, last error | No |
+| `live_export_terrain` | live | Write a seed's terrain as GeoTIFFs for VBS Geo | Yes (writes files) |
 
-The seven tools marked "No" are annotated read-only, so a well-behaved client may call them without asking you each time. The seven marked "Yes" start, alter or stop a session — and a session with a staged gateway **transmits on your network**. See [E.9](#e9-safety-and-limits).
+The seven tools marked "No" are annotated read-only, so a well-behaved client may call them without asking you each time. The eight marked "Yes" start, alter or stop a session, or write files — and a session with a staged gateway **transmits on your network**. See [E.9](#e9-safety-and-limits).
 
 ## E.2 Conventions
 
@@ -111,7 +112,7 @@ Neither takes any arguments.
 
 ## E.7 Live session tools
 
-All nine live tools act on the single session the application hosts. Only one session exists at a time.
+All ten live tools act on the single session the application hosts (the terrain export reads only its staged configuration). Only one session exists at a time.
 
 ### `live_start_session`
 
@@ -187,6 +188,20 @@ No arguments. Returns the gateway `state`, PDU counters by type for both transmi
 
 With no session running and nothing staged, the status detail reads **no gateway config staged**; after a successful `live_configure_gateway` it reads **configured for next session**. This is the quickest check that staging actually took effect.
 
+### `live_export_terrain`
+
+Writes a seed's terrain as GeoTIFFs for VBS Geo's DEM import (Chapter 11.3): the elevation in both vertical datums, each with a `.json` of the grid's metadata, and the canopy density, five files named `seed-<n>-…`.
+
+| Argument | Required | Type | Meaning |
+|---|---|---|---|
+| `seed` | yes | integer `0` to `4294967295` | The terrain to export. |
+| `anchor` | no | object | `lat0Deg` and `lon0Deg` (both required inside the object), `h0M`, `rotationDeg` and `geoidOffsetM` as in [Appendix C](C-gateway-config-reference.md). Default: the staged gateway configuration's anchor. |
+| `out_dir` | no | string | Absolute folder, created if needed. Default `%APPDATA%\fpv-sim-app\terrain`. |
+
+Returns `{ "ok": true, "dir": …, "files": [ { "path", "layer", "vdatum", "bytes" }, … ], "meta": { "egm96": …, "ellipsoid": … }, "warnings": [ … ] }`, or `{ "ok": false, "error": … }` when nothing is staged and no anchor was passed, when the seed or anchor is out of range, or when the folder cannot be written. A warning rather than an error flags `geoidOffsetM` at 0 (the two elevation files then hold the same heights) and the untouched 0°, 0° anchor.
+
+This is the same operation as **EXPORT TERRAIN** in the Live Ops panel's GATEWAY box, minus the folder picker.
+
 ## E.8 Resources
 
 Besides the tools, the endpoint publishes two documents an MCP client can read directly:
@@ -210,7 +225,7 @@ Both are Markdown. Ask for them by name — "read the fpv-sim design notes resou
 | Concurrent live sessions | 1 |
 
 > [!CAUTION]
-> An assistant with this endpoint can start a live session, and a live session with a staged gateway transmits DIS PDUs on your network — which other simulators on that network will act on. Chapter 10 is exactly this behaviour used deliberately. If you do not want it to happen on request, stop the session and clear the staged gateway before handing the endpoint to an assistant, or keep the machine off the exercise network.
+> An assistant with this endpoint can start a live session, and a live session with a staged gateway transmits DIS PDUs on your network — which other simulators on that network will act on. Chapter 10 is exactly this behaviour used deliberately. If you do not want it to happen on request, stop the session and clear the staged gateway before handing the endpoint to an assistant, or keep the machine off the exercise network. `live_export_terrain` is the one tool that writes files: into the folder the call names, or the profile's terrain folder; it transmits nothing.
 
 Batch tools are stateless and cheap: each call builds a fresh simulation, so concurrent calls cannot contaminate one another and identical inputs always return identical outputs. They never write to your results folder. Use the Studies panel (Chapter 6) when you want a dataset the Dashboard can open.
 

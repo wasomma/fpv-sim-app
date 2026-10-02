@@ -26,19 +26,34 @@ FPV Sim has no native HLA federate. `docs/INTEROP.md` describes the bridged topo
 
 ## 11.3 Terrain export
 
-For the remote simulator's terrain to correlate with the engagement, the developer checkout can export any seed's heightfield as a georeferenced DEM in the form VBS Geo's import accepts:
+For the remote simulator's terrain to correlate with the engagement, FPV Sim exports any seed's terrain as a georeferenced DEM in the form VBS Geo's import accepts. Three ways run the same export:
 
-```bash
-npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N>
-npm run terrain-export -- --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N> --vdatum=ellipsoid
-```
+- **Live Ops ▸ GATEWAY ▸ EXPORT TERRAIN.** Stage a gateway configuration first (Chapter 10.2): the export takes its place on Earth from the staged `anchor`, so the terrain and the DIS stream cannot disagree. Set the seed in the header, press **EXPORT TERRAIN** and choose a folder. The box then reads `terrain exported: 5 files for seed … in …`; with nothing staged it reads `export refused: no gateway config staged`.
+- **The MCP tool `live_export_terrain`** ([Appendix E.7](E-mcp-tools-reference.md)): the same export, with the anchor from the staged configuration unless the call passes one and the folder `%APPDATA%\fpv-sim-app\terrain` unless the call names one.
+- **The command line**, for scripts, from the installed copy (the summary prints in the console window you launch it from):
+  ```bat
+  "%LocalAppData%\Programs\FPV Sim\FPV Sim.exe" --terrain-export --seed=20260719 --lat=21.35 --lon=-157.95 --geoid=<N> --out=C:\terrain
+  ```
+  `--h0`, `--rotation` and `--geoid` match the gateway's `anchor` keys (Appendix C); `--out` defaults to an `export` folder under the current directory; `--vdatum=egm96` or `--vdatum=ellipsoid` narrows the set to one elevation variant. A developer checkout runs the same code as `npm run terrain-export -- <the same flags>`.
 
-Each run writes three files into `./export`: `seed-20260719-elevation-<vdatum>.tif`, a single-band Float32 GeoTIFF in geographic WGS 84 (EPSG:4326) with 200 × 200 pixels over the 4,000 m box, one pixel per engine post; `seed-20260719-canopy.tif`, canopy density 0 to 1 on the same grid; and `seed-20260719-elevation-<vdatum>.json`, the grid's metadata. The flags `--h0`, `--rotation`, `--geoid` and `--out` match the gateway's `anchor` keys (Appendix C). The grid is written directly on the gateway's own mapping, so the centre of every pixel is exactly where the DIS stream places that sim point; no projection or resampling is involved.
+![EXPORT TERRAIN](images/live-ops-terrain-export.png)
+*Figure 11-1. EXPORT TERRAIN in the GATEWAY box: the staged anchor and the seed become the five files below.*
 
-The vertical datum is yours to choose, because VBS Geo ignores the GeoTIFF's vertical tag and assumes one of two datums its manual does not name. `--vdatum=egm96` (the default) writes heights above mean sea level: the sim's zero is sea level, so the values are the engine's own. `--vdatum=ellipsoid` adds the EGM96 geoid undulation you pass as `--geoid` and declares WGS 84 ellipsoidal heights. VBS4's ocean sits at mean sea level and cannot be moved, so the import that puts the sim's coastline on the water line is the right one: land drowned by a constant offset means the `egm96` file went into an importer that assumes ellipsoidal heights, and seabed exposed by a constant offset means the reverse. Negative posts are real seabed and must not be clamped.
+Every export writes five files, named by seed:
+
+| File | Content |
+|---|---|
+| `seed-<n>-elevation-egm96.tif` | Heights above mean sea level (EPSG:4326 + EPSG:5773). The sim's zero is sea level, so these are the engine's own values. |
+| `seed-<n>-elevation-ellipsoid.tif` | The same heights plus the anchor's `geoidOffsetM`, declared as WGS 84 ellipsoidal heights (EPSG:4979). |
+| `seed-<n>-elevation-<vdatum>.json` | One per variant: the grid's metadata (bounds, pixel size, datum, offset, anchor). |
+| `seed-<n>-canopy.tif` | Canopy density 0 to 1 on the same grid, a reference layer for vegetation work. |
+
+Each `.tif` is a single-band Float32 GeoTIFF in geographic WGS 84 (EPSG:4326) with 200 × 200 pixels over the 4,000 m box, one pixel per engine post, nodata `-9999`. The grid is written directly on the gateway's own mapping, so the centre of every pixel is exactly where the DIS stream places that sim point; no projection or resampling is involved.
+
+Both vertical-datum variants are written every time because VBS Geo ignores the GeoTIFF's vertical tag and assumes one of two datums its manual does not name. VBS4's ocean sits at mean sea level and cannot be moved, so the import that puts the sim's coastline on the water line is the right one: import the `egm96` file first and keep it if the coastline lands on the water line; land drowned by a constant offset means VBS Geo assumes ellipsoidal heights, so import the `ellipsoid` file instead; seabed exposed by a constant offset means the reverse. Negative posts are real seabed and must not be clamped.
 
 > [!NOTE]
-> The geoid undulation N also belongs in the gateway configuration as `anchor.geoidOffsetM`, whichever file VBS Geo turns out to want: DIS positions are ellipsoidal, so without it every entity sits N metres below the terrain. GeographicLib's GeoidEval page (EGM96) gives N for any latitude and longitude; it is positive at the example anchor.
+> The geoid undulation N belongs in the gateway configuration as `anchor.geoidOffsetM` before you export, whichever file VBS Geo turns out to want: the `ellipsoid` file is built from it, and DIS positions are ellipsoidal, so without it every entity sits N metres below the terrain. GeographicLib's GeoidEval page (EGM96) gives N for any latitude and longitude; it is positive at the example anchor. With `geoidOffsetM` left at 0 the export still runs, but the box adds the line *exported, but check: anchor.geoidOffsetM is 0*, and the two elevation files hold the same heights.
 
 > [!TIP]
 > Need another format? GDAL converts the GeoTIFF losslessly, for example `gdal_translate -of AAIGrid seed-20260719-elevation-egm96.tif seed-20260719-elevation.asc` for an Esri ASCII Grid. TerraTools and Mantle read the GeoTIFF and its vertical tag directly.

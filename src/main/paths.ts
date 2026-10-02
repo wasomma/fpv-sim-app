@@ -37,6 +37,11 @@ export function resultsDir(): string {
   return path.join(app.getPath("userData"), "results");
 }
 
+/** Default destination of the terrain export (EXPORT TERRAIN offers it; the MCP tool uses it unless told otherwise). */
+export function terrainDir(): string {
+  return path.join(app.getPath("userData"), "terrain");
+}
+
 /** Window icon for dev runs; packaged windows inherit the exe's embedded icon. */
 export function devWindowIcon(): string | null {
   return app.isPackaged ? null : path.join(appRoot, "assets", "icon", "icon.ico");

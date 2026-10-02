@@ -50,10 +50,13 @@ DIS requires: sim z + h0M + geoidOffsetM. A small-offset "flat-geodetic"
 mapping (< 2 cm across the box) keeps entity positions and the DEM
 export mutually consistent: latitude and longitude vary linearly with
 sim y and x, so the 200 × 200 posts form a regular geographic grid.
-`npm run terrain-export -- --seed=<n> --lat=.. --lon=.. --geoid=<N>`
-writes that grid as a Float32 GeoTIFF in WGS 84 (EPSG:4326), one post
-per pixel, with a canopy raster beside it. `--vdatum=egm96` (default)
-writes mean-sea-level heights and `--vdatum=ellipsoid` adds the geoid
+EXPORT TERRAIN in the Live Ops panel (also the MCP tool
+`live_export_terrain`, and `"FPV Sim.exe" --terrain-export --seed=<n>
+--lat=.. --lon=.. --geoid=<N>` from the installed copy or `npm run
+terrain-export -- …` in a checkout) writes that grid as a Float32 GeoTIFF
+in WGS 84 (EPSG:4326), one post per pixel, in both vertical datums at
+once, with a canopy raster beside them: the `egm96` file holds
+mean-sea-level heights and the `ellipsoid` file adds the geoid
 undulation; VBS Geo reads neither Esri ASCII Grid nor the vertical tag
 and assumes one of the two datums, so the lab imports both and keeps
 the one whose coastline lands on VBS4's water line. Negative posts are

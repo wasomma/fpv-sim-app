@@ -150,6 +150,7 @@
             <dl class="kv" id="gateway-kv" hidden></dl>
           </div>
           <button id="stage" title="Validate this JSON and stage it for the next session (armed in memory until the app closes; the text is remembered)">STAGE</button>
+          <button id="export-terrain" class="quiet" title="Write this seed's terrain as GeoTIFFs for VBS Geo into a folder you choose: the elevation in both vertical datums plus canopy density. The anchor comes from the staged configuration, so stage it first.">EXPORT TERRAIN</button>
         </div>
         <div class="caution" id="gateway-warn"></div>
         <textarea id="gateway-cfg" rows="4" spellcheck="false" title="Gateway config JSON — staged in memory until the app closes; the last staged text is restored on the next launch">{"network":{"mode":"broadcast","port":3000},
@@ -479,6 +480,30 @@
     } else {
       setGateway(`refused: ${r.error}`, "bad");
     }
+  });
+
+  // EXPORT TERRAIN: seed from the header, anchor from the staged config,
+  // folder from a picker; main writes the five files and names the folder.
+  $("export-terrain").addEventListener("click", async () => {
+    $("gateway-warn").textContent = "";
+    const seed = Number($("seed").value);
+    let r;
+    try {
+      r = await window.fpvApp.live.exportTerrain(seed);
+    } catch (err) {
+      setGateway(`export failed: ${err.message}`, "bad");
+      return;
+    }
+    if (!r.ok) {
+      setGateway(`export refused: ${r.error}`, "bad");
+      return;
+    }
+    if (r.to === null) {
+      refreshGateway(); // cancelled: back to the staging state
+      return;
+    }
+    setGateway(`terrain exported: ${r.files.length} files for seed ${seed} in ${r.to}`, "ok");
+    if (r.warnings && r.warnings.length > 0) $("gateway-warn").textContent = "exported, but check: " + r.warnings.join(" · ");
   });
 
   /* ---------------- GATEWAY form view ----------------

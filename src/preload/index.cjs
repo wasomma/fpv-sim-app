@@ -75,6 +75,9 @@ contextBridge.exposeInMainWorld("fpvApp", {
     // returning { ok, issues: [{path, message}] } without staging anything.
     gatewayForm: () => ipcRenderer.invoke("live-gateway-form"),
     checkGateway: (cfg) => ipcRenderer.invoke("live-gateway-check", cfg),
+    // EXPORT TERRAIN: the staged anchor and this seed become the GeoTIFF
+    // set in a folder the user picks; { ok, to, files, warnings } or { ok, to: null } when cancelled.
+    exportTerrain: (seed) => ipcRenderer.invoke("live-export-terrain", { seed }),
     onSnapshot: (cb) => subscribe("live-snapshot", cb),
     onEnded: (cb) => subscribe("live-ended", cb),
   },

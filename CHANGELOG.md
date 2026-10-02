@@ -12,6 +12,25 @@ All simulation data is notional and unclassified.
 
 ## [Unreleased]
 
+### Added
+
+- **Terrain export from the installed app** (#4). **EXPORT TERRAIN** in
+  the Live Ops panel's GATEWAY box writes the seed's terrain for VBS Geo
+  into a folder you choose, placed on Earth by the staged gateway
+  configuration's anchor so terrain and DIS stream cannot disagree. The
+  same export is the MCP tool `live_export_terrain` (anchor from the
+  staged configuration unless passed, folder `%APPDATA%\fpv-sim-app\terrain`
+  unless named) and the command line `"FPV Sim.exe" --terrain-export
+  --seed=… --lat=… --lon=… --geoid=N --out=…` from the installed copy,
+  which no longer needs a developer checkout. One call writes the whole
+  set: the elevation in both vertical datums, each with a `.json` of the
+  grid's metadata, and the canopy density, five files named `seed-<n>-…`;
+  `npm run terrain-export` writes the same set, `--vdatum` narrowing it
+  to one variant. A self-check step exports from the staged anchor and
+  reads the files back. Chapter 11.3 is rewritten for users of the
+  installed app, with a new figure, and Appendices B, E and H, chapters
+  9 and 10, the VBS4 checklist, INTEROP.md and the lab brief follow.
+
 ### Changed
 
 - **Terrain export writes GeoTIFF for VBS Geo.** `npm run terrain-export`

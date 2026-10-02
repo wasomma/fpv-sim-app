@@ -221,3 +221,108 @@ export function writeFloat32GeoTiff(width: number, height: number, values: Float
   for (let i = 0; i < values.length; i++) view.setFloat32(pixelOffset + i * 4, values[i]!, true);
   return bytes;
 }
+
+/* ------------------------------ reader ------------------------------ */
+
+export interface GeoTiffReadback {
+  width: number;
+  height: number;
+  /** Row-major Float32 raster, row 0 = north. */
+  pixels: Float32Array;
+  nodata: number | null;
+  westDeg: number;
+  northDeg: number;
+  pixelLonDeg: number;
+  pixelLatDeg: number;
+  /** GeoKey 2048 (GeodeticCRSGeoKey), or null when absent. */
+  geodeticEpsg: number | null;
+  /** GeoKey 4096 (VerticalGeoKey), or null when the raster declares no vertical CRS. */
+  verticalEpsg: number | null;
+}
+
+/**
+ * Read back a GeoTIFF this module wrote (or any single-strip, uncompressed,
+ * little-endian, one-band Float32 GeoTIFF). Used by the self-check and by
+ * the in-app export to prove a file on disk before reporting success; the
+ * tests keep their own independent reader on purpose.
+ */
+export function readFloat32GeoTiff(bytes: Uint8Array): GeoTiffReadback {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (bytes[0] !== 0x49 || bytes[1] !== 0x49 || view.getUint16(2, true) !== 42) {
+    throw new Error("not a little-endian classic TIFF");
+  }
+  const ifd = view.getUint32(4, true);
+  const n = view.getUint16(ifd, true);
+  const tags = new Map<number, { type: number; count: number; at: number }>();
+  for (let i = 0; i < n; i++) {
+    const at = ifd + 2 + i * 12;
+    const tag = view.getUint16(at, true);
+    const type = view.getUint16(at + 2, true);
+    const count = view.getUint32(at + 4, true);
+    const inline = count * (TYPE_SIZE[type] ?? 0) <= 4;
+    tags.set(tag, { type, count, at: inline ? at + 8 : view.getUint32(at + 8, true) });
+  }
+  const num = (tag: number): number | null => {
+    const t = tags.get(tag);
+    if (t === undefined) return null;
+    return t.type === SHORT ? view.getUint16(t.at, true) : t.type === LONG ? view.getUint32(t.at, true) : view.getFloat64(t.at, true);
+  };
+  const doubles = (tag: number): number[] => {
+    const t = tags.get(tag);
+    if (t === undefined) return [];
+    return Array.from({ length: t.count }, (_, i) => view.getFloat64(t.at + i * 8, true));
+  };
+  const text = (tag: number): string | null => {
+    const t = tags.get(tag);
+    if (t === undefined) return null;
+    let s = "";
+    for (let i = 0; i < t.count - 1; i++) s += String.fromCharCode(bytes[t.at + i]!);
+    return s;
+  };
+  const width = num(TAG.ImageWidth);
+  const height = num(TAG.ImageLength);
+  if (width === null || height === null) throw new Error("missing image dimensions");
+  if (num(TAG.BitsPerSample) !== 32 || num(TAG.SampleFormat) !== 3 || num(TAG.SamplesPerPixel) !== 1) {
+    throw new Error("not a one-band Float32 raster");
+  }
+  if (num(TAG.Compression) !== 1) throw new Error("compressed raster");
+  const stripOffset = num(TAG.StripOffsets);
+  if (stripOffset === null) throw new Error("missing strip offset");
+  const count = width * height;
+  if (stripOffset + count * 4 > bytes.byteLength) throw new Error("pixel data truncated");
+  const pixels = new Float32Array(count);
+  for (let i = 0; i < count; i++) pixels[i] = view.getFloat32(stripOffset + i * 4, true);
+
+  const scale = doubles(TAG.ModelPixelScale);
+  const tie = doubles(TAG.ModelTiepoint);
+  if (scale.length < 2 || tie.length < 5) throw new Error("missing georeferencing");
+
+  const geo = tags.get(TAG.GeoKeyDirectory);
+  let geodeticEpsg: number | null = null;
+  let verticalEpsg: number | null = null;
+  if (geo !== undefined) {
+    const keys = view.getUint16(geo.at + 6, true);
+    for (let k = 0; k < keys; k++) {
+      const at = geo.at + 8 + k * 8;
+      const id = view.getUint16(at, true);
+      const location = view.getUint16(at + 2, true);
+      const value = view.getUint16(at + 6, true);
+      if (location !== 0) continue;
+      if (id === KEY.GeodeticCRS) geodeticEpsg = value;
+      if (id === KEY.VerticalCRS) verticalEpsg = value;
+    }
+  }
+  const nodataText = text(TAG.GdalNodata);
+  return {
+    width,
+    height,
+    pixels,
+    nodata: nodataText === null ? null : Number(nodataText),
+    westDeg: tie[3]!,
+    northDeg: tie[4]!,
+    pixelLonDeg: scale[0]!,
+    pixelLatDeg: scale[1]!,
+    geodeticEpsg,
+    verticalEpsg,
+  };
+}

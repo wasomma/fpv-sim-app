@@ -11,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { GatewayStatus, OverlayTrack, TickView } from "../../shared/gateway-slot.js";
 import { validateGatewayConfig } from "../gateway/config.js";
+import type { LocalFrameAnchor } from "../gateway/geo/localframe.js";
 import { gatewayWarnings } from "../gateway/presets.js";
 import { countOverrideKeys, validateOverridesValue } from "../studies/overrides-schema.js";
 
@@ -137,6 +138,17 @@ export function liveGatewayStatus(): GatewayStatus & { pendingConfig: boolean } 
     detail: pendingGatewayCfg !== null ? "configured for next session" : "no gateway config staged",
   };
   return { ...status, pendingConfig: pendingGatewayCfg !== null };
+}
+
+/**
+ * The anchor of the staged gateway config, merged over the defaults, or
+ * null when nothing is staged. The terrain export reads it so the
+ * exported grid and the DIS stream share one place on Earth.
+ */
+export function liveStagedAnchor(): LocalFrameAnchor | null {
+  if (pendingGatewayCfg === null) return null;
+  const { issues, config } = validateGatewayConfig(pendingGatewayCfg);
+  return issues.length > 0 ? null : { ...config.anchor };
 }
 
 export function liveOverlay(): OverlayTrack[] {
